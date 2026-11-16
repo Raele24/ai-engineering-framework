@@ -1,0 +1,7 @@
+{
+  "description": "Gemini CLI workspace settings template for AI Engineering Framework",
+  "contextFileName": [
+    "GEMINI.md",
+    "AGENTS.md"
+  ]
+}

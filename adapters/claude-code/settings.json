@@ -1,0 +1,15 @@
+{
+  "description": "Claude Code workspace settings template for AI Engineering Framework",
+  "permissions": {
+    "allow": [
+      "Bash(python scripts/validate.py*)",
+      "Bash(python scripts/sync_adapters.py*)",
+      "Bash(python -m unittest*)",
+      "Bash(graphify *)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(rm -rf /*)"
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "description": "Curated, vendor-neutral MCP server configuration template. Never place literal secrets here; use ${ENV_VAR} placeholders.",
+  "mcpServers": {
+    "filesystem-local": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "disabled": true
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "disabled": true
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      },
+      "variables": [
+        {
+          "name": "GITHUB_PERSONAL_ACCESS_TOKEN",
+          "title": "GitHub Personal Access Token",
+          "description": "Fine-grained GitHub PAT with repo read/write scope"
+        }
+      ],
+      "disabled": true
+    }
+  }
+}
