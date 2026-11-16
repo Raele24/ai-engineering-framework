@@ -1,11 +1,15 @@
 ---
 name: seo-audit
-description: Technical SEO inspection covering crawlability, canonical tags, XML sitemaps, schema.org JSON-LD, meta tags, and Core Web Vitals for public web sites.
+description: "Technical SEO inspection covering crawlability, canonical tags, XML sitemaps, schema.org JSON-LD, meta tags, and Core Web Vitals for public web sites."
 version: "1.0.0"
-tier: optional-growth
+source: "https://github.com/coreyhaines31/marketingskills"
+license: "MIT"
+category: "seo-growth"
+tier: "optional-growth"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [read_file, invoke_subagent, run_command]
-security_scope: network-external
+dependencies: []
+security_scope: "network-external"
 ---
 
 # SEO Audit — Technical Search Engine Optimization Skill

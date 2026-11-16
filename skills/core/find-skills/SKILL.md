@@ -1,11 +1,15 @@
 ---
 name: find-skills
-description: Discovers, audits for security, and registers external Agent Skills (SKILL.md) from open catalogs without introducing prompt injection or malware.
+description: "Discovers, audits for security, and registers external Agent Skills (SKILL.md) from open catalogs without introducing prompt injection or malware."
 version: "1.0.0"
-tier: core
+source: "https://github.com/vercel-labs/skills"
+license: "MIT"
+category: "core-sdlc"
+tier: "core"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [read_file, write_file, run_command, search_web]
-security_scope: network-external
+dependencies: []
+security_scope: "network-external"
 ---
 
 # Find Skills — Safe Skill Discovery & Vetting Protocol

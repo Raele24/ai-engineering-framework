@@ -132,6 +132,10 @@ python scripts/sync_adapters.py --check
 - **[Installation Guide (`docs/INSTALLATION.md`)](./docs/INSTALLATION.md)** — Prerequisites, bootstrap modes, and non-destructive updates.
 - **[Configuration Reference (`docs/CONFIGURATION.md`)](./docs/CONFIGURATION.md)** — Configuring `project.framework.json`, platform adapters, and optional domain packs.
 - **[Security Policy (`docs/SECURITY.md`)](./docs/SECURITY.md)** — Vulnerability reporting, secret prevention, and authorized security testing (Strix).
+- **[Skills Research Report (`docs/SKILLS_RESEARCH_REPORT.md`)](./docs/SKILLS_RESEARCH_REPORT.md)** — Upstream evaluation of 32 skills and tools across Token Optimization, Context Engineering, UI/UX, Agent Architecture, Graphify, and SEO/Growth.
+- **[Skill Compatibility Matrix (`docs/SKILL_COMPATIBILITY_MATRIX.md`)](./docs/SKILL_COMPATIBILITY_MATRIX.md)** — Per-platform discovery, activation, and script support for all 30 registered skills.
+- **[Token Optimization Guide (`docs/TOKEN_OPTIMIZATION.md`)](./docs/TOKEN_OPTIMIZATION.md)** — Empirical benchmarks across progressive disclosure, Ponytail, Caveman, RTK, and filesystem context offloading.
+- **[Skill Installation Guide (`docs/SKILL_INSTALLATION_GUIDE.md`)](./docs/SKILL_INSTALLATION_GUIDE.md)** — Policy A/B/C classification, optional pack bootstrap commands, and Windows CLI setup.
 - **[Versioning Policy (`docs/VERSIONING.md`)](./docs/VERSIONING.md)** — Semantic Versioning (`SemVer 2.0.0`) and schema migration guarantees.
 - **[Contributing Guide (`docs/CONTRIBUTING.md`)](./docs/CONTRIBUTING.md)** — How to propose new skills, adapters, and workflow improvements.
 - **[Roadmap (`docs/ROADMAP.md`)](./docs/ROADMAP.md)** — Milestone progression from `v0.1.0` through `v1.0.0`.

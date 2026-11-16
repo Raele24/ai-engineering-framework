@@ -1,11 +1,15 @@
 ---
 name: adr-writer
-description: Authors concise, immutable Architecture Decision Records (ADRs) in docs/adr/ during Phase 5 with trade-off analysis and architectural reduction checks.
+description: "Authors concise, immutable Architecture Decision Records (ADRs) in docs/adr/ during Phase 5 with trade-off analysis and architectural reduction checks."
 version: "1.0.0"
-tier: core
+source: "first-party"
+license: "Apache-2.0"
+category: "core-sdlc"
+tier: "core"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [read_file, write_file, edit_file]
-security_scope: workspace-write
+dependencies: []
+security_scope: "workspace-write"
 ---
 
 # ADR Writer — Architecture Decision Record Skill

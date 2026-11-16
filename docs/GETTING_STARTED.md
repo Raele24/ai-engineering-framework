@@ -31,8 +31,11 @@ If you are starting a new project or adding the framework to an existing reposit
 python /path/to/ai-engineering-framework/scripts/bootstrap.py \
   --target /path/to/my-app \
   --platforms antigravity,copilot,claude-code,codex,gemini-cli \
+  --optional-packs communication,context-engineering,agent-architecture,frontend-design \
   --profile standard
 ```
+
+See [`docs/SKILL_INSTALLATION_GUIDE.md`](./SKILL_INSTALLATION_GUIDE.md) and [`docs/TOKEN_OPTIMIZATION.md`](./TOKEN_OPTIMIZATION.md) for configuring optional skill packs (`frontend-design` for UI/UX Pro Max & Angular; `growth-media` for SEO & video) and token optimization tools (`ponytail`, `caveman`, `rtk-cli`).
 
 This creates:
 - Canonical rules and workflows in your project (or links to them).

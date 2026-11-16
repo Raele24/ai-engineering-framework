@@ -53,6 +53,10 @@ REQUIRED_FOUNDATION_FILES = [
     "docs/VERSIONING.md",
     "docs/SECURITY.md",
     "docs/ROADMAP.md",
+    "docs/SKILLS_RESEARCH_REPORT.md",
+    "docs/SKILL_COMPATIBILITY_MATRIX.md",
+    "docs/TOKEN_OPTIMIZATION.md",
+    "docs/SKILL_INSTALLATION_GUIDE.md",
     "core/rules/engineering-principles.md",
     "core/rules/context-handoff-protocol.md",
     "core/rules/human-approval-gates.md",
@@ -83,17 +87,39 @@ REQUIRED_SKILL_KEYS = {
     "name",
     "description",
     "version",
+    "source",
+    "license",
+    "category",
     "tier",
     "platforms",
     "requires_tools",
+    "dependencies",
     "security_scope",
 }
 
 VALID_SKILL_TIERS = {
     "core",
     "optional-communication",
+    "optional-context",
+    "optional-agent-architecture",
     "optional-frontend",
     "optional-growth",
+}
+
+VALID_SKILL_CATEGORIES = {
+    "core-sdlc",
+    "token-optimization",
+    "context-engineering",
+    "ui-ux-design",
+    "agent-architecture",
+    "codebase-intelligence",
+    "seo-growth",
+}
+
+VALID_LICENSES = {
+    "Apache-2.0",
+    "MIT",
+    "BSD-3-Clause",
 }
 
 VALID_PLATFORMS = {
@@ -110,7 +136,6 @@ VALID_SECURITY_SCOPES = {
     "network-external",
 }
 
-# Patterns that indicate real leaked credentials (excluding documentation rule definitions)
 SECRET_PATTERNS = [
     ("RSA_PRIVATE_KEY", re.compile(r"-----BEGIN RSA PRIVATE KEY-----")),
     ("OPENSSH_PRIVATE_KEY", re.compile(r"-----BEGIN OPENSSH PRIVATE KEY-----")),
@@ -192,6 +217,9 @@ def check_skills_and_registry(root: Path) -> List[str]:
         skill_path = root / Path(skill_rel)
         if not skill_path.exists():
             errors.append(f"skills/registry.json references non-existent path: {skill_rel}")
+        upstream_rel = entry.get("upstream_preserved_path")
+        if upstream_rel and not (root / Path(str(upstream_rel))).exists():
+            errors.append(f"skills/registry.json references missing upstream snapshot: {upstream_rel}")
 
     discovered_skills = sorted((root / "skills").rglob("SKILL.md"))
     if not discovered_skills:
@@ -211,6 +239,10 @@ def check_skills_and_registry(root: Path) -> List[str]:
             errors.append(f"{rel}: frontmatter name '{meta.get('name')}' does not match folder '{folder_name}'")
         if meta.get("tier") not in VALID_SKILL_TIERS:
             errors.append(f"{rel}: invalid tier '{meta.get('tier')}'")
+        if meta.get("category") not in VALID_SKILL_CATEGORIES:
+            errors.append(f"{rel}: invalid category '{meta.get('category')}'")
+        if meta.get("license") not in VALID_LICENSES:
+            errors.append(f"{rel}: invalid license '{meta.get('license')}'")
         platforms = meta.get("platforms")
         if not isinstance(platforms, list) or not platforms or not set(platforms).issubset(VALID_PLATFORMS):
             errors.append(f"{rel}: invalid platforms list '{platforms}'")

@@ -1,6 +1,6 @@
 {
   "$schema": "./core/schemas/framework-config.schema.json",
-  "frameworkVersion": "0.1.0",
+  "frameworkVersion": "0.2.0",
   "projectName": "ai-engineering-framework",
   "workflowProfile": "full",
   "enabledPlatforms": [
@@ -12,9 +12,22 @@
   ],
   "optionalSkillPacks": {
     "communication": [
-      "caveman"
+      "caveman",
+      "rtk-cli"
+    ],
+    "contextEngineering": [
+      "context-optimization",
+      "context-compression",
+      "filesystem-context"
+    ],
+    "agentArchitecture": [
+      "multi-agent-patterns",
+      "evaluation"
     ],
     "frontendDesign": [
+      "ui-ux-pro-max",
+      "angular-developer",
+      "angular-new-app",
       "web-design-guidelines",
       "canvas-design"
     ],

@@ -1,11 +1,15 @@
 ---
 name: anti-slop
-description: Eliminates predictable AI writing patterns, promotional filler, vague adjectives, and bloated boilerplate from documentation, specs, and UI copy.
+description: "Eliminates predictable AI writing patterns, promotional filler, vague adjectives, and bloated boilerplate from documentation, specs, and UI copy."
 version: "1.0.0"
-tier: core
+source: "https://hvpandya.com/stop-slop"
+license: "MIT"
+category: "token-optimization"
+tier: "core"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [read_file, edit_file]
-security_scope: workspace-write
+dependencies: []
+security_scope: "workspace-write"
 ---
 
 # Anti-AI Slop — High-Signal Technical Prose Skill

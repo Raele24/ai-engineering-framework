@@ -1,11 +1,15 @@
 ---
 name: tdd-cycle
-description: Enforces strict Red-Green-Refactor Test-Driven Development during Phase 9 implementation with specification traceability and circuit-breaker recovery.
+description: "Enforces strict Red-Green-Refactor Test-Driven Development during Phase 9 implementation with specification traceability and circuit-breaker recovery."
 version: "1.0.0"
-tier: core
+source: "first-party"
+license: "Apache-2.0"
+category: "core-sdlc"
+tier: "core"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [read_file, write_file, edit_file, run_command]
-security_scope: workspace-write
+dependencies: []
+security_scope: "workspace-write"
 ---
 
 # TDD Cycle — Red-Green-Refactor Protocol

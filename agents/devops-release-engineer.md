@@ -5,7 +5,7 @@ description: Owns repository automation, GitHub Actions workflows, adapter synch
 version: "1.0.0"
 phases: [13]
 allowed_tools: [read_file, write_file, edit_file, run_command, ask_question]
-required_skills: [anti-slop]
+required_skills: [rtk-cli, context-optimization, anti-slop]
 delegation_targets: [planner-orchestrator]
 approval_gates: [Gate-04]
 ---

@@ -1,11 +1,15 @@
 ---
 name: ai-seo
-description: Generative Engine Optimization (GEO / AEO) for public docs and web apps, including llms.txt generation, entity disambiguation, and citation structure.
+description: "Generative Engine Optimization (GEO / AEO) for public docs and web apps, including llms.txt generation, entity disambiguation, and citation structure."
 version: "1.0.0"
-tier: optional-growth
+source: "https://github.com/coreyhaines31/marketingskills"
+license: "MIT"
+category: "seo-growth"
+tier: "optional-growth"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [read_file, write_file, edit_file]
-security_scope: workspace-write
+dependencies: []
+security_scope: "workspace-write"
 ---
 
 # AI SEO — Generative & Answer Engine Optimization Skill

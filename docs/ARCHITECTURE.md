@@ -85,20 +85,22 @@ Multiple agents exist in this framework **to isolate context windows**, not to s
 - **Supervisor / Subagent Mode:** On platforms supporting subagents (Google Antigravity `invoke_subagent` / `run_workflow` / `swarm`, Claude Code subagents), `planner-orchestrator` dispatches fresh subagent instances with only the specific input files (`input_artifacts`) required for that task.
 - **Hard Worker Cap:** A supervisor turn never spawns more than **3 to 5 concurrent workers**, preventing supervisor context saturation.
 
-### 4.2 Progressive Skill Disclosure
+### 4.2 Progressive Skill Disclosure & Domain Isolation
 Loading every guideline into the global system prompt causes the **Lost-in-the-Middle Effect** and wastes token budget.
-- **Always-On Context (`AGENTS.md` / `CLAUDE.md` / `GEMINI.md`):** Kept concise (< 4 KB). Contains only core workflow routing, safety/approval gates, and pointers to canonical files.
-- **On-Demand Context (`skills/`):** Loaded only when an agent enters a matching workflow phase or domain task (e.g., `tdd-cycle` during Phase 9; `web-design-guidelines` only when touching frontend UI).
+- **Always-On Context (`AGENTS.md` / `CLAUDE.md` / `GEMINI.md`):** Kept concise (< 6 KB). Contains only core workflow routing, safety/approval gates, and a compact metadata index (~1,245 tokens for all 30 registered skills — a **98.4% reduction** compared to loading all `SKILL.md` bodies).
+- **On-Demand Context (`skills/`):** Organized into `skills/core/` (8 core SDLC, YAGNI `ponytail`, and `graphify` skills) and 5 isolated optional domain packs (`communication`, `context-engineering`, `agent-architecture`, `frontend-design`, `growth-media`). See [`docs/SKILL_COMPATIBILITY_MATRIX.md`](./SKILL_COMPATIBILITY_MATRIX.md) and [`docs/TOKEN_OPTIMIZATION.md`](./TOKEN_OPTIMIZATION.md).
+- **Offline Script & Database Execution:** Heavy reference assets (such as the 28 CSV databases in `ui-ux-pro-max` or the 36 Angular guides in `angular-developer`) remain on disk and are queried via standard-library Python scripts (`search.py`) or targeted `read_file` calls.
 
 ---
 
 ## 5. Codebase Knowledge Graph Integration (`Graphify`)
 
-To prevent architectural drift and blind file grepping on medium-to-large repositories, the framework integrates **Graphify (`graphify`)** as a first-class architectural component:
+To prevent architectural drift and blind file grepping on medium-to-large repositories, the framework integrates **Graphify (`graphify 0.9.48`)** as a first-class architectural component ([`skills/core/graphify/SKILL.md`](../skills/core/graphify/SKILL.md)):
 
-1. **Knowledge Graph Generation (`graphify .`):** Parses repository source code, documentation, and relationships into `graphify-out/graph.json` and `graphify-out/GRAPH_REPORT.md`.
-2. **Phase 1 & 4 (Discovery & Research):** When `graphify-out/graph.json` exists, agents query the graph (`graphify query "<question>"`, `graphify path "<A>" "<B>"`, `graphify explain "<node>"`) before scanning raw directory trees.
-3. **Phase 10 & 14 (Code Review & Docs):** Agents run `graphify update .` to incrementally refresh the AST/concept graph and verify that new changes do not introduce unintended god-nodes or cross-layer couplings.
+1. **Minimum Corpus Threshold Guard:** Only build or update `graphify-out/` when a repository has **$\ge 15$ tracked code/doc files OR $> 2,000$ lines of code**. For tiny projects ($< 15$ files), agents read files directly to avoid unnecessary graph overhead.
+2. **Knowledge Graph Generation (`graphify .` / `graphify update .`):** Parses repository source code, SQL schemas, and documentation into `graphify-out/graph.json` and `graphify-out/GRAPH_REPORT.md` using local deterministic `tree-sitter` AST parsing (zero external LLM API cost).
+3. **Phase 1 & 4 (Discovery & Research):** When `graphify-out/graph.json` exists, agents query the graph (`graphify query "<question>"`, `graphify path "<A>" "<B>"`, `graphify explain "<node>"`, `graphify god-nodes`) before scanning raw directory trees.
+4. **Phase 10 & 14 (Code Review & Docs):** Agents run `graphify update .` to incrementally refresh the AST/concept graph and verify that new changes do not introduce unintended god-nodes or cross-layer couplings.
 
 ---
 

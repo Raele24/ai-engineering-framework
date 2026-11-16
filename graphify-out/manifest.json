@@ -24,9 +24,9 @@
     "semantic_hash": ""
   },
   "core/schemas/framework-config.schema.json": {
-    "mtime": 1794857981.8477473,
-    "seen": 1794858577.6647885,
-    "ast_hash": "2ec625c3a22cec9881d143c2762cb71b",
+    "mtime": 1794861648.8949263,
+    "seen": 1794861800.654726,
+    "ast_hash": "da6c6e9170532066a6b50af411df5fbf",
     "semantic_hash": ""
   },
   "core/schemas/handoff-packet.schema.json": {
@@ -36,9 +36,9 @@
     "semantic_hash": ""
   },
   "core/schemas/skill-frontmatter.schema.json": {
-    "mtime": 1794857978.7975526,
-    "seen": 1794858577.6647897,
-    "ast_hash": "ccf7a90a4b9004a96ce68e829dd3e7ba",
+    "mtime": 1794861194.0489378,
+    "seen": 1794861800.6547287,
+    "ast_hash": "2e46462dea90aa5f1d3b86820999f8ea",
     "semantic_hash": ""
   },
   "integrations/mcp/mcp.template.json": {
@@ -48,9 +48,9 @@
     "semantic_hash": ""
   },
   "scripts/bootstrap.py": {
-    "mtime": 1794858536.1753016,
-    "seen": 1794858577.6647909,
-    "ast_hash": "5384310efff5c532ef5b1aad685ac426",
+    "mtime": 1794861653.8715138,
+    "seen": 1794861800.6547306,
+    "ast_hash": "5eb5a84477687cadbc9074c4b3656cfe",
     "semantic_hash": ""
   },
   "scripts/sync_adapters.py": {
@@ -60,15 +60,15 @@
     "semantic_hash": ""
   },
   "scripts/validate.py": {
-    "mtime": 1794858534.460425,
-    "seen": 1794858577.6647923,
-    "ast_hash": "bb722dd437cdbba388b1604e3846df1d",
+    "mtime": 1794861651.893396,
+    "seen": 1794861800.654732,
+    "ast_hash": "685b616cc0e43838019875042e552d3e",
     "semantic_hash": ""
   },
   "skills/registry.json": {
-    "mtime": 1794858200.191951,
-    "seen": 1794858577.664793,
-    "ast_hash": "22aa280c2bf34f85875e51ebe3ea7e20",
+    "mtime": 1794861456.5662467,
+    "seen": 1794861800.6547427,
+    "ast_hash": "3e49058f1deb3a329777737887293549",
     "semantic_hash": ""
   },
   "templates/HANDOFF_PACKET.template.json": {
@@ -78,15 +78,15 @@
     "semantic_hash": ""
   },
   "templates/project.framework.json": {
-    "mtime": 1794857991.8243322,
-    "seen": 1794858577.6647942,
-    "ast_hash": "d2b4ae05723821efaa0c2e09a15b1ae0",
+    "mtime": 1794861649.8922713,
+    "seen": 1794861800.6547446,
+    "ast_hash": "e70cb68cf937fe59c91a77c5137dc37e",
     "semantic_hash": ""
   },
   "tests/test_framework.py": {
-    "mtime": 1794858537.8497665,
-    "seen": 1794858577.6647947,
-    "ast_hash": "f2f73052288f5029e12c19bbed6af36e",
+    "mtime": 1794861746.4213011,
+    "seen": 1794861800.654745,
+    "ast_hash": "057f9eb3d024f728f0c4c5bf1c53c53c",
     "semantic_hash": ""
   },
   ".github/ISSUE_TEMPLATE/bug_report.yml": {
@@ -108,9 +108,9 @@
     "semantic_hash": ""
   },
   ".github/copilot-instructions.md": {
-    "mtime": 1794858551.4796178,
-    "seen": 1794858577.664797,
-    "ast_hash": "b7cd50ad660fedf530080991adb026af",
+    "mtime": 1794861793.952437,
+    "seen": 1794861800.654748,
+    "ast_hash": "5ee807a1af3aa9c3e3ed10705da5f84b",
     "semantic_hash": ""
   },
   ".github/workflows/ci-validate.yml": {
@@ -126,21 +126,21 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1794858551.4796178,
-    "seen": 1794858577.6647992,
-    "ast_hash": "2a6012b84ed5c8cce510876d3a6cb5b5",
+    "mtime": 1794861793.953944,
+    "seen": 1794861800.65475,
+    "ast_hash": "12b762cfdfe3bc6ad7bdfb53828eb1ce",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1794858551.4811573,
-    "seen": 1794858577.6648002,
-    "ast_hash": "f517af77e570194e09356da61451c599",
+    "mtime": 1794861793.953944,
+    "seen": 1794861800.654751,
+    "ast_hash": "2b07aab9216b426e1338691d85ba781f",
     "semantic_hash": ""
   },
   "GEMINI.md": {
-    "mtime": 1794858551.4811573,
-    "seen": 1794858577.6648011,
-    "ast_hash": "eaa829c1006dba9ab6f70487be799187",
+    "mtime": 1794861793.953944,
+    "seen": 1794861800.6547515,
+    "ast_hash": "d1c5c0db12213f6c32baf21fa406e83a",
     "semantic_hash": ""
   },
   "PROJECT_CHARTER.md": {
@@ -150,15 +150,15 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1794857707.29363,
-    "seen": 1794858577.6648023,
-    "ast_hash": "813dd5b9b8d0bfa7ae40a524fd57762a",
+    "mtime": 1794861774.6427915,
+    "seen": 1794861800.654753,
+    "ast_hash": "fd3b955db8ef222f94c2df39bbb31050",
     "semantic_hash": ""
   },
   "adapters/antigravity/rules/framework-core.md": {
-    "mtime": 1794858551.4826627,
-    "seen": 1794858577.664803,
-    "ast_hash": "5d75a04ae5e27c43f38b080924739e6c",
+    "mtime": 1794861793.9554508,
+    "seen": 1794861800.6547532,
+    "ast_hash": "316f0993b9d9823d010a7b86482e2458",
     "semantic_hash": ""
   },
   "adapters/claude-code/agents/code-reviewer.md": {
@@ -192,9 +192,9 @@
     "semantic_hash": ""
   },
   "adapters/copilot/framework.instructions.md": {
-    "mtime": 1794858551.4881802,
-    "seen": 1794858577.6648061,
-    "ast_hash": "ab4ceec6415ad02ad475ba6767866f3f",
+    "mtime": 1794861793.9554508,
+    "seen": 1794861800.6547573,
+    "ast_hash": "061ed96e341619c195a0bcff5dd50a5b",
     "semantic_hash": ""
   },
   "adapters/copilot/grill-me.prompt.md": {
@@ -204,51 +204,51 @@
     "semantic_hash": ""
   },
   "agents/code-reviewer.md": {
-    "mtime": 1794858065.561603,
-    "seen": 1794858577.6648073,
-    "ast_hash": "47babc870009ca8213cc25fc427e712e",
+    "mtime": 1794861496.726061,
+    "seen": 1794861800.654759,
+    "ast_hash": "cdc0b3e67ac191dcbacf73f792ba24aa",
     "semantic_hash": ""
   },
   "agents/devops-release-engineer.md": {
-    "mtime": 1794858070.8043165,
-    "seen": 1794858577.6648078,
-    "ast_hash": "35015f65ebde31d7c87cb56f7dae3286",
+    "mtime": 1794861503.9841373,
+    "seen": 1794861800.6547594,
+    "ast_hash": "373c505821f6273131512f4238ebd25a",
     "semantic_hash": ""
   },
   "agents/implementation-engineer.md": {
-    "mtime": 1794858064.0667465,
-    "seen": 1794858577.6648083,
-    "ast_hash": "9d3ee7fb30ba6b1c644c0d82b307b581",
+    "mtime": 1794861494.4289796,
+    "seen": 1794861800.6547601,
+    "ast_hash": "195a3eff61e5a256629d1a9aca3bb0d7",
     "semantic_hash": ""
   },
   "agents/planner-orchestrator.md": {
-    "mtime": 1794858062.200516,
-    "seen": 1794858577.664809,
-    "ast_hash": "ef4c69e6dd407dda968a37ee82337b15",
+    "mtime": 1794861491.7571921,
+    "seen": 1794861800.6547613,
+    "ast_hash": "6e8391b4ef6f24e52bb4efbcc37c45d1",
     "semantic_hash": ""
   },
   "agents/product-analyst.md": {
-    "mtime": 1794858058.8773766,
-    "seen": 1794858577.6648092,
-    "ast_hash": "d0a7ef7b3b508084daaa8b6aa82da230",
+    "mtime": 1794861487.7522318,
+    "seen": 1794861800.654762,
+    "ast_hash": "859e18d2f3371c9ab5af7a72ab1d36ba",
     "semantic_hash": ""
   },
   "agents/qa-engineer.md": {
-    "mtime": 1794858067.2852147,
-    "seen": 1794858577.6648097,
-    "ast_hash": "8a1eeef42fbf1a80c456b476040e1a0f",
+    "mtime": 1794861498.7814655,
+    "seen": 1794861800.6547625,
+    "ast_hash": "10e076a8a56f7d34a0a70834cdd9c015",
     "semantic_hash": ""
   },
   "agents/security-engineer.md": {
-    "mtime": 1794858068.9932737,
-    "seen": 1794858577.6648104,
-    "ast_hash": "4b46eff56d12789cfb9aa95ce2476fbf",
+    "mtime": 1794861501.5862136,
+    "seen": 1794861800.654763,
+    "ast_hash": "5d3acf8a6cbd2dd0af38951bd25d2d80",
     "semantic_hash": ""
   },
   "agents/software-architect.md": {
-    "mtime": 1794858060.5394192,
-    "seen": 1794858577.664811,
-    "ast_hash": "04d43be618630c7400c212d699edfeda",
+    "mtime": 1794861489.7616704,
+    "seen": 1794861800.6547635,
+    "ast_hash": "55895b63cbc176a60d1b13733f47ea88",
     "semantic_hash": ""
   },
   "core/rules/context-handoff-protocol.md": {
@@ -276,9 +276,9 @@
     "semantic_hash": ""
   },
   "docs/ARCHITECTURE.md": {
-    "mtime": 1794857833.7662635,
-    "seen": 1794858577.6648142,
-    "ast_hash": "d6a8a442ffe75431740d702cb41ddaf0",
+    "mtime": 1794861776.7415667,
+    "seen": 1794861800.654767,
+    "ast_hash": "f9c7e5864ba895996295e85a61b73dec",
     "semantic_hash": ""
   },
   "docs/CONFIGURATION.md": {
@@ -300,9 +300,9 @@
     "semantic_hash": ""
   },
   "docs/GETTING_STARTED.md": {
-    "mtime": 1794857835.1633956,
-    "seen": 1794858577.6648169,
-    "ast_hash": "d4d7fa19434ece8f7da4a96e272a125c",
+    "mtime": 1794861778.750821,
+    "seen": 1794861800.65477,
+    "ast_hash": "14143e321ca18548e6ff7259c44b3fe9",
     "semantic_hash": ""
   },
   "docs/IMPLEMENTATION_PLAN.md": {
@@ -414,93 +414,93 @@
     "semantic_hash": ""
   },
   "skills/core/adr-writer/SKILL.md": {
-    "mtime": 1794858125.2360814,
-    "seen": 1794858577.6648276,
-    "ast_hash": "c0ee5de177557e02a5cc45d8c6f245eb",
+    "mtime": 1794861454.1624427,
+    "seen": 1794861800.6547859,
+    "ast_hash": "ba90fccd5183dc80b210f51e5715d3f4",
     "semantic_hash": ""
   },
   "skills/core/agent-browser/SKILL.md": {
-    "mtime": 1794858126.728135,
-    "seen": 1794858577.664828,
-    "ast_hash": "3453487377254b464c95a97f1e2a3f56",
+    "mtime": 1794861454.163443,
+    "seen": 1794861800.6547863,
+    "ast_hash": "9808fe40f15edad6210a243770d5f94b",
     "semantic_hash": ""
   },
   "skills/core/anti-slop/SKILL.md": {
-    "mtime": 1794858129.5441198,
-    "seen": 1794858577.664829,
-    "ast_hash": "5e40b3048b65083773a5abcaec1669de",
+    "mtime": 1794861454.1640105,
+    "seen": 1794861800.6547868,
+    "ast_hash": "2f280db8a753891924ffe1c9905fb8f9",
     "semantic_hash": ""
   },
   "skills/core/find-skills/SKILL.md": {
-    "mtime": 1794858128.3467686,
-    "seen": 1794858577.6648293,
-    "ast_hash": "28023c94ba6001525e1d8e1c3784e2fb",
+    "mtime": 1794861454.1640105,
+    "seen": 1794861800.6547873,
+    "ast_hash": "9fb543e5ebd3be2741ae1ed84232308c",
     "semantic_hash": ""
   },
   "skills/core/grill-me/SKILL.md": {
-    "mtime": 1794858122.4869194,
-    "seen": 1794858577.6648297,
-    "ast_hash": "50359d5badf5695ce579b50df3fe43fa",
+    "mtime": 1794861454.1614237,
+    "seen": 1794861800.6547892,
+    "ast_hash": "0cdabfbc2534f95916705b50520e5496",
     "semantic_hash": ""
   },
   "skills/core/tdd-cycle/SKILL.md": {
-    "mtime": 1794858123.9114623,
-    "seen": 1794858577.6648304,
-    "ast_hash": "8cfbc9ae0266a25a8ecdc31d5ef64ef0",
+    "mtime": 1794861454.1619315,
+    "seen": 1794861800.6547902,
+    "ast_hash": "5d702d2d60a43349b892273dadb78ff6",
     "semantic_hash": ""
   },
   "skills/optional/communication/caveman/SKILL.md": {
-    "mtime": 1794858187.4438386,
-    "seen": 1794858577.664831,
-    "ast_hash": "dd20df60747701de96d467fe245b928c",
+    "mtime": 1794861454.1640105,
+    "seen": 1794861800.6547966,
+    "ast_hash": "66c38c8dac44cb3f8c567e02694f546d",
     "semantic_hash": ""
   },
   "skills/optional/frontend-design/canvas-design/SKILL.md": {
-    "mtime": 1794858190.0750399,
-    "seen": 1794858577.6648314,
-    "ast_hash": "4c0f1b3967f4be8250ae3191025e5dca",
+    "mtime": 1794861456.5635417,
+    "seen": 1794861800.6548333,
+    "ast_hash": "805221a176cfb701d0af5cf6cd49eb72",
     "semantic_hash": ""
   },
   "skills/optional/frontend-design/web-design-guidelines/SKILL.md": {
-    "mtime": 1794858189.0242395,
-    "seen": 1794858577.664832,
-    "ast_hash": "0ccf29bd567e940c7288e4f5c00387de",
+    "mtime": 1794861456.5625412,
+    "seen": 1794861800.6548352,
+    "ast_hash": "c324908bb08bbb356a0a8c128b8767ed",
     "semantic_hash": ""
   },
   "skills/optional/growth-media/ai-seo/SKILL.md": {
-    "mtime": 1794858192.7740152,
-    "seen": 1794858577.6648326,
-    "ast_hash": "159fd48d67647cb1aa26fe0c763dbf89",
+    "mtime": 1794861456.5640461,
+    "seen": 1794861800.654836,
+    "ast_hash": "be1ba69a7e833281fd32a67f400da3db",
     "semantic_hash": ""
   },
   "skills/optional/growth-media/content-strategy/SKILL.md": {
-    "mtime": 1794858197.2491415,
-    "seen": 1794858577.6648333,
-    "ast_hash": "4fdb99b0b8abdbfb138ab7c210f65d60",
+    "mtime": 1794861456.5640461,
+    "seen": 1794861800.6548429,
+    "ast_hash": "bcb34359ebd506ac7a2ad642d43a7425",
     "semantic_hash": ""
   },
   "skills/optional/growth-media/pricing/SKILL.md": {
-    "mtime": 1794858198.665367,
-    "seen": 1794858577.6648338,
-    "ast_hash": "45fd9a8985a94774e5e634aeeabba298",
+    "mtime": 1794861456.5640461,
+    "seen": 1794861800.6548436,
+    "ast_hash": "53eb0de609d8d1ed419bfd0718315ae6",
     "semantic_hash": ""
   },
   "skills/optional/growth-media/seo-audit/SKILL.md": {
-    "mtime": 1794858191.12227,
-    "seen": 1794858577.6648343,
-    "ast_hash": "cfd9f7341ffa73f6989682e4d857a639",
+    "mtime": 1794861456.5635417,
+    "seen": 1794861800.6548445,
+    "ast_hash": "5ddfba7f60235f1d7231c5e4d9cf3930",
     "semantic_hash": ""
   },
   "skills/optional/growth-media/video-lens/SKILL.md": {
-    "mtime": 1794858194.2835913,
-    "seen": 1794858577.6648347,
-    "ast_hash": "c3f78f59d2059abc9c816523b375e1bb",
+    "mtime": 1794861456.5640461,
+    "seen": 1794861800.654845,
+    "ast_hash": "2077f63985b5a52182de92c628c55468",
     "semantic_hash": ""
   },
   "skills/optional/growth-media/video-use/SKILL.md": {
-    "mtime": 1794858195.5897744,
-    "seen": 1794858577.664835,
-    "ast_hash": "8fffa95d9294ed1ec07ecaec6e74e797",
+    "mtime": 1794861456.5662467,
+    "seen": 1794861800.6548457,
+    "ast_hash": "978b2304ea811ad0df28cc39f5fe5c00",
     "semantic_hash": ""
   },
   "templates/ADR.template.md": {
@@ -561,6 +561,654 @@
     "mtime": 1794858280.2857018,
     "seen": 1794858577.664841,
     "ast_hash": "ea745ab0de0bd09e6120949159fdbc7b",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/evaluation/scripts/evaluator.py": {
+    "mtime": 1786098061.7738624,
+    "seen": 1794861800.6547334,
+    "ast_hash": "d69fe0be495402c3f13a0c9d0a3045d8",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/multi-agent-patterns/scripts/coordination.py": {
+    "mtime": 1786098061.7938573,
+    "seen": 1794861800.6547344,
+    "ast_hash": "d386c18b1366915a11ca4f5d32dd49f5",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/tool-design/scripts/description_generator.py": {
+    "mtime": 1786098061.8018644,
+    "seen": 1794861800.654735,
+    "ast_hash": "ff414745f840aa455e554eda7cb8b3cd",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/context-compression/scripts/compression_evaluator.py": {
+    "mtime": 1786098061.7588556,
+    "seen": 1794861800.6547356,
+    "ast_hash": "cfc33f94812799d4bbe98fbbd6fa52a0",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/context-optimization/scripts/compaction.py": {
+    "mtime": 1786098061.765857,
+    "seen": 1794861800.6547363,
+    "ast_hash": "4202ceba3fd76526ffb91f5768cec5e4",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/filesystem-context/scripts/filesystem_context.py": {
+    "mtime": 1786098061.7768624,
+    "seen": 1794861800.654737,
+    "ast_hash": "39a182c6740002764b9fd1c08185692e",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/memory-systems/scripts/memory_store.py": {
+    "mtime": 1786098061.790856,
+    "seen": 1794861800.6547375,
+    "ast_hash": "e550056698209cc3125e9aaf54e9a386",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/ui-ux-pro-max/data/_sync_all.py": {
+    "mtime": 1782741139.355376,
+    "seen": 1794861800.654738,
+    "ast_hash": "c5102d726b2b4bdba1c4b7e3d5a55c52",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/ui-ux-pro-max/scripts/core.py": {
+    "mtime": 1784723890.320871,
+    "seen": 1794861800.6547384,
+    "ast_hash": "c81307355b3c2ba9fc8cbadcf5cddebd",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/ui-ux-pro-max/scripts/design_system.py": {
+    "mtime": 1784723890.3498678,
+    "seen": 1794861800.654739,
+    "ast_hash": "ab69d000f69bad6c1cc3ae0826574f8d",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/ui-ux-pro-max/scripts/search.py": {
+    "mtime": 1784723890.3798754,
+    "seen": 1794861800.6547394,
+    "ast_hash": "63d4d793a72499b6daf7c506d2eeb475",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/scripts/extract-colors.cjs": {
+    "mtime": 1784723889.8618038,
+    "seen": 1794861800.6547399,
+    "ast_hash": "267ef00a878b8c0cec252443796c6122",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/scripts/inject-brand-context.cjs": {
+    "mtime": 1784723889.8698032,
+    "seen": 1794861800.6547403,
+    "ast_hash": "72ab4372fcdb90d68b5cb09b912e34f4",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/scripts/sync-brand-to-tokens.cjs": {
+    "mtime": 1784723889.8748028,
+    "seen": 1794861800.6547408,
+    "ast_hash": "0bd6e8f1cb486753d11da715a548650a",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/scripts/tests/test_sync_brand_to_tokens.py": {
+    "mtime": 1784723890.4028728,
+    "seen": 1794861800.6547413,
+    "ast_hash": "1cc075890cd68fa5c5f7463b9e1a4618",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/scripts/validate-asset.cjs": {
+    "mtime": 1784723889.8818038,
+    "seen": 1794861800.654742,
+    "ast_hash": "8217a1364af59e1acfb95d71fd41df1e",
+    "semantic_hash": ""
+  },
+  "docs/SKILLS_RESEARCH_REPORT.md": {
+    "mtime": 1794861150.8648772,
+    "seen": 1794861800.6547732,
+    "ast_hash": "f9ac543e6aee52fd09ce0b2e533fc115",
+    "semantic_hash": ""
+  },
+  "docs/SKILL_COMPATIBILITY_MATRIX.md": {
+    "mtime": 1794861155.464284,
+    "seen": 1794861800.6547737,
+    "ast_hash": "f32b908a19c9cdc11a0c0c392668d06d",
+    "semantic_hash": ""
+  },
+  "docs/SKILL_INSTALLATION_GUIDE.md": {
+    "mtime": 1794861743.9439933,
+    "seen": 1794861800.6547742,
+    "ast_hash": "82200eef17b745f89458cb80f194412e",
+    "semantic_hash": ""
+  },
+  "docs/TOKEN_OPTIMIZATION.md": {
+    "mtime": 1794861742.02759,
+    "seen": 1794861800.6547747,
+    "ast_hash": "796d803e95d79edfd92c2e9d51f7c642",
+    "semantic_hash": ""
+  },
+  "docs/VALIDATION_REPORT.md": {
+    "mtime": 1794858613.1376052,
+    "seen": 1794861800.6547754,
+    "ast_hash": "e9003133c76f2d1cbe2d2f9a3f2f755d",
+    "semantic_hash": ""
+  },
+  "integrations/rtk/README.md": {
+    "mtime": 1794861255.052105,
+    "seen": 1794861800.6547806,
+    "ast_hash": "f87d04bb82bfb50f5de644b4e0469c74",
+    "semantic_hash": ""
+  },
+  "skills/core/graphify/SKILL.md": {
+    "mtime": 1794861454.1624427,
+    "seen": 1794861800.6547878,
+    "ast_hash": "a4dc0336e92ed826e244396be3b02853",
+    "semantic_hash": ""
+  },
+  "skills/core/graphify/UPSTREAM_SKILL.md": {
+    "mtime": 1787519129.4570892,
+    "seen": 1794861800.6547883,
+    "ast_hash": "1d7af0382f81dbfb5ef1990d3d09ac16",
+    "semantic_hash": ""
+  },
+  "skills/core/ponytail/SKILL.md": {
+    "mtime": 1794861454.1624427,
+    "seen": 1794861800.6547894,
+    "ast_hash": "8ce8aed8c7828746411c457919f10750",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/evaluation/SKILL.md": {
+    "mtime": 1794861456.5591867,
+    "seen": 1794861800.6547906,
+    "ast_hash": "e75b6381a668efae84fbb5bfa4802055",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/evaluation/UPSTREAM_SKILL.md": {
+    "mtime": 1786098061.765857,
+    "seen": 1794861800.654791,
+    "ast_hash": "f61a05aa937ce39e54ee194c4535c051",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/evaluation/references/metrics.md": {
+    "mtime": 1786098061.765857,
+    "seen": 1794861800.6547916,
+    "ast_hash": "c9cdee4c83939ee6d45b4ceb7628887f",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/multi-agent-patterns/SKILL.md": {
+    "mtime": 1794861456.5576808,
+    "seen": 1794861800.6547923,
+    "ast_hash": "e02a62c2dab3e60b32c60f9fcb8c4bc9",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/multi-agent-patterns/UPSTREAM_SKILL.md": {
+    "mtime": 1786098061.7918675,
+    "seen": 1794861800.6547928,
+    "ast_hash": "17177978185937cadb2b89ddf324509d",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/multi-agent-patterns/references/frameworks.md": {
+    "mtime": 1786098061.7928934,
+    "seen": 1794861800.6547933,
+    "ast_hash": "64fc838dba3dde751a8454628e15dff6",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/self-improvement-loops/SKILL.md": {
+    "mtime": 1794861456.5591867,
+    "seen": 1794861800.6547937,
+    "ast_hash": "404ab114f8e671f986f576641bf6c7dd",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/self-improvement-loops/UPSTREAM_SKILL.md": {
+    "mtime": 1786098061.7978604,
+    "seen": 1794861800.654794,
+    "ast_hash": "f3b6e77d61f75b2080c0bd2cbafa3867",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/tool-design/SKILL.md": {
+    "mtime": 1794861456.5576808,
+    "seen": 1794861800.6547945,
+    "ast_hash": "c42af930d2e8d3f4286bdf9de27259a8",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/tool-design/UPSTREAM_SKILL.md": {
+    "mtime": 1786098061.7988584,
+    "seen": 1794861800.654795,
+    "ast_hash": "dc67d5ba6c2ea196d3c49c8c242f0b16",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/tool-design/references/architectural_reduction.md": {
+    "mtime": 1786098061.7998586,
+    "seen": 1794861800.6547954,
+    "ast_hash": "e8146bb762c8a0862f6af9916e9419b4",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/tool-design/references/best_practices.md": {
+    "mtime": 1786098061.800858,
+    "seen": 1794861800.6547961,
+    "ast_hash": "8103ccef373cce3c7d03c77ebb4da4d1",
+    "semantic_hash": ""
+  },
+  "skills/optional/communication/caveman/UPSTREAM_SKILL.md": {
+    "mtime": 1793232654.4598787,
+    "seen": 1794861800.6547973,
+    "ast_hash": "56b2f9db32197569a4a53b69bd8e859d",
+    "semantic_hash": ""
+  },
+  "skills/optional/communication/rtk-cli/SKILL.md": {
+    "mtime": 1794861454.1640105,
+    "seen": 1794861800.6547976,
+    "ast_hash": "edaf345f6676d0010f197a4a11e7160f",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/context-compression/SKILL.md": {
+    "mtime": 1794861456.5543137,
+    "seen": 1794861800.654798,
+    "ast_hash": "210534e36ae18f1e2bdade4cf34813ef",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/context-compression/UPSTREAM_SKILL.md": {
+    "mtime": 1786098061.7578568,
+    "seen": 1794861800.6547985,
+    "ast_hash": "e2143e0d5c3eec0d8eaa21da92fb94e3",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/context-compression/references/evaluation-framework.md": {
+    "mtime": 1786098061.7578568,
+    "seen": 1794861800.6547992,
+    "ast_hash": "de3607b5eb88bf75d35b6c476a327881",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/context-optimization/SKILL.md": {
+    "mtime": 1794861456.438309,
+    "seen": 1794861800.6547997,
+    "ast_hash": "9d3cf4e6d06a0eaff32148c025cded7a",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/context-optimization/UPSTREAM_SKILL.md": {
+    "mtime": 1786098061.765857,
+    "seen": 1794861800.6548,
+    "ast_hash": "239185a584fc4009bbbcfd61aa713809",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/context-optimization/references/optimization_techniques.md": {
+    "mtime": 1786098061.765857,
+    "seen": 1794861800.6548004,
+    "ast_hash": "28b36c428266baf2b5f4aa1ef9893a35",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/filesystem-context/SKILL.md": {
+    "mtime": 1794861456.5543137,
+    "seen": 1794861800.654801,
+    "ast_hash": "c0a22abf8faa02766829e7283c22d2f1",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/filesystem-context/UPSTREAM_SKILL.md": {
+    "mtime": 1786098061.7748587,
+    "seen": 1794861800.6548014,
+    "ast_hash": "66320bc73e7b0141def9070cd4175c75",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/filesystem-context/references/implementation-patterns.md": {
+    "mtime": 1786098061.7758603,
+    "seen": 1794861800.6548018,
+    "ast_hash": "2a4303f169442a840f95f3906d5e0293",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/memory-systems/SKILL.md": {
+    "mtime": 1794861456.5561745,
+    "seen": 1794861800.654802,
+    "ast_hash": "565e62481c5f4b293f1c7ba1a2700790",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/memory-systems/UPSTREAM_SKILL.md": {
+    "mtime": 1786098061.7888565,
+    "seen": 1794861800.6548028,
+    "ast_hash": "6a2b262186f4ad00af43a3aa79286746",
+    "semantic_hash": ""
+  },
+  "skills/optional/context-engineering/memory-systems/references/implementation.md": {
+    "mtime": 1786098061.7898557,
+    "seen": 1794861800.6548033,
+    "ast_hash": "c1930b7bb412f8755b7e1c04c40a89e6",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/SKILL.md": {
+    "mtime": 1794861456.5620368,
+    "seen": 1794861800.6548038,
+    "ast_hash": "cbe882a7c7354a30e26eabdecd9ec5ab",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/UPSTREAM_SKILL.md": {
+    "mtime": 1777989932.1914375,
+    "seen": 1794861800.6548042,
+    "ast_hash": "11aa366e1835834850c695a2f0063e8e",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/angular-animations.md": {
+    "mtime": 1777989932.1914375,
+    "seen": 1794861800.6548047,
+    "ast_hash": "6f5ea78e0cb4f2ef500cdd9323e13450",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/angular-aria.md": {
+    "mtime": 1777989932.1924381,
+    "seen": 1794861800.6548054,
+    "ast_hash": "3cb0419e0d6337d11b3fa157dfd184ad",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/cli.md": {
+    "mtime": 1777989932.1934385,
+    "seen": 1794861800.6548066,
+    "ast_hash": "2a30fcd486c152a2d5641de8f46e9057",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/component-harnesses.md": {
+    "mtime": 1777989932.1934385,
+    "seen": 1794861800.6548073,
+    "ast_hash": "b57f87c92824d5d97878e28211158b8f",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/component-styling.md": {
+    "mtime": 1777989932.1944375,
+    "seen": 1794861800.654808,
+    "ast_hash": "062bf7471659215abe8f081c73feac57",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/components.md": {
+    "mtime": 1777989932.1944375,
+    "seen": 1794861800.6548085,
+    "ast_hash": "b9e9fe4e5994488b20fe59793c67fd34",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/creating-services.md": {
+    "mtime": 1777989932.195441,
+    "seen": 1794861800.6548097,
+    "ast_hash": "c938b19fbb609a42e6b4c067244674bf",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/data-resolvers.md": {
+    "mtime": 1777989932.195441,
+    "seen": 1794861800.6548104,
+    "ast_hash": "6b24753be6f1b36597f8b525abcc482f",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/define-routes.md": {
+    "mtime": 1777989932.196438,
+    "seen": 1794861800.6548111,
+    "ast_hash": "7d5048d875293f0ee0bf4ae4ded4bf6f",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/defining-providers.md": {
+    "mtime": 1777989932.196438,
+    "seen": 1794861800.6548119,
+    "ast_hash": "3404b31475b90b5cba665fa39a3cc8c3",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/di-fundamentals.md": {
+    "mtime": 1777989932.1974683,
+    "seen": 1794861800.6548126,
+    "ast_hash": "0fcabe4b7c353ecfa41b1381e343d60b",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/e2e-testing.md": {
+    "mtime": 1777989932.1974683,
+    "seen": 1794861800.6548135,
+    "ast_hash": "1d6a82e507a971170beed5721fe6ed31",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/effects.md": {
+    "mtime": 1777989932.1974683,
+    "seen": 1794861800.6548142,
+    "ast_hash": "c0d53101eceb48f64722916ae77429e9",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/hierarchical-injectors.md": {
+    "mtime": 1777989932.1984375,
+    "seen": 1794861800.654815,
+    "ast_hash": "3903e7717fe0531cab226448effcec5f",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/host-elements.md": {
+    "mtime": 1777989932.1984375,
+    "seen": 1794861800.6548154,
+    "ast_hash": "1ed5d1179941ad91bfcb63587d61f78c",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/injection-context.md": {
+    "mtime": 1777989932.199438,
+    "seen": 1794861800.6548162,
+    "ast_hash": "6dc24002fd516cf0fb4ce090195201e1",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/inputs.md": {
+    "mtime": 1777989932.199438,
+    "seen": 1794861800.654817,
+    "ast_hash": "118e557fb8e837009af25efb9bc2cac2",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/linked-signal.md": {
+    "mtime": 1777989932.199438,
+    "seen": 1794861800.6548178,
+    "ast_hash": "e2a16695a5b276ffb1ff498c2f76721d",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/loading-strategies.md": {
+    "mtime": 1777989932.2004378,
+    "seen": 1794861800.6548183,
+    "ast_hash": "f23b6665a6e84baf1175a993e030e301",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/mcp.md": {
+    "mtime": 1777989932.2014427,
+    "seen": 1794861800.6548193,
+    "ast_hash": "6ab7510b445f3c3a8fccb759dbe14136",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/migrations.md": {
+    "mtime": 1777989932.2014427,
+    "seen": 1794861800.6548202,
+    "ast_hash": "fe6515df76927a64348454b84815685a",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/navigate-to-routes.md": {
+    "mtime": 1777989932.2024376,
+    "seen": 1794861800.6548207,
+    "ast_hash": "7fd1ed2bdaab90bd97fa0652697726ca",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/outputs.md": {
+    "mtime": 1777989932.2024376,
+    "seen": 1794861800.6548214,
+    "ast_hash": "0e1d5d6a4149e36e29dc7107e18ccc6e",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/reactive-forms.md": {
+    "mtime": 1777989932.203437,
+    "seen": 1794861800.6548223,
+    "ast_hash": "b8175aea55595aad237473fa008040f2",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/rendering-strategies.md": {
+    "mtime": 1777989932.203437,
+    "seen": 1794861800.6548245,
+    "ast_hash": "f00aeadfad5429d347d5f6b99e73d3db",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/resource.md": {
+    "mtime": 1777989932.203437,
+    "seen": 1794861800.6548252,
+    "ast_hash": "0946949687075944efbc5e6fc15fce4e",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/route-animations.md": {
+    "mtime": 1777989932.2044373,
+    "seen": 1794861800.654826,
+    "ast_hash": "ac7940d3f6126c5731f8a5283f37b277",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/route-guards.md": {
+    "mtime": 1777989932.2054381,
+    "seen": 1794861800.6548266,
+    "ast_hash": "84ae5e3a34ca1bab4889d715860f74ec",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/router-lifecycle.md": {
+    "mtime": 1777989932.2054381,
+    "seen": 1794861800.6548276,
+    "ast_hash": "bc16d3767f29c75b88457242031f0920",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/router-testing.md": {
+    "mtime": 1777989932.2054381,
+    "seen": 1794861800.6548285,
+    "ast_hash": "19263c0d5ff92672774efbb4a30d503a",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/show-routes-with-outlets.md": {
+    "mtime": 1777989932.2074392,
+    "seen": 1794861800.6548293,
+    "ast_hash": "040798bdc95b708146d93bf6ee0227aa",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/signal-forms.md": {
+    "mtime": 1777989932.2074392,
+    "seen": 1794861800.6548297,
+    "ast_hash": "f77aa56473533ecf7d0691ae076ecf1d",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/signals-overview.md": {
+    "mtime": 1777989932.2074392,
+    "seen": 1794861800.6548302,
+    "ast_hash": "5b9ce4f5853450d87fd776ecb5f28154",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/tailwind-css.md": {
+    "mtime": 1777989932.2084382,
+    "seen": 1794861800.654831,
+    "ast_hash": "e77c8c77b76127ed2789a54392f96c6d",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/template-driven-forms.md": {
+    "mtime": 1777989932.2084382,
+    "seen": 1794861800.6548314,
+    "ast_hash": "9088c5fd934a39855af9acd45106e57a",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-developer/references/testing-fundamentals.md": {
+    "mtime": 1777989932.209438,
+    "seen": 1794861800.654832,
+    "ast_hash": "30c15a5c9ea7f401887b4e10a7afd9de",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-new-app/SKILL.md": {
+    "mtime": 1794861456.5625412,
+    "seen": 1794861800.6548321,
+    "ast_hash": "2435bd8d51c9ccf99f0fb4536b9d3c7f",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/angular-new-app/UPSTREAM_SKILL.md": {
+    "mtime": 1777989932.209438,
+    "seen": 1794861800.6548326,
+    "ast_hash": "8f57a89ebce487213e750010aca7d9e6",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/ui-ux-pro-max/SKILL.md": {
+    "mtime": 1794861456.561036,
+    "seen": 1794861800.654834,
+    "ast_hash": "321ebb1ecae6524ad132755fa8d6a7ea",
+    "semantic_hash": ""
+  },
+  "skills/optional/frontend-design/ui-ux-pro-max/UPSTREAM_SKILL.md": {
+    "mtime": 1784723896.481806,
+    "seen": 1794861800.6548345,
+    "ast_hash": "909439a19150c386e2b686126a90434c",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/SKILL.md": {
+    "mtime": 1794861456.5640461,
+    "seen": 1794861800.6548364,
+    "ast_hash": "9c0c9428e721f28ca2e4a21bf88f7b31",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/UPSTREAM_SKILL.md": {
+    "mtime": 1784723890.266871,
+    "seen": 1794861800.654837,
+    "ast_hash": "7d771c480a628d8abdd2749d1893c7ab",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/references/approval-checklist.md": {
+    "mtime": 1784723890.1648676,
+    "seen": 1794861800.6548376,
+    "ast_hash": "8cedb5a9d3ddff0d5f7d98affd1fadfc",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/references/asset-organization.md": {
+    "mtime": 1784723890.1679337,
+    "seen": 1794861800.6548378,
+    "ast_hash": "8c359aaccb0d5f5a9c0daed9128fd9e9",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/references/brand-guideline-template.md": {
+    "mtime": 1784723890.1768737,
+    "seen": 1794861800.6548383,
+    "ast_hash": "40aadbb3eb6b82efb9c933951cdfe632",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/references/color-palette-management.md": {
+    "mtime": 1784723890.1948686,
+    "seen": 1794861800.6548388,
+    "ast_hash": "b7e3dc308cfc2e65bd94ecf85fb580e7",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/references/consistency-checklist.md": {
+    "mtime": 1784723890.2038667,
+    "seen": 1794861800.6548393,
+    "ast_hash": "e0be65fe750959b397a96d72ee939ebc",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/references/logo-usage-rules.md": {
+    "mtime": 1784723890.2348719,
+    "seen": 1794861800.6548398,
+    "ast_hash": "03cb4cb2d302a9e827fceeff93b4186a",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/references/messaging-framework.md": {
+    "mtime": 1784723890.2368684,
+    "seen": 1794861800.6548402,
+    "ast_hash": "9390c33e1c7ddb04a39528aa5872f85f",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/references/typography-specifications.md": {
+    "mtime": 1784723890.3098705,
+    "seen": 1794861800.6548405,
+    "ast_hash": "bc5d6e2d497b8aa2d3110de1d8463276",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/references/update.md": {
+    "mtime": 1784723890.3138719,
+    "seen": 1794861800.6548412,
+    "ast_hash": "14b943f767980c2675e19008209d9eac",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/references/visual-identity.md": {
+    "mtime": 1784723890.3168678,
+    "seen": 1794861800.6548417,
+    "ast_hash": "0ada28b9a2e03da7fe50b95f3318f4de",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/references/voice-framework.md": {
+    "mtime": 1784723890.319042,
+    "seen": 1794861800.654842,
+    "ast_hash": "05b79e16c373850ea5e94e0977856dbc",
+    "semantic_hash": ""
+  },
+  "skills/optional/growth-media/brand-strategy/templates/brand-guidelines-starter.md": {
+    "mtime": 1784723890.1798687,
+    "seen": 1794861800.6548424,
+    "ast_hash": "f7a5da16b17f9792a93270626d97a978",
+    "semantic_hash": ""
+  },
+  "skills/optional/agent-architecture/self-improvement-loops/references/loop-design-evidence.md": {
+    "mtime": 1786098061.7978604,
+    "seen": 1794861800.6548526,
+    "ast_hash": "93f5a6f637d6eac6c30d8630e9cac4de",
     "semantic_hash": ""
   }
 }

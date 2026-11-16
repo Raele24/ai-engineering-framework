@@ -8,9 +8,13 @@
     "name",
     "description",
     "version",
+    "source",
+    "license",
+    "category",
     "tier",
     "platforms",
     "requires_tools",
+    "dependencies",
     "security_scope"
   ],
   "properties": {
@@ -28,11 +32,34 @@
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
+    "source": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Upstream repository URL or first-party identifier"
+    },
+    "license": {
+      "type": "string",
+      "enum": ["Apache-2.0", "MIT", "BSD-3-Clause"]
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "core-sdlc",
+        "token-optimization",
+        "context-engineering",
+        "ui-ux-design",
+        "agent-architecture",
+        "codebase-intelligence",
+        "seo-growth"
+      ]
+    },
     "tier": {
       "type": "string",
       "enum": [
         "core",
         "optional-communication",
+        "optional-context",
+        "optional-agent-architecture",
         "optional-frontend",
         "optional-growth"
       ]
@@ -52,6 +79,12 @@
       "minItems": 1
     },
     "requires_tools": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dependencies": {
       "type": "array",
       "items": {
         "type": "string"

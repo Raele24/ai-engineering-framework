@@ -46,9 +46,23 @@
     },
     "optionalSkillPacks": {
       "type": "object",
-      "required": ["communication", "frontendDesign", "growthMedia"],
+      "required": [
+        "communication",
+        "contextEngineering",
+        "agentArchitecture",
+        "frontendDesign",
+        "growthMedia"
+      ],
       "properties": {
         "communication": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "contextEngineering": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "agentArchitecture": {
           "type": "array",
           "items": { "type": "string" }
         },

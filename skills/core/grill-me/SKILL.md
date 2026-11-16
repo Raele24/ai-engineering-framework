@@ -1,11 +1,15 @@
 ---
 name: grill-me
-description: Structured stakeholder interview methodology for Phase 2 requirement clarification that resolves ambiguities, edge cases, and non-goals before coding.
+description: "Structured stakeholder interview methodology for Phase 2 requirement clarification that resolves ambiguities, edge cases, and non-goals before coding."
 version: "1.0.0"
-tier: core
+source: "first-party"
+license: "Apache-2.0"
+category: "core-sdlc"
+tier: "core"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [read_file, write_file, ask_question]
-security_scope: workspace-write
+dependencies: []
+security_scope: "workspace-write"
 ---
 
 # Grill Me — Requirement Clarification Skill

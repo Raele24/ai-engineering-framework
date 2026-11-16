@@ -1,11 +1,15 @@
 ---
 name: web-design-guidelines
-description: Enforces WCAG AA/AAA accessibility, semantic HTML/ARIA, responsive layout grids, typography scales, and interaction states for web UI implementation.
+description: "Enforces WCAG AA/AAA accessibility, semantic HTML/ARIA, responsive layout grids, typography scales, and interaction states for web UI implementation."
 version: "1.0.0"
-tier: optional-frontend
+source: "first-party"
+license: "Apache-2.0"
+category: "ui-ux-design"
+tier: "optional-frontend"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [read_file, write_file, edit_file]
-security_scope: workspace-write
+dependencies: []
+security_scope: "workspace-write"
 ---
 
 # Web Design Guidelines — Frontend UX & Accessibility Skill

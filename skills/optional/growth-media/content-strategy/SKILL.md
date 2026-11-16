@@ -1,11 +1,15 @@
 ---
 name: content-strategy
-description: Developer-focused technical content architecture, documentation taxonomy, launch messaging, and audience positioning for software products.
+description: "Developer-focused technical content architecture, Diataxis documentation taxonomy, launch messaging, and audience positioning for software products."
 version: "1.0.0"
-tier: optional-growth
+source: "https://github.com/coreyhaines31/marketingskills"
+license: "MIT"
+category: "seo-growth"
+tier: "optional-growth"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [read_file, write_file]
-security_scope: workspace-write
+dependencies: []
+security_scope: "workspace-write"
 ---
 
 # Content Strategy — Technical Messaging & Documentation Taxonomy Skill

@@ -5,7 +5,7 @@ description: Executes integration, end-to-end (Playwright/Browser), boundary, an
 version: "1.0.0"
 phases: [11]
 allowed_tools: [read_file, write_file, edit_file, run_command, manage_task, invoke_subagent]
-required_skills: [tdd-cycle, agent-browser]
+required_skills: [tdd-cycle, agent-browser, evaluation]
 delegation_targets: [security-engineer, implementation-engineer]
 approval_gates: []
 ---

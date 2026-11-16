@@ -1,11 +1,15 @@
 ---
 name: pricing
-description: Unit-economics modeling, LLM token/compute margin calculation, usage-based rate card design, and SaaS tier packaging for AI-powered software.
+description: "Unit-economics modeling, LLM token/compute margin calculation, usage-based rate card design, and SaaS tier packaging for AI-powered software."
 version: "1.0.0"
-tier: optional-growth
+source: "https://github.com/coreyhaines31/marketingskills"
+license: "MIT"
+category: "seo-growth"
+tier: "optional-growth"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [read_file, write_file]
-security_scope: workspace-write
+dependencies: []
+security_scope: "workspace-write"
 ---
 
 # Pricing — AI Unit Economics & Tier Modeling Skill

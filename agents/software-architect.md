@@ -5,7 +5,7 @@ description: Conducts technical research spikes, analyzes Graphify codebase grap
 version: "1.0.0"
 phases: [4, 5, 14]
 allowed_tools: [read_file, write_file, edit_file, run_command, search_web, invoke_subagent]
-required_skills: [adr-writer, find-skills, anti-slop]
+required_skills: [adr-writer, graphify, ponytail, tool-design, context-optimization, find-skills, anti-slop]
 delegation_targets: [planner-orchestrator]
 approval_gates: [Gate-02]
 ---

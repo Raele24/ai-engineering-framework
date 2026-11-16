@@ -1,11 +1,15 @@
 ---
 name: video-lens
-description: Multimodal analysis of recorded video files (bug reproductions, UI session replays, product demos) producing timestamped technical event logs.
+description: "Multimodal analysis of recorded video files and YouTube transcripts into structured HTML/Markdown technical reports with timestamped event logs."
 version: "1.0.0"
-tier: optional-growth
+source: "https://github.com/kar2phi/video-lens"
+license: "MIT"
+category: "seo-growth"
+tier: "optional-growth"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [read_file, run_command]
-security_scope: read-only
+dependencies: ["opencv-python (optional fallback)"]
+security_scope: "read-only"
 ---
 
 # Video Lens — Technical Video & Session Replay Analysis Skill

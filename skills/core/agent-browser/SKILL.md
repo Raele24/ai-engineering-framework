@@ -1,11 +1,15 @@
 ---
 name: agent-browser
-description: Standardized browser automation and live UI inspection protocol for research and Phase 11 E2E verification across native subagents and Playwright MCP.
+description: "Standardized browser automation and live UI inspection protocol for research and Phase 11 E2E verification across native subagents and Playwright MCP."
 version: "1.0.0"
-tier: core
+source: "first-party"
+license: "Apache-2.0"
+category: "core-sdlc"
+tier: "core"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [invoke_subagent, run_command, read_file]
-security_scope: network-external
+dependencies: []
+security_scope: "network-external"
 ---
 
 # Agent Browser — Live Web & UI Verification Skill

@@ -5,7 +5,7 @@ description: Leads discovery, runs Grill Me stakeholder interviews, clarifies ed
 version: "1.0.0"
 phases: [1, 2, 3]
 allowed_tools: [read_file, write_file, edit_file, search_web, ask_question]
-required_skills: [grill-me, anti-slop]
+required_skills: [grill-me, anti-slop, context-compression]
 delegation_targets: [software-architect]
 approval_gates: [Gate-01a, Gate-01b]
 ---

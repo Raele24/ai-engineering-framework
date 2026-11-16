@@ -1,11 +1,15 @@
 ---
 name: video-use
-description: Programmatic capture and assembly of reproducible product demo videos, E2E Playwright video traces, and release walkthroughs.
+description: "Agentic video editing, filler-word/silence cutting, Playwright/Remotion demo capture, and reproducible release walkthrough assembly."
 version: "1.0.0"
-tier: optional-growth
+source: "https://github.com/browser-use/video-use"
+license: "MIT"
+category: "seo-growth"
+tier: "optional-growth"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [run_command, write_file]
-security_scope: workspace-write
+dependencies: ["ffmpeg or playwright (when recording/editing)"]
+security_scope: "workspace-write"
 ---
 
 # Video Use — Automated Demo & Walkthrough Recording Skill

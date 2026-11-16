@@ -5,7 +5,7 @@ description: Performs adversarial, read-only review of code diffs against specif
 version: "1.0.0"
 phases: [10]
 allowed_tools: [read_file, write_file, run_command]
-required_skills: [anti-slop]
+required_skills: [ponytail, graphify, evaluation, anti-slop]
 delegation_targets: [qa-engineer, implementation-engineer]
 approval_gates: []
 ---

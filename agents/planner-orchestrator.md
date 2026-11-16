@@ -5,7 +5,7 @@ description: Decomposes approved specifications and ADRs into milestones and ato
 version: "1.0.0"
 phases: [6, 7, 8, 15]
 allowed_tools: [read_file, write_file, edit_file, invoke_subagent, run_workflow, swarm, ask_question]
-required_skills: [find-skills, anti-slop]
+required_skills: [multi-agent-patterns, filesystem-context, memory-systems, self-improvement-loops, find-skills, anti-slop]
 delegation_targets: [implementation-engineer, code-reviewer, qa-engineer, security-engineer, devops-release-engineer]
 approval_gates: [Gate-03, Gate-05]
 ---

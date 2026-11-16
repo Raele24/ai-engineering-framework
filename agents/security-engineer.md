@@ -5,7 +5,7 @@ description: Conducts threat modeling, static secret and dependency audits, secu
 version: "1.0.0"
 phases: [12]
 allowed_tools: [read_file, write_file, run_command, ask_question]
-required_skills: [anti-slop]
+required_skills: [anti-slop, tool-design]
 delegation_targets: [devops-release-engineer, implementation-engineer]
 approval_gates: [Gate-Sec]
 ---

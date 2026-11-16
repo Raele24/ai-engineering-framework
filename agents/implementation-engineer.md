@@ -5,7 +5,7 @@ description: Executes Red-Green-Refactor TDD implementation across backend, fron
 version: "1.0.0"
 phases: [9, 14]
 allowed_tools: [read_file, write_file, edit_file, run_command, manage_task]
-required_skills: [tdd-cycle, anti-slop]
+required_skills: [tdd-cycle, ponytail, anti-slop, ui-ux-pro-max, angular-developer, angular-new-app, web-design-guidelines, canvas-design]
 delegation_targets: [code-reviewer]
 approval_gates: []
 ---

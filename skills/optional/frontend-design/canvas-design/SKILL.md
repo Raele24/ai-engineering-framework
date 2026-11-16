@@ -1,11 +1,15 @@
 ---
 name: canvas-design
-description: Token-driven visual architecture (`primitive -> semantic -> component`), HTML/Canvas layout composition, and structured slide/diagram generation.
+description: "Token-driven visual architecture (primitive -> semantic -> component), HTML/Canvas layout composition, and structured slide/diagram generation."
 version: "1.0.0"
-tier: optional-frontend
+source: "first-party"
+license: "Apache-2.0"
+category: "ui-ux-design"
+tier: "optional-frontend"
 platforms: [antigravity, copilot, claude-code, codex, gemini-cli]
 requires_tools: [read_file, write_file, edit_file]
-security_scope: workspace-write
+dependencies: []
+security_scope: "workspace-write"
 ---
 
 # Canvas Design — Three-Layer Design Token & Visual Layout Skill

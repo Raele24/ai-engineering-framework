@@ -12,6 +12,7 @@ Key Guarantees:
 Usage:
     python scripts/bootstrap.py --target /path/to/project --dry-run
     python scripts/bootstrap.py --target /path/to/project --platforms antigravity,copilot,claude-code
+    python scripts/bootstrap.py --target /path/to/project --optional-packs communication,context-engineering,frontend-design
     python scripts/bootstrap.py --target /path/to/project --update
 """
 
@@ -22,15 +23,14 @@ import hashlib
 import json
 from pathlib import Path
 import sys
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 
 FRAMEWORK_ROOT = Path(__file__).resolve().parent.parent
-FRAMEWORK_VERSION = "0.1.0"
+FRAMEWORK_VERSION = "0.2.0"
 LOCKFILE_NAME = ".framework-lock.json"
 
 ALL_PLATFORMS = ["antigravity", "copilot", "claude-code", "codex", "gemini-cli"]
 
-# Tier 1 files always installed into the consumer project
 CORE_MANAGED_GLOBS = [
     "core/rules/*.md",
     "core/schemas/*.json",
@@ -46,7 +46,6 @@ CORE_MANAGED_GLOBS = [
     "scripts/sync_adapters.py",
 ]
 
-# Platform-specific file mappings: (source_rel_in_framework, target_rel_in_consumer)
 PLATFORM_ADAPTER_MAPPINGS: Dict[str, List[Tuple[str, str]]] = {
     "antigravity": [
         ("GEMINI.md", "GEMINI.md"),
@@ -81,10 +80,12 @@ PLATFORM_ADAPTER_MAPPINGS: Dict[str, List[Tuple[str, str]]] = {
     ],
 }
 
-OPTIONAL_PACK_GLOBS: Dict[str, str] = {
-    "communication": "skills/optional/communication/*/*.md",
-    "frontend-design": "skills/optional/frontend-design/*/*.md",
-    "growth-media": "skills/optional/growth-media/*/*.md",
+OPTIONAL_PACK_DIRS: Dict[str, str] = {
+    "communication": "skills/optional/communication",
+    "context-engineering": "skills/optional/context-engineering",
+    "agent-architecture": "skills/optional/agent-architecture",
+    "frontend-design": "skills/optional/frontend-design",
+    "growth-media": "skills/optional/growth-media",
 }
 
 
@@ -111,19 +112,20 @@ def collect_managed_plan(
                 plan[rel] = src
 
     for pack in optional_packs:
-        glob_pat = OPTIONAL_PACK_GLOBS.get(pack)
-        if glob_pat:
-            for src in sorted(framework_root.glob(glob_pat)):
-                if src.is_file():
-                    rel = src.relative_to(framework_root).as_posix()
-                    plan[rel] = src
+        pack_rel_dir = OPTIONAL_PACK_DIRS.get(pack)
+        if pack_rel_dir:
+            pack_dir = framework_root / Path(pack_rel_dir)
+            if pack_dir.exists():
+                for src in sorted(pack_dir.rglob("*")):
+                    if src.is_file() and "__pycache__" not in src.parts:
+                        rel = src.relative_to(framework_root).as_posix()
+                        plan[rel] = src
 
     for plat in platforms:
         for src_rel, dst_rel in PLATFORM_ADAPTER_MAPPINGS.get(plat, []):
             src = framework_root / Path(src_rel)
             if src.exists():
                 plan[dst_rel] = src
-                # Also keep the canonical adapter copy under adapters/ so validate.py passes
                 plan[src_rel] = src
 
     return plan
@@ -139,7 +141,11 @@ def bootstrap_project(
     framework_root: Path = FRAMEWORK_ROOT,
 ) -> Dict[str, List[str]]:
     """Bootstrap or update the framework in target_dir non-destructively."""
-    optional_packs = optional_packs if optional_packs is not None else ["communication"]
+    optional_packs = (
+        optional_packs
+        if optional_packs is not None
+        else ["communication", "context-engineering", "agent-architecture"]
+    )
     target_dir = target_dir.resolve()
 
     lock_path = target_dir / LOCKFILE_NAME
@@ -160,7 +166,14 @@ def bootstrap_project(
 
     if not dry_run:
         target_dir.mkdir(parents=True, exist_ok=True)
-        for sub in ["docs/specs", "docs/adr", "docs/plans", "docs/retrospectives", ".framework-state/handoffs"]:
+        for sub in [
+            "docs/specs",
+            "docs/adr",
+            "docs/plans",
+            "docs/retrospectives",
+            ".framework-state/handoffs",
+            ".framework-state/scratch",
+        ]:
             (target_dir / Path(sub)).mkdir(parents=True, exist_ok=True)
 
     for dst_rel, src_path in sorted(plan.items()):
@@ -182,19 +195,15 @@ def bootstrap_project(
             new_locked_hashes[dst_rel] = src_hash
             continue
 
-        # Destination exists and differs from source
         previous_locked_hash = locked_hashes.get(dst_rel)
         if update_mode and previous_locked_hash and current_hash == previous_locked_hash:
-            # File was not modified by user since last install; safe to update
             updated.append(dst_rel)
             if not dry_run:
                 dst_path.write_bytes(src_bytes)
             new_locked_hashes[dst_rel] = src_hash
         else:
-            # Either not in update_mode or user customized this file locally -> preserve user file!
             skipped_modified.append(dst_rel)
 
-    # Consumer-owned project.framework.json (Tier 3 - create ONLY if missing)
     config_rel = "project.framework.json"
     config_path = target_dir / config_rel
     if not config_path.exists():
@@ -206,10 +215,38 @@ def bootstrap_project(
             "workflowProfile": profile,
             "enabledPlatforms": platforms,
             "optionalSkillPacks": {
-                "communication": ["caveman"] if "communication" in optional_packs else [],
-                "frontendDesign": ["web-design-guidelines", "canvas-design"] if "frontend-design" in optional_packs else [],
+                "communication": ["caveman", "rtk-cli"] if "communication" in optional_packs else [],
+                "contextEngineering": (
+                    ["context-optimization", "context-compression", "filesystem-context", "memory-systems"]
+                    if "context-engineering" in optional_packs
+                    else []
+                ),
+                "agentArchitecture": (
+                    ["multi-agent-patterns", "tool-design", "evaluation", "self-improvement-loops"]
+                    if "agent-architecture" in optional_packs
+                    else []
+                ),
+                "frontendDesign": (
+                    [
+                        "ui-ux-pro-max",
+                        "angular-developer",
+                        "angular-new-app",
+                        "web-design-guidelines",
+                        "canvas-design",
+                    ]
+                    if "frontend-design" in optional_packs
+                    else []
+                ),
                 "growthMedia": (
-                    ["seo-audit", "ai-seo", "video-lens", "video-use", "content-strategy", "pricing"]
+                    [
+                        "seo-audit",
+                        "ai-seo",
+                        "content-strategy",
+                        "pricing",
+                        "brand-strategy",
+                        "video-lens",
+                        "video-use",
+                    ]
                     if "growth-media" in optional_packs
                     else []
                 ),
@@ -284,8 +321,8 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument(
         "--optional-packs",
         type=str,
-        default="communication",
-        help="Comma-separated optional packs (communication,frontend-design,growth-media)",
+        default="communication,context-engineering,agent-architecture",
+        help="Comma-separated optional packs (communication,context-engineering,agent-architecture,frontend-design,growth-media)",
     )
     parser.add_argument("--update", action="store_true", help="Update unmodified framework-managed files")
     parser.add_argument("--dry-run", action="store_true", help="Preview file operations without writing to disk")
@@ -293,7 +330,7 @@ def main(argv: List[str] | None = None) -> int:
 
     try:
         platforms = parse_csv_list(args.platforms, set(ALL_PLATFORMS), "--platforms")
-        optional_packs = parse_csv_list(args.optional_packs, set(OPTIONAL_PACK_GLOBS.keys()), "--optional-packs")
+        optional_packs = parse_csv_list(args.optional_packs, set(OPTIONAL_PACK_DIRS.keys()), "--optional-packs")
     except ValueError as exc:
         print(f"BOOTSTRAP_ERROR: {exc}", file=sys.stderr)
         return 2
