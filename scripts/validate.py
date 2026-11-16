@@ -57,6 +57,7 @@ REQUIRED_FOUNDATION_FILES = [
     "docs/SKILL_COMPATIBILITY_MATRIX.md",
     "docs/TOKEN_OPTIMIZATION.md",
     "docs/SKILL_INSTALLATION_GUIDE.md",
+    "docs/RUNTIME_SKILLS_VALIDATION.md",
     "core/rules/engineering-principles.md",
     "core/rules/context-handoff-protocol.md",
     "core/rules/human-approval-gates.md",

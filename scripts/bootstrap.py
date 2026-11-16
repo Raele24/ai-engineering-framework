@@ -51,6 +51,7 @@ PLATFORM_ADAPTER_MAPPINGS: Dict[str, List[Tuple[str, str]]] = {
         ("GEMINI.md", "GEMINI.md"),
         ("AGENTS.md", "AGENTS.md"),
         ("adapters/antigravity/rules/framework-core.md", ".agents/rules/framework-core.md"),
+        ("adapters/antigravity/skills.json", ".agents/skills.json"),
         ("adapters/antigravity/hooks.json", "adapters/antigravity/hooks.json"),
     ],
     "copilot": [
