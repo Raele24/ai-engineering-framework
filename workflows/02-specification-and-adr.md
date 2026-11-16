@@ -1,6 +1,6 @@
 # Stage 2 Runbook: Technical Research, Architecture & ADRs (Phases 4–5)
 
-**Canonical Reference:** [`docs/WORKFLOW.md`](../docs/WORKFLOW.md) (Phases 4, 5)  
+**Canonical Reference:** [`AGENTS.md`](../AGENTS.md) & [`core/rules/engineering-principles.md`](../core/rules/engineering-principles.md) (Phases 4, 5)  
 **Responsible Role:** [`agents/software-architect.md`](../agents/software-architect.md)  
 **Required Skills:** [`adr-writer`](../skills/core/adr-writer/SKILL.md), [`find-skills`](../skills/core/find-skills/SKILL.md), [`anti-slop`](../skills/core/anti-slop/SKILL.md)  
 **Human Approval Gates:** `Gate-02` (Architecture & ADR Approval)  

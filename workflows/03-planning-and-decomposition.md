@@ -1,6 +1,6 @@
 # Stage 3 Runbook: Planning, Decomposition & Delegation (Phases 6–8)
 
-**Canonical Reference:** [`docs/WORKFLOW.md`](../docs/WORKFLOW.md) (Phases 6, 7, 8)  
+**Canonical Reference:** [`AGENTS.md`](../AGENTS.md) & [`core/rules/engineering-principles.md`](../core/rules/engineering-principles.md) (Phases 6, 7, 8)  
 **Responsible Role:** [`agents/planner-orchestrator.md`](../agents/planner-orchestrator.md)  
 **Required Skills:** [`find-skills`](../skills/core/find-skills/SKILL.md), [`anti-slop`](../skills/core/anti-slop/SKILL.md)  
 **Human Approval Gates:** `Gate-03` (Implementation Plan Approval)  

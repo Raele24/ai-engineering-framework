@@ -1,6 +1,6 @@
 # Project Roadmap (`ROADMAP.md`)
 
-**Version:** `0.1.0`  
+**Version:** `0.3.0`  
 
 ---
 
@@ -8,12 +8,11 @@
 
 ```mermaid
 flowchart LR
-    M0["M0: Environment Audit & Plan (Done)"] --> M1["M1: Foundation Docs & Schemas (v0.1.0)"]
-    M1 --> M2["M2: Canonical Agents & Skills (v0.1.0)"]
-    M2 --> M3["M3: 5 Platform Adapters (v0.1.0)"]
-    M3 --> M4["M4: Bootstrap, Validate & Graphify (v0.1.0)"]
-    M4 --> M5["M5: GitHub Public Release & CI (v0.2.0)"]
-    M5 --> M6["M6: Ecosystem & Orchestrator Packs (v0.3.0 - v1.0.0)"]
+    M0["M0: Environment Audit (Done)"] --> M1["M1-M4: Foundation, Adapters & Tooling (v0.1.0)"]
+    M1 --> M2["Skills Ecosystem & Runtime Validation (v0.2.0)"]
+    M2 --> M6["M6-Pilot: Full-Stack Consumer Validation (Done)"]
+    M6 --> M7["M7: Framework Hardening & Consumer Bootstrap (v0.3.0 - Done)"]
+    M7 --> M5["M5: GitHub Public Release & CI (Next)"]
 ```
 
 ---

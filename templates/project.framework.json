@@ -1,6 +1,6 @@
 {
   "$schema": "./core/schemas/framework-config.schema.json",
-  "frameworkVersion": "0.2.0",
+  "frameworkVersion": "0.3.0",
   "projectName": "ai-engineering-framework",
   "workflowProfile": "full",
   "enabledPlatforms": [
@@ -10,6 +10,7 @@
     "codex",
     "gemini-cli"
   ],
+  "stacks": [],
   "optionalSkillPacks": {
     "communication": [
       "caveman",

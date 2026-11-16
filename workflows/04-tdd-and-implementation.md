@@ -1,6 +1,6 @@
 # Stage 4 Runbook: Test-Driven Development & Implementation (Phase 9)
 
-**Canonical Reference:** [`docs/WORKFLOW.md`](../docs/WORKFLOW.md) (Phase 9)  
+**Canonical Reference:** [`AGENTS.md`](../AGENTS.md) & [`core/rules/engineering-principles.md`](../core/rules/engineering-principles.md) (Phase 9)  
 **Responsible Role:** [`agents/implementation-engineer.md`](../agents/implementation-engineer.md)  
 **Required Skills:** [`tdd-cycle`](../skills/core/tdd-cycle/SKILL.md), plus task-specific domain skills  
 

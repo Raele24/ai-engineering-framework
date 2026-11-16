@@ -1,6 +1,6 @@
 # Stage 5 Runbook: Code Review, QA & Security Validation (Phases 10–12)
 
-**Canonical Reference:** [`docs/WORKFLOW.md`](../docs/WORKFLOW.md) (Phases 10, 11, 12)  
+**Canonical Reference:** [`AGENTS.md`](../AGENTS.md) & [`core/rules/engineering-principles.md`](../core/rules/engineering-principles.md) (Phases 10, 11, 12)  
 **Responsible Roles:** [`code-reviewer`](../agents/code-reviewer.md), [`qa-engineer`](../agents/qa-engineer.md), [`security-engineer`](../agents/security-engineer.md)  
 **Required Skills:** [`anti-slop`](../skills/core/anti-slop/SKILL.md), [`tdd-cycle`](../skills/core/tdd-cycle/SKILL.md), [`agent-browser`](../skills/core/agent-browser/SKILL.md)  
 **Human Approval Gates:** `Gate-Sec` (Required before any active/dynamic security scan such as Strix)  

@@ -1,6 +1,6 @@
 # Stage 1 Runbook: Discovery, Grill Me & Specification (Phases 1–3)
 
-**Canonical Reference:** [`docs/WORKFLOW.md`](../docs/WORKFLOW.md) (Phases 1, 2, 3)  
+**Canonical Reference:** [`AGENTS.md`](../AGENTS.md) & [`core/rules/engineering-principles.md`](../core/rules/engineering-principles.md) (Phases 1, 2, 3)  
 **Responsible Role:** [`agents/product-analyst.md`](../agents/product-analyst.md)  
 **Required Skills:** [`grill-me`](../skills/core/grill-me/SKILL.md), [`anti-slop`](../skills/core/anti-slop/SKILL.md)  
 **Human Approval Gates:** `Gate-01a` (Clarification Sign-Off), `Gate-01b` (Specification Approval)  

@@ -44,6 +44,17 @@
       },
       "minItems": 1
     },
+    "stacks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "dotnet",
+          "node-angular",
+          "python"
+        ]
+      }
+    },
     "optionalSkillPacks": {
       "type": "object",
       "required": [

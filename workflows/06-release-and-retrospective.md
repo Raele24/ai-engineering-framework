@@ -1,6 +1,6 @@
 # Stage 6 Runbook: CI/CD Release, Documentation & Retrospective (Phases 13–15)
 
-**Canonical Reference:** [`docs/WORKFLOW.md`](../docs/WORKFLOW.md) (Phases 13, 14, 15)  
+**Canonical Reference:** [`AGENTS.md`](../AGENTS.md) & [`core/rules/engineering-principles.md`](../core/rules/engineering-principles.md) (Phases 13, 14, 15)  
 **Responsible Roles:** [`devops-release-engineer`](../agents/devops-release-engineer.md), [`implementation-engineer`](../agents/implementation-engineer.md), [`planner-orchestrator`](../agents/planner-orchestrator.md)  
 **Human Approval Gates:** `Gate-04` (Release & Remote Publish Approval), `Gate-05` (Framework Rule/Skill Evolution Approval)  
 

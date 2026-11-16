@@ -1,7 +1,7 @@
 # AI Engineering Framework
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.0-success.svg)](./docs/VERSIONING.md)
+[![Version](https://img.shields.io/badge/version-0.3.0-success.svg)](./docs/VERSIONING.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./docs/CONTRIBUTING.md)
 
 **A modular, open-source, platform-independent engineering framework that standardizes the complete Software Development Lifecycle (SDLC) for AI coding agents.**
@@ -86,14 +86,24 @@ python -m unittest discover -s tests -v
 ```
 
 ### 2. Bootstrap the Framework into a New or Existing Project
-Install the canonical rules, templates, and selected platform adapters into any target repository without overwriting existing project files:
+Install the canonical rules, stack templates, filtered skill registry, and selected platform adapters into any target repository without overwriting existing project files:
 
 ```bash
 # Preview changes (dry-run)
 python scripts/bootstrap.py --target /path/to/your-project --platforms antigravity,copilot,claude-code --dry-run
 
-# Execute non-destructive bootstrap
-python scripts/bootstrap.py --target /path/to/your-project --platforms antigravity,copilot,claude-code
+# Execute non-destructive bootstrap with selected optional packs and stack templates
+python scripts/bootstrap.py \
+  --target /path/to/your-project \
+  --platforms antigravity,copilot,claude-code \
+  --optional-packs communication,context-engineering,design-ui \
+  --stacks dotnet,node/angular
+
+# Validate the bootstrapped consumer project (auto-detects consumer mode)
+python /path/to/your-project/scripts/validate.py --root /path/to/your-project --mode consumer
+
+# Run stack SDK preflight check (detects Windows user-space DOTNET_ROOT, Node/Angular, Python)
+python /path/to/your-project/scripts/preflight.py --stacks dotnet,node/angular
 ```
 
 ### 3. Synchronize Platform Adapters After Editing Canonical Rules
@@ -136,6 +146,8 @@ python scripts/sync_adapters.py --check
 - **[Skill Compatibility Matrix (`docs/SKILL_COMPATIBILITY_MATRIX.md`)](./docs/SKILL_COMPATIBILITY_MATRIX.md)** — Per-platform discovery, activation, and script support for all 30 registered skills.
 - **[Token Optimization Guide (`docs/TOKEN_OPTIMIZATION.md`)](./docs/TOKEN_OPTIMIZATION.md)** — Empirical benchmarks across progressive disclosure, Ponytail, Caveman, RTK, and filesystem context offloading.
 - **[Skill Installation Guide (`docs/SKILL_INSTALLATION_GUIDE.md`)](./docs/SKILL_INSTALLATION_GUIDE.md)** — Policy A/B/C classification, optional pack bootstrap commands, and Windows CLI setup.
+- **[M7 Implementation Report (`docs/M7_IMPLEMENTATION_REPORT.md`)](./docs/M7_IMPLEMENTATION_REPORT.md)** — Engineering details for `REC-01`..`REC-04` consumer bootstrap hardening (`v0.3.0`).
+- **[M7 Validation Report (`docs/M7_VALIDATION_REPORT.md`)](./docs/M7_VALIDATION_REPORT.md)** — Clean consumer bootstrap verification (`M7-06`) and M6-Pilot consistency reconciliation (`M7-07`).
 - **[Versioning Policy (`docs/VERSIONING.md`)](./docs/VERSIONING.md)** — Semantic Versioning (`SemVer 2.0.0`) and schema migration guarantees.
 - **[Contributing Guide (`docs/CONTRIBUTING.md`)](./docs/CONTRIBUTING.md)** — How to propose new skills, adapters, and workflow improvements.
 - **[Roadmap (`docs/ROADMAP.md`)](./docs/ROADMAP.md)** — Milestone progression from `v0.1.0` through `v1.0.0`.
