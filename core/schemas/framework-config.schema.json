@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Raele24/ai-engineering-framework/core/schemas/framework-config.schema.json",
+  "title": "Consumer Project Framework Configuration Schema",
+  "description": "Validates project.framework.json in consumer repositories",
+  "type": "object",
+  "required": [
+    "frameworkVersion",
+    "projectName",
+    "workflowProfile",
+    "enabledPlatforms",
+    "optionalSkillPacks",
+    "qualityGates",
+    "security",
+    "paths"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "frameworkVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "projectName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workflowProfile": {
+      "type": "string",
+      "enum": ["full", "standard", "hotfix"]
+    },
+    "enabledPlatforms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "antigravity",
+          "copilot",
+          "claude-code",
+          "codex",
+          "gemini-cli"
+        ]
+      },
+      "minItems": 1
+    },
+    "optionalSkillPacks": {
+      "type": "object",
+      "required": ["communication", "frontendDesign", "growthMedia"],
+      "properties": {
+        "communication": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "frontendDesign": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "growthMedia": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "qualityGates": {
+      "type": "object",
+      "required": [
+        "requireTddRedGreen",
+        "requireIndependentCodeReview",
+        "requireGraphifyCheck",
+        "minimumTestCoveragePercent"
+      ],
+      "properties": {
+        "requireTddRedGreen": { "type": "boolean" },
+        "requireIndependentCodeReview": { "type": "boolean" },
+        "requireGraphifyCheck": { "type": "boolean" },
+        "minimumTestCoveragePercent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "required": [
+        "enforcePreCommitSecretScan",
+        "allowActiveSecurityTesting",
+        "strixProfilePath"
+      ],
+      "properties": {
+        "enforcePreCommitSecretScan": { "type": "boolean" },
+        "allowActiveSecurityTesting": { "type": "boolean" },
+        "strixProfilePath": { "type": "string" }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "required": [
+        "specsDir",
+        "adrDir",
+        "plansDir",
+        "retrospectivesDir",
+        "stateDir"
+      ],
+      "properties": {
+        "specsDir": { "type": "string" },
+        "adrDir": { "type": "string" },
+        "plansDir": { "type": "string" },
+        "retrospectivesDir": { "type": "string" },
+        "stateDir": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

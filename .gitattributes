@@ -1,0 +1,26 @@
+# Normalize line endings across Windows, macOS, and Linux
+* text=auto eol=lf
+
+# Explicitly enforce LF for markdown, configs, schemas, Python, and POSIX shell scripts
+*.md text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+
+# Enforce CRLF for Windows-native batch and PowerShell scripts
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary

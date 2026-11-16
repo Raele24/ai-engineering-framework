@@ -1,0 +1,41 @@
+{
+  "$schema": "./core/schemas/framework-config.schema.json",
+  "frameworkVersion": "0.1.0",
+  "projectName": "ai-engineering-framework",
+  "workflowProfile": "full",
+  "enabledPlatforms": [
+    "antigravity",
+    "copilot",
+    "claude-code",
+    "codex",
+    "gemini-cli"
+  ],
+  "optionalSkillPacks": {
+    "communication": [
+      "caveman"
+    ],
+    "frontendDesign": [
+      "web-design-guidelines",
+      "canvas-design"
+    ],
+    "growthMedia": []
+  },
+  "qualityGates": {
+    "requireTddRedGreen": true,
+    "requireIndependentCodeReview": true,
+    "requireGraphifyCheck": true,
+    "minimumTestCoveragePercent": 80
+  },
+  "security": {
+    "enforcePreCommitSecretScan": true,
+    "allowActiveSecurityTesting": false,
+    "strixProfilePath": "security/strix-profile.yaml"
+  },
+  "paths": {
+    "specsDir": "docs/specs",
+    "adrDir": "docs/adr",
+    "plansDir": "docs/plans",
+    "retrospectivesDir": "docs/retrospectives",
+    "stateDir": ".framework-state"
+  }
+}

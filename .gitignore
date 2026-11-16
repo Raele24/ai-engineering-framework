@@ -1,0 +1,62 @@
+# =============================================================================
+# AI Engineering Framework — .gitignore
+# =============================================================================
+
+# Tier 4: Runtime state & ephemeral orchestration artifacts
+.framework-state/
+!templates/
+graphify-out/cache/
+graphify-out/20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
+graphify-out/.graphify_*
+graphify-out/graph.html
+
+# Secrets, credentials, and environment variables (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*credentials*.json
+*secret*.json
+*token*.json
+
+# Local machine / developer overrides
+.claude/settings.local.json
+.gemini/settings.local.json
+.codex/config.local.toml
+project.framework.local.json
+
+# Python bytecode & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Node.js / Playwright / Frontend tooling
+node_modules/
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+.vscode/*
+!.vscode/extensions.json
+!.vscode/mcp.json
+.idea/
