@@ -1,0 +1,52 @@
+name: Bug Report
+description: Report a defect in the AI Engineering Framework rules, adapters, schemas, or scripts.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue. Please provide exact reproduction details and do not include secrets or API tokens.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected Component
+      options:
+        - Core Rules & Schemas (core/)
+        - Canonical Workflow (docs/WORKFLOW.md & workflows/)
+        - Agent Roles (agents/)
+        - Skills (skills/)
+        - Platform Adapters (adapters/)
+        - CLI Scripts (scripts/bootstrap.py, validate.py, sync_adapters.py)
+        - Documentation (docs/)
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: AI Coding Agent Platform
+      options:
+        - Google Antigravity
+        - GitHub Copilot
+        - Claude Code
+        - OpenAI Codex
+        - Gemini CLI
+        - Platform-Independent / CLI
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Exact commands or prompts executed.
+      placeholder: |
+        1. Run `python scripts/validate.py`
+        2. Observe error...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true

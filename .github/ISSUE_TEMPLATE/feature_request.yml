@@ -1,0 +1,35 @@
+name: Feature or Skill Request
+description: Propose a new skill, platform adapter capability, or workflow enhancement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Proposed Tier
+      options:
+        - Core Framework (Tier 1)
+        - Platform Adapter (Tier 2)
+        - Optional Skill Pack — Communication
+        - Optional Skill Pack — Frontend & Design
+        - Optional Skill Pack — Growth & Media
+        - Optional External Integration (MCP / Orchestrator)
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What engineering problem does this solve across supported platforms?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution & Acceptance Criteria
+      placeholder: |
+        - Given: ...
+        - When: ...
+        - Then: ...
+    validations:
+      required: true

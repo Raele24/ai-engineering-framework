@@ -1,0 +1,60 @@
+name: Security Audit & Conditional Strix Runner
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      run_authorized_strix:
+        description: "Run authorized Strix container check (Requires Gate-Sec approval & STRIX_LLM_API_KEY secret)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      authorized_target_url:
+        description: "Explicitly authorized local/staging target URL"
+        required: false
+        default: "http://127.0.0.1:8080"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  static-security-audit:
+    name: Static Secret & Policy Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Execute static secret & schema validation
+        run: python scripts/validate.py
+
+  conditional-strix-scan:
+    name: Authorized Strix Dynamic Scan (Gate-Sec)
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_authorized_strix == 'true' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify Gate-Sec authorization profile
+        run: |
+          python -c "
+          import pathlib, sys
+          profile = pathlib.Path('security/strix-profile.yaml').read_text(encoding='utf-8')
+          if 'enabled: true' not in profile:
+              print('BLOCKED: security/strix-profile.yaml has enabled: false. Approve Gate-Sec before running active scans.')
+              sys.exit(1)
+          print('Strix authorization profile verified.')
+          "
