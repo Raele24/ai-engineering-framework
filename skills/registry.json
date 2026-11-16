@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0.0",
+  "framework_version": "0.1.0",
+  "description": "Canonical catalog of Core and Optional Agent Skills in the AI Engineering Framework",
+  "skills": [
+    {
+      "name": "grill-me",
+      "version": "1.0.0",
+      "tier": "core",
+      "path": "skills/core/grill-me/SKILL.md",
+      "security_scope": "workspace-write",
+      "default_enabled": true,
+      "workflow_phases": [2]
+    },
+    {
+      "name": "tdd-cycle",
+      "version": "1.0.0",
+      "tier": "core",
+      "path": "skills/core/tdd-cycle/SKILL.md",
+      "security_scope": "workspace-write",
+      "default_enabled": true,
+      "workflow_phases": [9, 11]
+    },
+    {
+      "name": "adr-writer",
+      "version": "1.0.0",
+      "tier": "core",
+      "path": "skills/core/adr-writer/SKILL.md",
+      "security_scope": "workspace-write",
+      "default_enabled": true,
+      "workflow_phases": [5]
+    },
+    {
+      "name": "agent-browser",
+      "version": "1.0.0",
+      "tier": "core",
+      "path": "skills/core/agent-browser/SKILL.md",
+      "security_scope": "network-external",
+      "default_enabled": true,
+      "workflow_phases": [4, 11]
+    },
+    {
+      "name": "find-skills",
+      "version": "1.0.0",
+      "tier": "core",
+      "path": "skills/core/find-skills/SKILL.md",
+      "security_scope": "network-external",
+      "default_enabled": true,
+      "workflow_phases": [4, 8]
+    },
+    {
+      "name": "anti-slop",
+      "version": "1.0.0",
+      "tier": "core",
+      "path": "skills/core/anti-slop/SKILL.md",
+      "security_scope": "workspace-write",
+      "default_enabled": true,
+      "workflow_phases": [3, 5, 10, 14]
+    },
+    {
+      "name": "caveman",
+      "version": "1.0.0",
+      "tier": "optional-communication",
+      "path": "skills/optional/communication/caveman/SKILL.md",
+      "security_scope": "read-only",
+      "default_enabled": true,
+      "workflow_phases": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    },
+    {
+      "name": "web-design-guidelines",
+      "version": "1.0.0",
+      "tier": "optional-frontend",
+      "path": "skills/optional/frontend-design/web-design-guidelines/SKILL.md",
+      "security_scope": "workspace-write",
+      "default_enabled": false,
+      "workflow_phases": [9, 10, 11]
+    },
+    {
+      "name": "canvas-design",
+      "version": "1.0.0",
+      "tier": "optional-frontend",
+      "path": "skills/optional/frontend-design/canvas-design/SKILL.md",
+      "security_scope": "workspace-write",
+      "default_enabled": false,
+      "workflow_phases": [5, 9]
+    },
+    {
+      "name": "seo-audit",
+      "version": "1.0.0",
+      "tier": "optional-growth",
+      "path": "skills/optional/growth-media/seo-audit/SKILL.md",
+      "security_scope": "network-external",
+      "default_enabled": false,
+      "workflow_phases": [11, 14]
+    },
+    {
+      "name": "ai-seo",
+      "version": "1.0.0",
+      "tier": "optional-growth",
+      "path": "skills/optional/growth-media/ai-seo/SKILL.md",
+      "security_scope": "workspace-write",
+      "default_enabled": false,
+      "workflow_phases": [14]
+    },
+    {
+      "name": "video-lens",
+      "version": "1.0.0",
+      "tier": "optional-growth",
+      "path": "skills/optional/growth-media/video-lens/SKILL.md",
+      "security_scope": "read-only",
+      "default_enabled": false,
+      "workflow_phases": [1, 4, 11]
+    },
+    {
+      "name": "video-use",
+      "version": "1.0.0",
+      "tier": "optional-growth",
+      "path": "skills/optional/growth-media/video-use/SKILL.md",
+      "security_scope": "workspace-write",
+      "default_enabled": false,
+      "workflow_phases": [11, 14]
+    },
+    {
+      "name": "content-strategy",
+      "version": "1.0.0",
+      "tier": "optional-growth",
+      "path": "skills/optional/growth-media/content-strategy/SKILL.md",
+      "security_scope": "workspace-write",
+      "default_enabled": false,
+      "workflow_phases": [1, 14]
+    },
+    {
+      "name": "pricing",
+      "version": "1.0.0",
+      "tier": "optional-growth",
+      "path": "skills/optional/growth-media/pricing/SKILL.md",
+      "security_scope": "workspace-write",
+      "default_enabled": false,
+      "workflow_phases": [1, 6]
+    }
+  ]
+}
