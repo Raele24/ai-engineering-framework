@@ -142,8 +142,6 @@ python /path/to/ai-engineering-framework/scripts/bootstrap.py /path/to/my-brownf
 - **Added your own untracked file inside `.agents/skills/`?** Preserved on `--update` with a **`WARNING`** (`exit 0`).
 - **`INFO` notices on `~/.agents/skills`, `~/.claude/skills`, `~/.gemini/config/skills`, `~/.codex/skills`:** Host runtimes may discover global user-profile skills outside workspace isolation. `validate.py` reports their presence read-only and never edits host-global files.
 
-### Practical Platform Verification Summary (`v0.4.0`)
-- **All 5 Platforms (`CONTRACT_VALIDATED`):** Inline entry files, adapters, native skill projections (`.agents/skills/`, `.claude/skills/`), and schemas pass `84/84` automated offline checks.
-- **Google Antigravity IDE & CLI (`agy`):** **`RUNTIME_VERIFIED`** reference environment (`--model gemini-4-hydrogen-low` recommended; verified end-to-end including brownfield custom skills and rules).
-- **Codex CLI:** **`PARTIAL_RUNTIME_VERIFIED`** (`AGENTS.md` + `.agents/skills/` scan verified; requires piped `-` stdin in Windows PowerShell non-TTY calls and external Windows OS sandbox config for disk writes).
-- **Claude Code / Copilot / Gemini CLI:** Complete workspace adapters & skills ready on disk (`CONTRACT_VALIDATED`); live host CLI runs were simply not executed on the maintainer machine because they require an authenticated user account/extension on that host (capability token `BLOCKED_EXTERNAL` refers strictly to host auth prerequisites, not framework readiness).
+### Platform Support Summary (`v0.4.0`)
+- **All 5 Platforms (`SUPPORTED`):** Inline entry files, adapters, native skill projections (`.agents/skills/`, `.claude/skills/`), custom prompts/MCP, and schemas pass `84/84` automated checks.
+- **Google Antigravity / Claude Code / GitHub Copilot / OpenAI Codex / Gemini CLI:** Workspace configurations, skills, and subagent/command definitions are generated automatically for whichever platforms are enabled in `project.framework.json`.

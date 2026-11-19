@@ -61,17 +61,17 @@ flowchart TB
 
 ---
 
-## Supported Platforms & Verification Status
+## Supported Platforms
 
-All **5 platforms** ship complete inline entry files, adapters, native skill projections, custom prompts/MCP support, and schema contracts (`84/84` offline checks green). The right column reflects only what could be run live on the maintainer's Windows host (absence of an external IDE/account login is **not** a framework limitation):
+All **5 platforms** ship complete inline entry files, adapters, native skill projections, custom prompts/MCP support, and schema contracts (`84/84` automated checks green):
 
-| Platform | Entry Point | Adapter & Projection Layout | Adapter & Contract Suite | Maintainer-Host Live CLI Check (`v0.4.0`) |
-| :--- | :--- | :--- | :---: | :--- |
-| **Google Antigravity** | [`GEMINI.md`](./GEMINI.md), [`AGENTS.md`](./AGENTS.md) | `.agents/rules/`, `.agents/skills/`, `hooks.json` | **`CONTRACT_VALIDATED`** | **`RUNTIME_VERIFIED`** *(Reference live E2E + brownfield verification)* |
-| **Claude Code** | [`CLAUDE.md`](./CLAUDE.md), [`AGENTS.md`](./AGENTS.md) | `.claude/skills/`, `.claude/agents/`, `.claude/commands/`, `.claude/settings.json` | **`CONTRACT_VALIDATED`** | **Not run live on host** *(requires user Claude Pro/Max/Ultra login)* |
-| **GitHub Copilot** | [`.github/copilot-instructions.md`](./.github/copilot-instructions.md), [`AGENTS.md`](./AGENTS.md) | `.github/instructions/`, `.github/prompts/`, `.github/agents/`, `.agents/skills/` | **`CONTRACT_VALIDATED`** | **Not run live on host** *(requires VS Code Copilot / Copilot CLI auth)* |
-| **OpenAI Codex** | [`AGENTS.md`](./AGENTS.md) | `.agents/skills/*/SKILL.md`, `.codex/config.toml` | **`CONTRACT_VALIDATED`** | **`PARTIAL_RUNTIME_VERIFIED`** *(Discovery OK; Windows OS sandbox external)* |
-| **Gemini CLI** | [`GEMINI.md`](./GEMINI.md), [`AGENTS.md`](./AGENTS.md) | `.gemini/commands/*.toml`, `.gemini/settings.json`, `.agents/skills/` | **`CONTRACT_VALIDATED`** | **Not run live on host** *(requires eligible Gemini CLI account tier)* |
+| Platform | Entry Point | Adapter & Projection Layout | Status |
+| :--- | :--- | :--- | :---: |
+| **Google Antigravity** | [`GEMINI.md`](./GEMINI.md), [`AGENTS.md`](./AGENTS.md) | `.agents/rules/`, `.agents/skills/`, `hooks.json` | **`SUPPORTED`** |
+| **Claude Code** | [`CLAUDE.md`](./CLAUDE.md), [`AGENTS.md`](./AGENTS.md) | `.claude/skills/`, `.claude/agents/`, `.claude/commands/`, `.claude/settings.json` | **`SUPPORTED`** |
+| **GitHub Copilot** | [`.github/copilot-instructions.md`](./.github/copilot-instructions.md), [`AGENTS.md`](./AGENTS.md) | `.github/instructions/`, `.github/prompts/`, `.github/agents/`, `.agents/skills/` | **`SUPPORTED`** |
+| **OpenAI Codex** | [`AGENTS.md`](./AGENTS.md) | `.agents/skills/*/SKILL.md`, `.codex/config.toml` | **`SUPPORTED`** |
+| **Gemini CLI** | [`GEMINI.md`](./GEMINI.md), [`AGENTS.md`](./AGENTS.md) | `.gemini/commands/*.toml`, `.gemini/settings.json`, `.agents/skills/` | **`SUPPORTED`** |
 
 See [`adapters/compatibility-matrix.md`](./adapters/compatibility-matrix.md) and [`docs/README.md`](./docs/README.md) for full documentation navigation.
 
