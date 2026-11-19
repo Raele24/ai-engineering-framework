@@ -1,7 +1,7 @@
 # AI Engineering Framework
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-0.3.0-success.svg)](./docs/VERSIONING.md)
+[![Version](https://img.shields.io/badge/version-0.4.0-success.svg)](./docs/VERSIONING.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./docs/CONTRIBUTING.md)
 
 **A modular, open-source, platform-independent engineering framework that standardizes the complete Software Development Lifecycle (SDLC) for AI coding agents.**
@@ -61,48 +61,49 @@ flowchart TB
 
 ---
 
-## Supported Platforms
+## Supported Platforms & Verification Status
 
-| Platform | Entry Point | Adapter Directory | Native Capabilities Mapped |
-| :--- | :--- | :--- | :--- |
-| **GitHub Copilot** | [`.github/copilot-instructions.md`](./.github/copilot-instructions.md), [`AGENTS.md`](./AGENTS.md) | [`adapters/copilot/`](./adapters/copilot/) | Workspace instructions, scoped `.instructions.md`, `.prompt.md`, `.agent.md`, `.vscode/mcp.json` |
-| **Google Antigravity** | [`GEMINI.md`](./GEMINI.md), [`AGENTS.md`](./AGENTS.md) | [`adapters/antigravity/`](./adapters/antigravity/) | `.agents/rules/`, `.agents/skills/`, subagents (`self`, `research`, `browser`), `run_workflow`, `swarm`, `hooks.json` |
-| **Claude Code** | [`CLAUDE.md`](./CLAUDE.md) | [`adapters/claude-code/`](./adapters/claude-code/) | `.claude/agents/*.md`, `.claude/commands/*.md`, `.claude/skills/`, `.claude/settings.json` hooks, `.mcp.json` |
-| **OpenAI Codex** | [`AGENTS.md`](./AGENTS.md) | [`adapters/codex/`](./adapters/codex/) | Hierarchical `AGENTS.md`, `.agents/skills/*/SKILL.md`, `.codex/config.toml` |
-| **Gemini CLI** | [`GEMINI.md`](./GEMINI.md) | [`adapters/gemini-cli/`](./adapters/gemini-cli/) | `GEMINI.md`, `.gemini/commands/*.toml`, `.gemini/settings.json`, `.agents/skills/` |
+All **5 platforms** ship complete inline entry files, adapters, native skill projections, custom prompts/MCP support, and schema contracts (`84/84` offline checks green). The right column reflects only what could be run live on the maintainer's Windows host (absence of an external IDE/account login is **not** a framework limitation):
 
-See [adapters/compatibility-matrix.md](./adapters/compatibility-matrix.md) for detailed feature parity and fallback behavior.
+| Platform | Entry Point | Adapter & Projection Layout | Adapter & Contract Suite | Maintainer-Host Live CLI Check (`v0.4.0`) |
+| :--- | :--- | :--- | :---: | :--- |
+| **Google Antigravity** | [`GEMINI.md`](./GEMINI.md), [`AGENTS.md`](./AGENTS.md) | `.agents/rules/`, `.agents/skills/`, `hooks.json` | **`CONTRACT_VALIDATED`** | **`RUNTIME_VERIFIED`** *(Reference live E2E + brownfield verification)* |
+| **Claude Code** | [`CLAUDE.md`](./CLAUDE.md), [`AGENTS.md`](./AGENTS.md) | `.claude/skills/`, `.claude/agents/`, `.claude/commands/`, `.claude/settings.json` | **`CONTRACT_VALIDATED`** | **Not run live on host** *(requires user Claude Pro/Max/Ultra login)* |
+| **GitHub Copilot** | [`.github/copilot-instructions.md`](./.github/copilot-instructions.md), [`AGENTS.md`](./AGENTS.md) | `.github/instructions/`, `.github/prompts/`, `.github/agents/`, `.agents/skills/` | **`CONTRACT_VALIDATED`** | **Not run live on host** *(requires VS Code Copilot / Copilot CLI auth)* |
+| **OpenAI Codex** | [`AGENTS.md`](./AGENTS.md) | `.agents/skills/*/SKILL.md`, `.codex/config.toml` | **`CONTRACT_VALIDATED`** | **`PARTIAL_RUNTIME_VERIFIED`** *(Discovery OK; Windows OS sandbox external)* |
+| **Gemini CLI** | [`GEMINI.md`](./GEMINI.md), [`AGENTS.md`](./AGENTS.md) | `.gemini/commands/*.toml`, `.gemini/settings.json`, `.agents/skills/` | **`CONTRACT_VALIDATED`** | **Not run live on host** *(requires eligible Gemini CLI account tier)* |
+
+See [`adapters/compatibility-matrix.md`](./adapters/compatibility-matrix.md) and [`docs/README.md`](./docs/README.md) for full documentation navigation.
 
 ---
 
 ## Quick Start
 
 ### 1. Validate the Framework Repository
-Requires **Python 3.10+** and **Git 2.30+** (zero external `pip` packages required for core scripts):
+Requires **Python 3.11+** and **Git 2.30+** (zero external `pip` packages required for core scripts):
 
 ```bash
-python scripts/validate.py
+python scripts/sync_adapters.py --check
+python scripts/validate.py --mode framework
+python scripts/run_tests.py --fail-on-skip
+# Or via standard Python unittest discovery:
 python -m unittest discover -s tests -v
 ```
 
-### 2. Bootstrap the Framework into a New or Existing Project
-Install the canonical rules, stack templates, filtered skill registry, and selected platform adapters into any target repository without overwriting existing project files:
+### 2. Install into a New or Existing Project (Packaged `aief` CLI or Direct Python)
+Install via standard Python packaging (`uvx` / `pipx`) or directly from source checkout without overwriting existing project files:
 
 ```bash
-# Preview changes (dry-run)
-python scripts/bootstrap.py --target /path/to/your-project --platforms antigravity,copilot,claude-code --dry-run
+# Option A: One-command install via uvx / pipx (all 5 platforms, all 33 skills, auto-detected stacks)
+uvx --from git+https://github.com/Raele24/ai-engineering-framework.git aief init /path/to/your-project
+# Or install once via pipx install git+https://github.com/Raele24/ai-engineering-framework.git
+aief init /path/to/your-project
+aief compose /path/to/your-project
 
-# Execute non-destructive bootstrap with selected optional packs and stack templates
-python scripts/bootstrap.py \
-  --target /path/to/your-project \
-  --platforms antigravity,copilot,claude-code \
-  --optional-packs communication,context-engineering,design-ui \
-  --stacks dotnet,node/angular
-
-# Validate the bootstrapped consumer project (auto-detects consumer mode)
-python /path/to/your-project/scripts/validate.py --root /path/to/your-project --mode consumer
-
-# Run stack SDK preflight check (detects Windows user-space DOTNET_ROOT, Node/Angular, Python)
+# Option B: Direct invocation from local framework clone
+python scripts/bootstrap.py /path/to/your-project
+python scripts/bootstrap.py /path/to/your-project --dry-run
+python /path/to/your-project/scripts/compose.py --root /path/to/your-project
 python /path/to/your-project/scripts/preflight.py --stacks dotnet,node/angular
 ```
 
@@ -118,36 +119,39 @@ python scripts/sync_adapters.py --check
 
 | Path | Tier | Purpose |
 | :--- | :--- | :--- |
-| [`core/`](./core/) | Tier 1 | Canonical engineering rules (`core/rules/`) and JSON validation schemas (`core/schemas/`) |
+| [`core/`](./core/) | Tier 1 | Canonical engineering rules (`core/rules/`), JSON schemas (`core/schemas/`), and `platform-capabilities.json` |
 | [`agents/`](./agents/) | Tier 1 | 8 vendor-neutral agent role specifications (`product-analyst` through `devops-release-engineer`) |
 | [`skills/`](./skills/) | Tier 1 | Modular `SKILL.md` packages (`skills/core/` + opt-in `skills/optional/` packs) and `skills/registry.json` |
 | [`workflows/`](./workflows/) | Tier 1 | Step-by-step stage runbooks implementing the 15-phase canonical SDLC |
-| [`templates/`](./templates/) | Tier 3 | Artifact templates (`PRD`, `SPEC`, `ADR`, `TEST_PLAN`, `HANDOFF_PACKET`, `project.framework.json`) |
-| [`adapters/`](./adapters/) | Tier 2 | Platform-specific adapter configurations and compatibility matrix |
+| [`templates/`](./templates/) | Tier 3 | Artifact templates (`PRD`, `SPEC`, `ADR`, `TEST_PLAN`, `HANDOFF_PACKET`, `project.framework.json`, stack `.gitignore` presets) |
+| [`adapters/`](./adapters/) | Tier 2 | Platform-specific adapter configurations and [`compatibility-matrix.md`](./adapters/compatibility-matrix.md) |
 | [`quality/`](./quality/) | Tier 1 | TDD protocol, code review rubric, Definition of Done, and tool classification matrix |
 | [`security/`](./security/) | Tier 1 | Security authorization policy, secret prevention rules, and conditional Strix profile template |
 | [`integrations/`](./integrations/) | Tier 1 | MCP server templates, Graphify knowledge graph runner, and optional orchestrator specs |
-| [`scripts/`](./scripts/) | Tier 1 | Cross-platform Python CLI utilities (`bootstrap.py`, `validate.py`, `sync_adapters.py`) |
-| [`docs/`](./docs/) | Tier 1 | Complete documentation suite (Charter, Workflow, Architecture, Installation, Security, Roadmap) |
-| [`tests/`](./tests/) | Tier 1 | Automated unit and schema validation test suite |
+| [`scripts/`](./scripts/) | Tier 1 | Pure-stdlib Python CLIs (`bootstrap.py`, `compose.py`, `validate.py`, `sync_adapters.py`, `preflight.py`, `platform_capabilities.py`, `readiness.py`, `run_tests.py`) |
+| [`docs/`](./docs/) | Tier 1 | Complete documentation suite (Architecture, Workflow, Getting Started, Consumer Usage Guide, Installation, Security, Roadmap) |
+| [`tests/`](./tests/) | Tier 1 | Automated 6-tier offline regression suite (`84` stdlib tests via `scripts/run_tests.py`) |
 
 ---
 
-## Documentation Index
+## Documentation Index (`docs/README.md`)
+
+Start from **[`docs/README.md`](./docs/README.md)** for the full structured documentation map. Key guides:
 
 - **[Project Charter](./PROJECT_CHARTER.md)** — Vision, scope, non-goals, principles, and milestones.
 - **[Canonical Workflow (`docs/WORKFLOW.md`)](./docs/WORKFLOW.md)** — Complete 15-phase operational SDLC specification.
 - **[Architecture Guide (`docs/ARCHITECTURE.md`)](./docs/ARCHITECTURE.md)** — 4-tier architecture, state handoffs, and Graphify integration.
-- **[Getting Started (`docs/GETTING_STARTED.md`)](./docs/GETTING_STARTED.md)** — End-to-end walkthrough of your first feature using the framework.
+- **[Getting Started (`docs/GETTING_STARTED.md`)](./docs/GETTING_STARTED.md)** — End-to-end walkthrough of your first feature using the framework (`v0.4.0`).
+- **[Consumer Usage Guide (`docs/CONSUMER_USAGE_GUIDE.md`)](./docs/CONSUMER_USAGE_GUIDE.md)** — Practical playbook for adopting and operating the framework day-to-day in real brownfield repositories.
+- **[Customization & Auto-Loading Guide (`docs/CUSTOMIZATION_GUIDE.md`)](./docs/CUSTOMIZATION_GUIDE.md)** — Recipe guide for `.framework-custom/` (inline rules, custom skills, custom/appended agents), `disabled.*` toggles, and `scripts/compose.py`.
+- **[Platform Compatibility Matrix (`adapters/compatibility-matrix.md`)](./adapters/compatibility-matrix.md)** — Configuration mapping, fallbacks, and platform verification status across all 5 platforms.
 - **[Installation Guide (`docs/INSTALLATION.md`)](./docs/INSTALLATION.md)** — Prerequisites, bootstrap modes, and non-destructive updates.
 - **[Configuration Reference (`docs/CONFIGURATION.md`)](./docs/CONFIGURATION.md)** — Configuring `project.framework.json`, platform adapters, and optional domain packs.
 - **[Security Policy (`docs/SECURITY.md`)](./docs/SECURITY.md)** — Vulnerability reporting, secret prevention, and authorized security testing (Strix).
-- **[Skills Research Report (`docs/SKILLS_RESEARCH_REPORT.md`)](./docs/SKILLS_RESEARCH_REPORT.md)** — Upstream evaluation of 32 skills and tools across Token Optimization, Context Engineering, UI/UX, Agent Architecture, Graphify, and SEO/Growth.
-- **[Skill Compatibility Matrix (`docs/SKILL_COMPATIBILITY_MATRIX.md`)](./docs/SKILL_COMPATIBILITY_MATRIX.md)** — Per-platform discovery, activation, and script support for all 30 registered skills.
-- **[Token Optimization Guide (`docs/TOKEN_OPTIMIZATION.md`)](./docs/TOKEN_OPTIMIZATION.md)** — Empirical benchmarks across progressive disclosure, Ponytail, Caveman, RTK, and filesystem context offloading.
-- **[Skill Installation Guide (`docs/SKILL_INSTALLATION_GUIDE.md`)](./docs/SKILL_INSTALLATION_GUIDE.md)** — Policy A/B/C classification, optional pack bootstrap commands, and Windows CLI setup.
-- **[M7 Implementation Report (`docs/M7_IMPLEMENTATION_REPORT.md`)](./docs/M7_IMPLEMENTATION_REPORT.md)** — Engineering details for `REC-01`..`REC-04` consumer bootstrap hardening (`v0.3.0`).
-- **[M7 Validation Report (`docs/M7_VALIDATION_REPORT.md`)](./docs/M7_VALIDATION_REPORT.md)** — Clean consumer bootstrap verification (`M7-06`) and M6-Pilot consistency reconciliation (`M7-07`).
+- **[Skill Compatibility Matrix (`docs/SKILL_COMPATIBILITY_MATRIX.md`)](./docs/SKILL_COMPATIBILITY_MATRIX.md)** — Per-platform discovery, activation, and script support for all 33 registered skills.
+- **[Token Optimization Guide (`docs/TOKEN_OPTIMIZATION.md`)](./docs/TOKEN_OPTIMIZATION.md)** — Progressive disclosure principles, Ponytail, Caveman, RTK, and filesystem context offloading.
+- **[Skill Installation Guide (`docs/SKILL_INSTALLATION_GUIDE.md`)](./docs/SKILL_INSTALLATION_GUIDE.md)** — Policy A/B/C classification and Windows CLI setup.
+- **[Changelog (`CHANGELOG.md`)](./CHANGELOG.md)** — Release history from `v0.1.0` through `v0.4.0`.
 - **[Versioning Policy (`docs/VERSIONING.md`)](./docs/VERSIONING.md)** — Semantic Versioning (`SemVer 2.0.0`) and schema migration guarantees.
 - **[Contributing Guide (`docs/CONTRIBUTING.md`)](./docs/CONTRIBUTING.md)** — How to propose new skills, adapters, and workflow improvements.
 - **[Roadmap (`docs/ROADMAP.md`)](./docs/ROADMAP.md)** — Milestone progression from `v0.1.0` through `v1.0.0`.

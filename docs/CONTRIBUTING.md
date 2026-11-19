@@ -1,6 +1,6 @@
 # Contributing Guide (`CONTRIBUTING.md`)
 
-**Version:** `0.1.0`  
+**Version:** `0.4.0`  
 
 ---
 
@@ -8,7 +8,7 @@
 
 Contributions to the **AI Engineering Framework** must uphold the exact engineering discipline the framework teaches:
 1. **Single Source of Truth:** Never edit generated platform adapter files directly without updating the canonical source in `core/`, `agents/`, `skills/`, or `workflows/` and running `python scripts/sync_adapters.py`.
-2. **Platform Independence:** New core workflows, roles, and skills must work across GitHub Copilot, Google Antigravity, Claude Code, OpenAI Codex, and Gemini CLI (or document explicit platform fallbacks in `adapters/compatibility-matrix.md`).
+2. **Platform Capability Model:** Any platform capability or adapter schema change must stay aligned with [`core/platform-capabilities.json`](../core/platform-capabilities.json), [`scripts/platform_capabilities.py`](../scripts/platform_capabilities.py), and evidence rules in [`adapters/compatibility-matrix.md`](../adapters/compatibility-matrix.md) (never promote static parity to `RUNTIME_VERIFIED` without live evidence).
 3. **Zero AI Slop:** All documentation and skill instructions must follow [`skills/core/anti-slop/SKILL.md`](../skills/core/anti-slop/SKILL.md) — concrete, direct, verifiable instructions with zero promotional filler.
 
 ---
@@ -24,7 +24,8 @@ Contributions to the **AI Engineering Framework** must uphold the exact engineer
 4. **Write & Run Automated Tests:**
    ```bash
    python scripts/sync_adapters.py --check
-   python scripts/validate.py
+   python scripts/validate.py --mode framework
+   python scripts/run_tests.py --fail-on-skip
    python -m unittest discover -s tests -v
    ```
 5. **Update the Knowledge Graph (if `graphify` is installed):**

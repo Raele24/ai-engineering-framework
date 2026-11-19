@@ -1,6 +1,6 @@
 {
   "$schema": "./core/schemas/framework-config.schema.json",
-  "frameworkVersion": "0.3.0",
+  "frameworkVersion": "0.4.0",
   "projectName": "ai-engineering-framework",
   "workflowProfile": "full",
   "enabledPlatforms": [
@@ -14,12 +14,15 @@
   "optionalSkillPacks": {
     "communication": [
       "caveman",
-      "rtk-cli"
+      "rtk-cli",
+      "i-have-adhd",
+      "humanizer"
     ],
     "contextEngineering": [
       "context-optimization",
       "context-compression",
-      "filesystem-context"
+      "filesystem-context",
+      "session-handoff"
     ],
     "agentArchitecture": [
       "multi-agent-patterns",
@@ -51,5 +54,17 @@
     "plansDir": "docs/plans",
     "retrospectivesDir": "docs/retrospectives",
     "stateDir": ".framework-state"
+  },
+  "disabled": {
+    "skills": [],
+    "agents": [],
+    "phases": [],
+    "gates": [],
+    "mechanisms": []
+  },
+  "customizations": {
+    "overlayDir": ".framework-custom",
+    "promptInjectionMode": "inline",
+    "inlineMaxBytes": 16384
   }
 }

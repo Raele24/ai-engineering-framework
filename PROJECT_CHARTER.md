@@ -1,5 +1,8 @@
 # Project Charter — AI Engineering Framework
 
+> [!NOTE]
+> **Historical M1 Baseline Document (`v0.1.0`):** This charter captures the initial architectural vision and M0–M5 milestone blueprint. For current `v0.4.0` platform status, CLI scripts (`bootstrap.py`, `compose.py`, `validate.py`, `sync_adapters.py`, `preflight.py`, `platform_capabilities.py`, `readiness.py`, `run_tests.py`), and roadmap details, see [`README.md`](./README.md) and [`docs/ROADMAP.md`](./docs/ROADMAP.md).
+
 **Project Name:** AI Engineering Framework  
 **Repository:** `ai-engineering-framework`  
 **Version:** `0.1.0`  
@@ -82,7 +85,7 @@ Replace fragmented prompt collections and vendor-locked configurations with a **
 
 | Milestone | Scope | Status |
 | :--- | :--- | :--- |
-| **M0: Audit & Blueprint** | Host environment audit (`docs/ENVIRONMENT_AUDIT.md`) and implementation plan (`docs/IMPLEMENTATION_PLAN.md`) | Completed |
+| **M0: Audit & Blueprint** | Initial environment audit and architectural implementation plan | Completed |
 | **M1: Canonical Foundation** | Charter, README, 15-phase `WORKFLOW.md`, `ARCHITECTURE.md`, operational guides, schemas, and templates | In Progress |
 | **M2: Agents, Skills & Domain Packs** | 8 canonical agent role definitions, `skills/registry.json`, core SDLC skills, and opt-in domain packs | Planned |
 | **M3: Platform Adapters & Orchestration** | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, 5 platform adapter suites, `sync_adapters.py`, and stage runbooks | Planned |

@@ -92,15 +92,15 @@ class TestM7FrameworkHardening(unittest.TestCase):
             (
                 "core-plus-context-and-agent",
                 ["context-engineering", "agent-architecture"],
-                16,
-                {"ponytail", "context-optimization", "filesystem-context", "evaluation", "tool-design"},
+                17,
+                {"ponytail", "context-optimization", "filesystem-context", "session-handoff", "evaluation", "tool-design"},
                 {"caveman", "ui-ux-pro-max", "seo-audit"},
             ),
             (
                 "all-packs",
                 ["communication", "context-engineering", "agent-architecture", "frontend-design", "growth-media"],
-                30,
-                {"ponytail", "caveman", "context-optimization", "evaluation", "ui-ux-pro-max", "seo-audit"},
+                33,
+                {"ponytail", "caveman", "i-have-adhd", "humanizer", "context-optimization", "session-handoff", "evaluation", "ui-ux-pro-max", "seo-audit"},
                 set(),
             ),
         ]
@@ -284,7 +284,7 @@ class TestM7FrameworkHardening(unittest.TestCase):
             self.assertEqual(res_missing["status"], "MISSING")
             self.assertIn("dotnet-install.ps1", str(res_missing["guidance"]))
 
-            # If host has user-space C:\Users\raele\.dotnet, test with empty PATH so it detects AVAILABLE_USER_SPACE
+            # If host has user-space %USERPROFILE%\.dotnet, test with empty PATH so it detects AVAILABLE_USER_SPACE
             real_user_dotnet = Path.home() / ".dotnet"
             if (real_user_dotnet / "dotnet.exe").exists() or (real_user_dotnet / "dotnet").exists():
                 res_userspace = preflight.detect_dotnet_sdk(env={"PATH": ""}, home_dir=Path.home())

@@ -51,18 +51,21 @@ class TestAIEngineeringFramework(unittest.TestCase):
         agents, registry = sync_adapters.load_canonical_metadata(REPO_ROOT)
         self.assertEqual(len(agents), 8, "Expected exactly 8 non-redundant canonical agent roles")
         skills = registry.get("skills", [])
-        self.assertEqual(len(skills), 30, "Expected 30 curated skills in skills/registry.json")
+        self.assertEqual(len(skills), 33, "Expected 33 curated skills in skills/registry.json")
 
         skill_names = {s["name"] for s in skills}
         for must_have in [
             "ponytail",
             "caveman",
+            "i-have-adhd",
+            "humanizer",
             "rtk-cli",
             "graphify",
             "context-optimization",
             "context-compression",
             "filesystem-context",
             "memory-systems",
+            "session-handoff",
             "multi-agent-patterns",
             "tool-design",
             "evaluation",

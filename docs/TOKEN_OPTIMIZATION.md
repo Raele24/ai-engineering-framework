@@ -1,8 +1,9 @@
 # Token Efficiency & Context Optimization Guide (`TOKEN_OPTIMIZATION.md`)
 
 **Project:** AI Engineering Framework (`ai-engineering-framework`)  
-**Version:** `0.2.0`  
-**Date:** 2026-11-16  
+**Version:** `0.4.0`  
+**Date:** `2026-11-19`  
+*(Empirical byte/token measurements below were captured on the M2 baseline corpus; M9 native projections in `.agents/skills/` and `.claude/skills/` follow the exact same progressive-disclosure index so startup prompt overhead remains unchanged unless skills are explicitly loaded via `read_file`.)*
 
 ---
 
@@ -35,7 +36,7 @@ flowchart LR
 
 ## 3. Empirical Benchmarks Across 7 Measurable Scenarios
 
-All measurements below were executed directly against `D:\PROGETTI\ai-engineering-framework` (`1 token ≈ 4 UTF-8 bytes`).
+All baseline measurements below were captured on the `v0.2.0` (`30`-skill) repository corpus (`1 token ≈ 4 UTF-8 bytes`); `v0.4.0` adds `3` optional skills (`i-have-adhd`, `humanizer`, `session-handoff`) using the exact same metadata-index progressive disclosure mechanism.
 
 ### Scenario 1: Skill Metadata Loaded per Session vs. Eager Loading
 - **Baseline (Naive Eager Loading of All 30 Skill Directories):** `2,634,858 bytes` (`~658,714 tokens`) across all 30 skills, 36 Angular reference guides, and 28 UI/UX Pro Max CSV databases.

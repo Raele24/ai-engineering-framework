@@ -16,9 +16,11 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import re
+import shutil
 import sys
 from typing import Dict, List, Set, Tuple
 
@@ -35,22 +37,21 @@ REQUIRED_FOUNDATION_FILES = [
     "CLAUDE.md",
     "GEMINI.md",
     ".github/copilot-instructions.md",
-    "docs/ENVIRONMENT_AUDIT.md",
-    "docs/IMPLEMENTATION_PLAN.md",
     "docs/ARCHITECTURE.md",
     "docs/WORKFLOW.md",
     "docs/GETTING_STARTED.md",
+    "docs/CONSUMER_USAGE_GUIDE.md",
+    "docs/CUSTOMIZATION_GUIDE.md",
     "docs/INSTALLATION.md",
     "docs/CONFIGURATION.md",
     "docs/CONTRIBUTING.md",
     "docs/VERSIONING.md",
     "docs/SECURITY.md",
     "docs/ROADMAP.md",
-    "docs/SKILLS_RESEARCH_REPORT.md",
+    "docs/README.md",
     "docs/SKILL_COMPATIBILITY_MATRIX.md",
     "docs/TOKEN_OPTIMIZATION.md",
     "docs/SKILL_INSTALLATION_GUIDE.md",
-    "docs/RUNTIME_SKILLS_VALIDATION.md",
     "core/rules/engineering-principles.md",
     "core/rules/context-handoff-protocol.md",
     "core/rules/human-approval-gates.md",
@@ -60,10 +61,15 @@ REQUIRED_FOUNDATION_FILES = [
     "core/schemas/handoff-packet.schema.json",
     "core/schemas/framework-config.schema.json",
     "skills/registry.json",
+    "core/platform-capabilities.json",
     "scripts/bootstrap.py",
+    "scripts/compose.py",
     "scripts/validate.py",
     "scripts/sync_adapters.py",
     "scripts/preflight.py",
+    "scripts/platform_capabilities.py",
+    "scripts/readiness.py",
+    "scripts/run_tests.py",
 ]
 
 REQUIRED_CONSUMER_FILES = [
@@ -228,6 +234,25 @@ FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 MD_LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 FENCED_CODE_RE = re.compile(r"```.*?```", re.DOTALL)
 AGENTS_MD_SKILL_ROW_RE = re.compile(r"^\|\s*`([^`]+)`\s*\|\s*`[^`]+`\s*\|\s*`[^`]+`\s*\|\s*\[`([^`]+)`\]", re.MULTILINE)
+SHA256_HEX_RE = re.compile(r"^[0-9a-fA-F]{64}$")
+VALID_OWNERSHIP_CLASSES = {
+    "framework_managed",
+    "platform_projected_skill",
+    "consumer_owned",
+    "consumer_customized_generated",
+    "consumer_custom_skill",
+    "consumer_custom_agent",
+    "consumer_custom_prompt",
+    "consumer_custom_mcp",
+    "obsolete_framework_managed",
+    "unknown_untracked",
+}
+BANNED_CONSUMER_UPSTREAM_TOKENS = (
+    "docs/WORKFLOW.md",
+    "scripts/sync_adapters.py",
+    "scripts/bootstrap.py",
+    "python -m unittest",
+)
 
 
 def parse_simple_frontmatter(markdown_text: str) -> Dict[str, object]:
@@ -295,9 +320,145 @@ def check_required_files(root: Path, mode: str = "framework") -> List[str]:
     return errors
 
 
-def check_consumer_state(root: Path) -> List[str]:
-    """Validate consumer project configuration, .framework-state/manifest.json, and handoff packets."""
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _resolve_expected_consumer_projections(root: Path, enabled_platforms: List[str]) -> Dict[str, str]:
+    """Return {platform_id: projection_root} using core/platform-capabilities.json when available."""
+    cap_path = root / "core" / "platform-capabilities.json"
+    supported_roots = {".agents/skills", ".claude/skills"}
+    out: Dict[str, str] = {}
+    if cap_path.exists():
+        try:
+            if str(SCRIPT_DIR) not in sys.path:
+                sys.path.insert(0, str(SCRIPT_DIR))
+            import platform_capabilities  # noqa: E402
+
+            model = platform_capabilities.load_platform_capabilities(cap_path)
+            for pid in enabled_platforms:
+                if pid in model.get("by_id", {}):
+                    cap = platform_capabilities.get_platform(model, pid)
+                    for pat in cap.get("native_skill_dirs", {}).get("paths", []):
+                        prefix = str(pat).split("/<name>/", 1)[0].rstrip("/")
+                        if prefix in supported_roots:
+                            out[pid] = prefix
+                            break
+            return out
+        except Exception:
+            pass
+    for pid in enabled_platforms:
+        if pid == "claude-code":
+            out[pid] = ".claude/skills"
+        elif pid in {"antigravity", "copilot", "codex", "gemini-cli"}:
+            out[pid] = ".agents/skills"
+    return out
+
+
+HOST_GLOBAL_SKILL_LOCATIONS: Tuple[Tuple[str, str, str], ...] = (
+    (".agents/skills", "antigravity, codex, gemini-cli", "Host-global shared Agent Skills directory"),
+    (".claude/skills", "claude-code", "Host-global Claude Code user skills directory"),
+    (".gemini/config/skills", "antigravity", "Host-global Antigravity user skills directory"),
+    (".codex/skills", "codex", "Host-global Codex CLI skills directory"),
+)
+
+
+def inspect_host_global_skill_visibility(home_dir: Path | None = None) -> List[str]:
+    """Read-only visibility report of host-global skill folders without inspecting/modifying contents."""
+    effective_home = home_dir if home_dir is not None else Path.home()
+    info_msgs: List[str] = []
+    observed_any = False
+
+    for rel_sub, runtimes, label in HOST_GLOBAL_SKILL_LOCATIONS:
+        candidate = effective_home / Path(rel_sub)
+        if candidate.exists() and candidate.is_dir():
+            observed_any = True
+            try:
+                dir_count = sum(1 for entry in candidate.iterdir() if entry.is_dir())
+            except OSError:
+                dir_count = 0
+            info_msgs.append(
+                f"{label} detected (~/{rel_sub}, {dir_count} top-level folder(s)); visible to {runtimes} outside framework workspace control."
+            )
+
+    if not observed_any:
+        info_msgs.append(
+            "No host-global skill directories detected under user home; runtime discovery depends on host defaults."
+        )
+    return info_msgs
+
+
+def _is_unsafe_lockfile_path(raw_rel: object) -> bool:
+    if not isinstance(raw_rel, str) or not raw_rel.strip():
+        return True
+    if "\x00" in raw_rel:
+        return True
+    norm = raw_rel.replace("\\", "/")
+    if norm.startswith("/") or re.match(r"^[A-Za-z]:", norm):
+        return True
+    parts = [p for p in norm.split("/") if p != ""]
+    return not parts or any(p in {".", ".."} for p in parts)
+
+
+def _load_consumer_overlay_controls(root: Path) -> Tuple[Dict[str, object], Set[str], List[str]]:
+    """Load consumer controls (disabled.*, customizations.*) and custom skill names safely."""
     errors: List[str] = []
+    cfg_data: Dict[str, object] = {}
+    cfg_path = root / "project.framework.json"
+    if cfg_path.exists():
+        try:
+            loaded = json.loads(cfg_path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                cfg_data = loaded
+        except Exception:
+            cfg_data = {}
+
+    if str(SCRIPT_DIR) not in sys.path:
+        sys.path.insert(0, str(SCRIPT_DIR))
+    try:
+        import compose  # noqa: E402
+
+        controls = compose.normalize_project_controls(cfg_data)
+        overlay_rel = str(controls["customizations"]["overlayDir"])
+        overlay = compose.load_project_overlay(root, overlay_rel)
+        custom_skills = set(overlay.get("custom_skills", {}).keys())  # type: ignore[union-attr]
+        return controls, custom_skills, errors
+    except Exception as exc:
+        errors.append(f"Consumer customization overlay/config error: {exc}")
+        fallback = {
+            "disabled": {
+                "skills": set(),
+                "agents": set(),
+                "phases": set(),
+                "gates": set(),
+                "mechanisms": set(),
+            },
+            "customizations": {
+                "overlayDir": ".framework-custom",
+                "promptInjectionMode": "inline",
+                "inlineMaxBytes": 16384,
+            },
+        }
+        return fallback, set(), errors
+
+
+def check_consumer_state(
+    root: Path,
+    warnings: List[str] | None = None,
+    info: List[str] | None = None,
+    home_dir: Path | None = None,
+) -> List[str]:
+    """Validate consumer project configuration, Lockfile v2 / projections, manifest, and handoffs."""
+    errors: List[str] = []
+    warn_list = warnings if warnings is not None else []
+    info_list = info if info is not None else []
+    enabled_platforms: List[str] = []
+
+    controls, custom_skills_names, overlay_errs = _load_consumer_overlay_controls(root)
+    errors.extend(overlay_errs)
+    disabled_ctrl: Dict[str, object] = controls["disabled"]  # type: ignore[assignment]
+    disabled_skills: Set[str] = set(disabled_ctrl.get("skills", set()))  # type: ignore[arg-type]
+    disabled_mechs: Set[str] = set(disabled_ctrl.get("mechanisms", set()))  # type: ignore[arg-type]
 
     # 1. project.framework.json
     cfg_path = root / "project.framework.json"
@@ -307,17 +468,240 @@ def check_consumer_state(root: Path) -> List[str]:
             missing_cfg = REQUIRED_CONSUMER_CONFIG_KEYS - set(cfg.keys())
             if missing_cfg:
                 errors.append(f"project.framework.json: Missing required keys: {sorted(missing_cfg)}")
+            if isinstance(cfg.get("enabledPlatforms"), list):
+                enabled_platforms = [str(p) for p in cfg["enabledPlatforms"]]
         except Exception as exc:
             errors.append(f"project.framework.json: Invalid JSON ({exc})")
 
-    # 2. .framework-lock.json
+    # 2. .framework-lock.json (supports v0.3.0 legacy + v2.0.0 projection ownership)
     lock_path = root / ".framework-lock.json"
     if lock_path.exists():
         try:
             lock = json.loads(lock_path.read_text(encoding="utf-8"))
-            for k in ("framework_version", "platforms", "optional_packs", "managed_files"):
-                if k not in lock:
-                    errors.append(f".framework-lock.json: Missing key '{k}'")
+            if not isinstance(lock, dict):
+                errors.append(".framework-lock.json: Root must be a JSON object")
+            elif lock.get("schema_version") is None:
+                for k in ("framework_version", "platforms", "optional_packs", "managed_files"):
+                    if k not in lock:
+                        errors.append(f".framework-lock.json: Missing key '{k}'")
+                warn_list.append(
+                    "Legacy v0.3.0 .framework-lock.json detected without native skill projections; "
+                    "run 'python scripts/bootstrap.py --target . --update' to migrate to lockfile schema 2.0.0."
+                )
+                info_list.extend(inspect_host_global_skill_visibility(home_dir))
+            elif lock.get("schema_version") != "2.0.0":
+                errors.append(
+                    f".framework-lock.json: Unsupported schema_version '{lock.get('schema_version')}'"
+                )
+            else:
+                req_v2 = {
+                    "schema_version",
+                    "framework_version",
+                    "enabled_platforms",
+                    "optional_packs",
+                    "projection_state",
+                    "projected_skills",
+                    "managed_files",
+                }
+                missing_v2 = sorted(req_v2 - set(lock.keys()))
+                if missing_v2:
+                    errors.append(f".framework-lock.json: Missing v2 required keys: {missing_v2}")
+                else:
+                    proj_state = lock.get("projection_state", {})
+                    if not isinstance(proj_state, dict) or proj_state.get("status") != "completed":
+                        errors.append(
+                            f".framework-lock.json: projection_state.status is '{proj_state.get('status')}' "
+                            "(interrupted bootstrap; re-run bootstrap.py to recover)."
+                        )
+
+                    lock_platforms = lock.get("enabled_platforms", [])
+                    if not isinstance(lock_platforms, list):
+                        errors.append(".framework-lock.json: 'enabled_platforms' must be a list")
+                    elif enabled_platforms and sorted(set(lock_platforms)) != sorted(set(enabled_platforms)):
+                        errors.append(
+                            f".framework-lock.json enabled_platforms {sorted(lock_platforms)} does not match "
+                            f"project.framework.json enabledPlatforms {sorted(enabled_platforms)}"
+                        )
+
+                    managed = lock.get("managed_files", {})
+                    projected_skills = lock.get("projected_skills", {})
+                    if not isinstance(managed, dict) or not isinstance(projected_skills, dict):
+                        errors.append(".framework-lock.json: 'managed_files' and 'projected_skills' must be objects")
+                    else:
+                        installed_skills: Set[str] = set()
+                        reg_path = root / "skills" / "registry.json"
+                        if reg_path.exists():
+                            try:
+                                reg_data = json.loads(reg_path.read_text(encoding="utf-8"))
+                                installed_skills = {
+                                    str(s.get("name", ""))
+                                    for s in reg_data.get("skills", [])
+                                    if s.get("name") and s.get("enabled", True)
+                                }
+                            except Exception:
+                                pass
+
+                        expected_projected_skills = (installed_skills - disabled_skills) | (
+                            custom_skills_names - disabled_skills
+                        )
+
+                        expected_proj_roots = _resolve_expected_consumer_projections(
+                            root, [str(p) for p in lock_platforms]
+                        )
+                        for pid, exp_root in expected_proj_roots.items():
+                            pdata = projected_skills.get(pid)
+                            if not isinstance(pdata, dict):
+                                errors.append(f".framework-lock.json: missing projected_skills entry for '{pid}'")
+                                continue
+                            if pdata.get("projection_root") != exp_root:
+                                errors.append(
+                                    f".framework-lock.json: projected_skills['{pid}'].projection_root "
+                                    f"'{pdata.get('projection_root')}' != expected '{exp_root}'"
+                                )
+                            listed_skills = pdata.get("skills", [])
+                            if not isinstance(listed_skills, list):
+                                errors.append(f".framework-lock.json: projected_skills['{pid}'].skills must be a list")
+                            elif expected_projected_skills and set(listed_skills) != expected_projected_skills:
+                                missing_sk = sorted(expected_projected_skills - set(listed_skills))
+                                stale_sk = sorted(set(listed_skills) - expected_projected_skills)
+                                if missing_sk:
+                                    errors.append(
+                                        f".framework-lock.json projected_skills['{pid}'] missing installed skills: {missing_sk}"
+                                    )
+                                if stale_sk:
+                                    errors.append(
+                                        f".framework-lock.json projected_skills['{pid}'] contains stale skills: {stale_sk}"
+                                    )
+                            for sk_name in sorted(expected_projected_skills):
+                                skill_md = root / Path(exp_root) / sk_name / "SKILL.md"
+                                if not skill_md.exists():
+                                    errors.append(
+                                        f"Missing native projected skill file for '{pid}': {exp_root}/{sk_name}/SKILL.md"
+                                    )
+
+                        extra_proj_plats = set(projected_skills.keys()) - set(expected_proj_roots.keys())
+                        if extra_proj_plats:
+                            errors.append(
+                                f".framework-lock.json contains stale projected_skills platforms: {sorted(extra_proj_plats)}"
+                            )
+
+                        # Case-insensitive skill name collision check across installed and custom skills
+                        seen_skill_fold: Dict[str, str] = {}
+                        for sk_raw in sorted(installed_skills | custom_skills_names):
+                            fold_key = sk_raw.casefold()
+                            if fold_key in seen_skill_fold and seen_skill_fold[fold_key] != sk_raw:
+                                errors.append(
+                                    f"skills/registry.json: case-insensitive skill name collision '{seen_skill_fold[fold_key]}' vs '{sk_raw}'"
+                                )
+                            seen_skill_fold[fold_key] = sk_raw
+
+                        # Check managed_files ownership, hashes, case collisions, unsafe paths, and active platform consistency
+                        enabled_set = set(str(p) for p in lock_platforms)
+                        seen_managed_fold: Dict[str, str] = {}
+                        for rel, meta in sorted(managed.items()):
+                            if _is_unsafe_lockfile_path(rel):
+                                errors.append(f".framework-lock.json: unsafe path rejected '{rel}'")
+                                continue
+                            rel_fold = rel.casefold()
+                            if rel_fold in seen_managed_fold and seen_managed_fold[rel_fold] != rel:
+                                errors.append(
+                                    f".framework-lock.json: case-insensitive path collision '{seen_managed_fold[rel_fold]}' vs '{rel}'"
+                                )
+                            seen_managed_fold[rel_fold] = rel
+
+                            if not isinstance(meta, dict):
+                                errors.append(f".framework-lock.json: entry for '{rel}' must be an object")
+                                continue
+                            ownership = meta.get("ownership")
+                            sha_val = meta.get("sha256")
+                            plats = meta.get("platforms")
+                            if ownership not in VALID_OWNERSHIP_CLASSES:
+                                errors.append(f".framework-lock.json: invalid ownership '{ownership}' for '{rel}'")
+                            if not isinstance(sha_val, str) or not SHA256_HEX_RE.match(sha_val):
+                                errors.append(f".framework-lock.json: invalid sha256 for '{rel}'")
+                            if not isinstance(plats, list):
+                                errors.append(f".framework-lock.json: invalid platforms list for '{rel}'")
+                            elif any(str(p) not in (VALID_PLATFORMS | {"core"}) for p in plats):
+                                unknown_p = sorted({str(p) for p in plats} - (VALID_PLATFORMS | {"core"}))
+                                errors.append(f".framework-lock.json: unknown platform(s) {unknown_p} for '{rel}'")
+
+                            disk_file = root / Path(rel)
+                            if ownership in {"platform_projected_skill", "consumer_custom_skill"}:
+                                src_rel = meta.get("source")
+                                if not src_rel or _is_unsafe_lockfile_path(src_rel):
+                                    errors.append(f".framework-lock.json: projected entry '{rel}' invalid or missing 'source'")
+                                skill_ref = str(meta.get("skill", ""))
+                                valid_refs = (
+                                    expected_projected_skills
+                                    if ownership == "platform_projected_skill"
+                                    else (custom_skills_names - disabled_skills)
+                                )
+                                if valid_refs and (not skill_ref or skill_ref not in valid_refs):
+                                    errors.append(
+                                        f".framework-lock.json: projected entry '{rel}' references unregistered/stale skill '{skill_ref}'"
+                                    )
+                                if not plats or not set(str(p) for p in plats).issubset(enabled_set):
+                                    errors.append(
+                                        f".framework-lock.json: projected entry '{rel}' platforms {plats} inconsistent with {sorted(enabled_set)}"
+                                    )
+                            if ownership in {
+                                "framework_managed",
+                                "platform_projected_skill",
+                                "consumer_custom_skill",
+                                "consumer_custom_agent",
+                            }:
+                                if not disk_file.exists():
+                                    errors.append(f"Missing lockfile-tracked file on disk: {rel}")
+                                elif isinstance(sha_val, str) and _sha256_file(disk_file) != sha_val.lower():
+                                    warn_list.append(
+                                        f"Locally customized {ownership} file differs from locked hash (preserved on update): {rel}"
+                                    )
+                            elif ownership == "consumer_customized_generated" and disk_file.exists():
+                                warn_list.append(f"Preserved consumer-customized file outside active plan: {rel}")
+
+                        # Scan projection directories for unexpected untracked files (WARNING) or stale/colliding items (ERROR)
+                        active_roots = set(expected_proj_roots.values())
+                        for proj_root in (".agents/skills", ".claude/skills"):
+                            proj_dir = root / Path(proj_root)
+                            if not proj_dir.exists():
+                                continue
+                            seen_dir_fold: Dict[str, str] = {}
+                            for child_dir in sorted(proj_dir.iterdir()):
+                                if child_dir.is_dir():
+                                    cf = child_dir.name.casefold()
+                                    if cf in seen_dir_fold and seen_dir_fold[cf] != child_dir.name:
+                                        errors.append(
+                                            f"Case-insensitive skill folder collision in '{proj_root}': '{seen_dir_fold[cf]}' vs '{child_dir.name}'"
+                                        )
+                                    seen_dir_fold[cf] = child_dir.name
+
+                            for disk_item in sorted(proj_dir.rglob("*")):
+                                if not disk_item.is_file():
+                                    continue
+                                rel_item = disk_item.relative_to(root).as_posix()
+                                if rel_item not in managed:
+                                    warn_list.append(
+                                        f"Unexpected untracked file inside projection directory (preserved): {rel_item}"
+                                    )
+                                elif proj_root not in active_roots:
+                                    entry_own = managed[rel_item].get("ownership")
+                                    if entry_own != "consumer_customized_generated":
+                                        errors.append(
+                                            f"Stale projection file on disk for disabled platform root '{proj_root}': {rel_item}"
+                                        )
+
+                        info_list.extend(inspect_host_global_skill_visibility(home_dir))
+                        if "graphify" not in disabled_mechs and not (root / "graphify-out" / "graph.json").exists():
+                            if shutil.which("graphify") is None:
+                                info_list.append(
+                                    "Graphify CLI not installed on this host (optional AST/concept graph skipped; "
+                                    "install via 'pipx install graphifyy' or 'pip install graphifyy')."
+                                )
+                            else:
+                                info_list.append(
+                                    "Graphify CLI is available, and graphify-out/graph.json is not yet generated "
+                                    "(run `graphify .` or let Phase 1 generate it if repository has >=15 files)."
+                                )
         except Exception as exc:
             errors.append(f".framework-lock.json: Invalid JSON ({exc})")
 
@@ -361,6 +745,57 @@ def check_consumer_state(root: Path) -> List[str]:
     return errors
 
 
+def _strip_jsonc(raw_text: str) -> str:
+    """Strip // line comments, /* block comments */, and trailing commas outside strings."""
+    out: List[str] = []
+    i = 0
+    n = len(raw_text)
+    in_string = False
+    escape = False
+    while i < n:
+        ch = raw_text[i]
+        if in_string:
+            out.append(ch)
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            i += 1
+            continue
+        if ch == '"':
+            in_string = True
+            out.append(ch)
+            i += 1
+            continue
+        if ch == "/" and i + 1 < n and raw_text[i + 1] == "/":
+            i += 2
+            while i < n and raw_text[i] != "\n":
+                i += 1
+            continue
+        if ch == "/" and i + 1 < n and raw_text[i + 1] == "*":
+            i += 2
+            while i + 1 < n and not (raw_text[i] == "*" and raw_text[i + 1] == "/"):
+                i += 1
+            i += 2
+            continue
+        out.append(ch)
+        i += 1
+    no_comments = "".join(out)
+    return re.sub(r",(\s*[}\]])", r"\1", no_comments)
+
+
+def _is_jsonc_config(rel_path: str) -> bool:
+    norm = rel_path.replace("\\", "/")
+    name = Path(norm).name
+    return (
+        norm.startswith(".vscode/")
+        or name == "jsconfig.json"
+        or (name.startswith("tsconfig") and name.endswith(".json"))
+    )
+
+
 def check_json_files(root: Path) -> List[str]:
     errors: List[str] = []
     skip_dirs = {".git", "node_modules", "graphify-out", "dist", ".angular", "bin", "obj", "__pycache__"}
@@ -369,22 +804,43 @@ def check_json_files(root: Path) -> List[str]:
             continue
         rel = json_path.relative_to(root).as_posix()
         try:
-            json.loads(json_path.read_text(encoding="utf-8"))
+            raw = json_path.read_text(encoding="utf-8")
+            text = _strip_jsonc(raw) if _is_jsonc_config(rel) else raw
+            json.loads(text)
         except Exception as exc:
             errors.append(f"Invalid JSON in {rel}: {exc}")
     return errors
 
 
-def check_agents_frontmatter(root: Path) -> List[str]:
+def check_agents_frontmatter(root: Path, mode: str = "framework") -> List[str]:
     errors: List[str] = []
     agents_dir = root / "agents"
     if not agents_dir.exists():
         return ["Missing agents/ directory"]
     agent_files = sorted(agents_dir.glob("*.md"))
+    disabled_agents: Set[str] = set()
+    custom_skills_names: Set[str] = set()
+    canonical_agent_names = {
+        "product-analyst",
+        "software-architect",
+        "planner-orchestrator",
+        "implementation-engineer",
+        "code-reviewer",
+        "qa-engineer",
+        "security-engineer",
+        "devops-release-engineer",
+    }
+    if mode == "consumer":
+        controls, custom_skills_names, _ = _load_consumer_overlay_controls(root)
+        disabled_agents = set(controls["disabled"]["agents"])  # type: ignore[index, arg-type]
     if not agent_files:
+        if mode == "consumer" and disabled_agents:
+            return []
         return ["No agent role definitions found in agents/"]
 
     known_agent_names = {p.stem for p in agent_files}
+    if mode == "consumer":
+        known_agent_names |= (canonical_agent_names & disabled_agents)
     registered_skills: Set[str] = set()
     reg_path = root / "skills" / "registry.json"
     if reg_path.exists():
@@ -393,6 +849,7 @@ def check_agents_frontmatter(root: Path) -> List[str]:
             registered_skills = {str(s.get("name", "")) for s in reg_data.get("skills", [])}
         except Exception:
             pass
+    valid_skills = registered_skills | custom_skills_names
 
     for path in agent_files:
         rel = path.relative_to(root).as_posix()
@@ -411,9 +868,9 @@ def check_agents_frontmatter(root: Path) -> List[str]:
             errors.append(f"{rel}: 'phases' must be a non-empty list of integers between 1 and 15")
 
         req_skills = meta.get("required_skills", [])
-        if isinstance(req_skills, list) and registered_skills:
+        if isinstance(req_skills, list) and valid_skills:
             for sk in req_skills:
-                if str(sk) not in registered_skills:
+                if str(sk) not in valid_skills:
                     errors.append(f"{rel}: required_skills references uninstalled/unregistered skill '{sk}'")
 
         targets = meta.get("delegation_targets", [])
@@ -497,31 +954,343 @@ def check_skills_and_registry(root: Path) -> List[str]:
                     f"AGENTS.md references skills not in skills/registry.json: {sorted(uninstalled_in_table)}"
                 )
 
-    # Verify .agents/skills.json entries exist on disk
+    # Verify .agents/skills.json entries exist on disk and cover every registered skill
     agy_skills_path = root / ".agents" / "skills.json"
     if agy_skills_path.exists():
         try:
             agy_data = json.loads(agy_skills_path.read_text(encoding="utf-8"))
+            entry_dirs: List[str] = []
             for item in agy_data.get("entries", []):
-                entry_rel = str(item.get("path", ""))
-                if entry_rel and not (root / Path(entry_rel)).exists():
-                    errors.append(f".agents/skills.json references missing directory: {entry_rel}")
+                entry_rel = str(item.get("path", "")).replace("\\", "/").rstrip("/")
+                if entry_rel:
+                    entry_dirs.append(entry_rel)
+                    if not (root / Path(entry_rel)).exists():
+                        errors.append(f".agents/skills.json references missing directory: {entry_rel}")
+
+            if entry_dirs:
+                for skill_name, skill_entry in registered_by_name.items():
+                    if not skill_entry.get("enabled", True):
+                        continue
+                    skill_rel = str(skill_entry.get("path", "")).replace("\\", "/")
+                    if not any(skill_rel.startswith(f"{edir}/") for edir in entry_dirs):
+                        errors.append(
+                            f".agents/skills.json omits registered skill '{skill_name}' directory ({skill_rel})"
+                        )
         except Exception as exc:
             errors.append(f".agents/skills.json parse error: {exc}")
 
     return errors
 
 
-def check_adapter_sync(root: Path, mode: str = "framework") -> List[str]:
+def check_platform_capabilities(root: Path) -> List[str]:
+    """Validate core/platform-capabilities.json schema, states, and platform coverage."""
+    cap_path = root / "core" / "platform-capabilities.json"
+    if not cap_path.exists():
+        return ["Missing required capability model: core/platform-capabilities.json"]
+
+    if str(SCRIPT_DIR) not in sys.path:
+        sys.path.insert(0, str(SCRIPT_DIR))
+    import platform_capabilities  # noqa: E402
+
+    try:
+        model = platform_capabilities.load_platform_capabilities(cap_path)
+    except platform_capabilities.CapabilityModelError as exc:
+        return [str(exc)]
+
+    defined_ids = set(model.get("platform_ids", []))
+    missing_platforms = sorted(VALID_PLATFORMS - defined_ids)
+    extra_platforms = sorted(defined_ids - VALID_PLATFORMS)
+    errors: List[str] = []
+    if missing_platforms:
+        errors.append(f"core/platform-capabilities.json missing required platforms: {missing_platforms}")
+    if extra_platforms:
+        errors.append(f"core/platform-capabilities.json defines unknown platforms: {extra_platforms}")
+    return errors
+
+
+def check_consumer_adapter_references(root: Path, warnings: List[str] | None = None) -> List[str]:
+    """Verify consumer adapters do not retain upstream-only paths or commands (GAP-01)."""
+    errors: List[str] = []
+    warn_list = warnings if warnings is not None else []
+    lock_is_v2 = False
+    lock_path = root / ".framework-lock.json"
+    if lock_path.exists():
+        try:
+            lock_data = json.loads(lock_path.read_text(encoding="utf-8"))
+            lock_is_v2 = isinstance(lock_data, dict) and lock_data.get("schema_version") == "2.0.0"
+        except Exception:
+            lock_is_v2 = False
+
+    adapter_targets: List[Path] = [
+        root / "CLAUDE.md",
+        root / "GEMINI.md",
+        root / ".agents" / "rules" / "framework-core.md",
+        root / ".github" / "copilot-instructions.md",
+        root / ".claude" / "settings.json",
+    ]
+    for folder, glob_pat in (
+        (".github/instructions", "*.md"),
+        (".github/prompts", "*.md"),
+        (".claude/commands", "*.md"),
+        (".gemini/commands", "*.toml"),
+    ):
+        d = root / Path(folder)
+        if d.exists():
+            adapter_targets.extend(sorted(d.glob(glob_pat)))
+
+    for target in adapter_targets:
+        if not target.exists():
+            continue
+        rel = target.relative_to(root).as_posix()
+        text = target.read_text(encoding="utf-8")
+        for banned in BANNED_CONSUMER_UPSTREAM_TOKENS:
+            if banned in text:
+                msg = f"Consumer adapter '{rel}' contains upstream-only reference '{banned}'"
+                if lock_is_v2:
+                    errors.append(msg)
+                else:
+                    warn_list.append(f"Legacy consumer adapter warning: {msg}")
+    return errors
+
+
+CANONICAL_TOOL_IDS = {"read_file", "write_file", "edit_file", "run_command"}
+CLAUDE_READONLY_TOOLS = {"Read", "Glob", "Grep"}
+CLAUDE_WRITE_TOOLS = {"Write", "Edit", "Bash"}
+COPILOT_READONLY_TOOLS = {"read", "search"}
+COPILOT_WRITE_TOOLS = {"edit", "terminal"}
+CLAUDE_SETTINGS_ALLOWED_KEYS = {
+    "$schema",
+    "permissions",
+    "hooks",
+    "env",
+    "model",
+    "modelSettings",
+    "editorMode",
+    "theme",
+    "statusLine",
+}
+ANTIGRAVITY_VALID_HOOK_EVENTS = {
+    "SessionStart",
+    "PreToolUse",
+    "PostToolUse",
+    "PreInvocation",
+    "PostInvocation",
+    "Stop",
+}
+
+
+def _parse_tools_field(raw_tools: object) -> List[str]:
+    if isinstance(raw_tools, list):
+        return [str(t).strip() for t in raw_tools if str(t).strip()]
+    if isinstance(raw_tools, str):
+        return [t.strip() for t in raw_tools.split(",") if t.strip()]
+    return []
+
+
+def check_m9_agent_and_settings_contracts(
+    root: Path,
+    mode: str = "framework",
+    warnings: List[str] | None = None,
+) -> List[str]:
+    """Validate Claude/Copilot agent tool schemas, Antigravity hooks.json, and settings schemas."""
+    errors: List[str] = []
+    warn_list = warnings if warnings is not None else []
+    strict = True
+    if mode == "consumer":
+        lock_path = root / ".framework-lock.json"
+        if lock_path.exists():
+            try:
+                lock_data = json.loads(lock_path.read_text(encoding="utf-8"))
+                strict = isinstance(lock_data, dict) and lock_data.get("schema_version") == "2.0.0"
+            except Exception:
+                strict = False
+
+    def _emit(msg: str) -> None:
+        if strict:
+            errors.append(msg)
+        else:
+            warn_list.append(f"Legacy consumer contract warning: {msg}")
+
+    # 1. Claude Code agent definitions
+    claude_agents_dir = (
+        root / "adapters" / "claude-code" / "agents" if mode == "framework" else root / ".claude" / "agents"
+    )
+    if claude_agents_dir.exists():
+        for agent_md in sorted(claude_agents_dir.glob("*.md")):
+            rel = agent_md.relative_to(root).as_posix()
+            meta = parse_simple_frontmatter(agent_md.read_text(encoding="utf-8"))
+            if not meta.get("name") or not meta.get("description"):
+                _emit(f"{rel}: Claude agent frontmatter missing required 'name' or 'description'")
+            for bad_key in ("subagent", "mainAgent"):
+                if bad_key in meta:
+                    _emit(f"{rel}: unsupported Claude agent frontmatter key '{bad_key}'")
+            tools_list = _parse_tools_field(meta.get("tools"))
+            for tool_id in tools_list:
+                if tool_id in CANONICAL_TOOL_IDS:
+                    _emit(f"{rel}: unmapped canonical tool '{tool_id}' in Claude agent")
+            if "reviewer" in agent_md.stem:
+                if any(t in CLAUDE_WRITE_TOOLS for t in tools_list) or not set(tools_list).issubset(
+                    CLAUDE_READONLY_TOOLS
+                ):
+                    _emit(f"{rel}: reviewer agent must restrict tools to read-only {sorted(CLAUDE_READONLY_TOOLS)}")
+
+    # 2. Copilot custom agent definitions
+    copilot_agents_dir = (
+        root / "adapters" / "copilot" if mode == "framework" else root / ".github" / "agents"
+    )
+    if copilot_agents_dir.exists():
+        for agent_md in sorted(copilot_agents_dir.glob("*.agent.md")):
+            rel = agent_md.relative_to(root).as_posix()
+            meta = parse_simple_frontmatter(agent_md.read_text(encoding="utf-8"))
+            if not meta.get("description"):
+                _emit(f"{rel}: Copilot agent frontmatter missing 'description'")
+            tools_list = _parse_tools_field(meta.get("tools"))
+            for tool_id in tools_list:
+                if tool_id in CANONICAL_TOOL_IDS:
+                    _emit(f"{rel}: unmapped canonical tool '{tool_id}' in Copilot agent")
+            if "reviewer" in agent_md.stem:
+                if any(t in COPILOT_WRITE_TOOLS for t in tools_list) or not set(tools_list).issubset(
+                    COPILOT_READONLY_TOOLS
+                ):
+                    _emit(f"{rel}: reviewer agent must restrict tools to read-only {sorted(COPILOT_READONLY_TOOLS)}")
+
+    # 3. Antigravity hooks contract
+    hooks_path = root / "adapters" / "antigravity" / "hooks.json"
+    if hooks_path.exists():
+        try:
+            hooks_data = json.loads(hooks_path.read_text(encoding="utf-8"))
+            if not isinstance(hooks_data, dict) or not hooks_data:
+                _emit("adapters/antigravity/hooks.json: root must be a non-empty object of named hooks")
+            else:
+                if "description" in hooks_data or "hooks" in hooks_data:
+                    _emit(
+                        "adapters/antigravity/hooks.json: top-level 'description'/'hooks' keys do not match Antigravity hooks contract"
+                    )
+                for hook_name, hook_cfg in hooks_data.items():
+                    if not isinstance(hook_cfg, dict):
+                        _emit(f"adapters/antigravity/hooks.json: hook '{hook_name}' must be an object")
+                        continue
+                    if "enabled" in hook_cfg and not isinstance(hook_cfg["enabled"], bool):
+                        _emit(f"adapters/antigravity/hooks.json: '{hook_name}.enabled' must be a boolean")
+                    for ev_key, ev_val in hook_cfg.items():
+                        if ev_key == "enabled":
+                            continue
+                        if ev_key not in ANTIGRAVITY_VALID_HOOK_EVENTS:
+                            _emit(f"adapters/antigravity/hooks.json: unsupported hook event '{ev_key}' in '{hook_name}'")
+                            continue
+                        if not isinstance(ev_val, list):
+                            _emit(f"adapters/antigravity/hooks.json: '{hook_name}.{ev_key}' must be a list")
+                            continue
+                        if ev_key in {"PreToolUse", "PostToolUse"}:
+                            for grp in ev_val:
+                                if not isinstance(grp, dict) or not isinstance(grp.get("hooks"), list):
+                                    _emit(
+                                        f"adapters/antigravity/hooks.json: grouped event '{hook_name}.{ev_key}' requires object with 'hooks' list"
+                                    )
+                        else:
+                            for h in ev_val:
+                                if not isinstance(h, dict) or h.get("type") != "command" or not isinstance(h.get("command"), str):
+                                    _emit(
+                                        f"adapters/antigravity/hooks.json: handler in '{hook_name}.{ev_key}' requires type='command' and command string"
+                                    )
+        except Exception as exc:
+            _emit(f"adapters/antigravity/hooks.json: invalid JSON ({exc})")
+
+    # 4. Claude & Gemini settings schemas
+    claude_settings_path = (
+        root / "adapters" / "claude-code" / "settings.json" if mode == "framework" else root / ".claude" / "settings.json"
+    )
+    if claude_settings_path.exists():
+        rel_cs = claude_settings_path.relative_to(root).as_posix()
+        try:
+            cs_data = json.loads(claude_settings_path.read_text(encoding="utf-8"))
+            if not isinstance(cs_data, dict):
+                _emit(f"{rel_cs}: root must be a JSON object")
+            else:
+                if "description" in cs_data:
+                    _emit(f"{rel_cs}: unsupported top-level 'description' metadata key")
+                extra_cs = set(cs_data.keys()) - CLAUDE_SETTINGS_ALLOWED_KEYS
+                if extra_cs:
+                    _emit(f"{rel_cs}: unsupported top-level Claude settings key(s): {sorted(extra_cs)}")
+                perms = cs_data.get("permissions")
+                if perms is not None and (
+                    not isinstance(perms, dict)
+                    or any(not isinstance(perms[k], list) for k in perms if k in {"allow", "deny", "ask"})
+                ):
+                    _emit(f"{rel_cs}: malformed 'permissions' object")
+        except Exception as exc:
+            _emit(f"{rel_cs}: invalid JSON ({exc})")
+
+    gemini_settings_path = (
+        root / "adapters" / "gemini-cli" / "settings.json" if mode == "framework" else root / ".gemini" / "settings.json"
+    )
+    if gemini_settings_path.exists():
+        rel_gs = gemini_settings_path.relative_to(root).as_posix()
+        try:
+            gs_data = json.loads(gemini_settings_path.read_text(encoding="utf-8"))
+            if not isinstance(gs_data, dict):
+                _emit(f"{rel_gs}: root must be a JSON object")
+            else:
+                if "description" in gs_data:
+                    _emit(f"{rel_gs}: unsupported top-level 'description' metadata key")
+                ctx_names = gs_data.get("contextFileName")
+                if ctx_names is not None and not (
+                    isinstance(ctx_names, str)
+                    or (isinstance(ctx_names, list) and all(isinstance(x, str) for x in ctx_names))
+                ):
+                    _emit(f"{rel_gs}: 'contextFileName' must be a string or list of strings")
+        except Exception as exc:
+            _emit(f"{rel_gs}: invalid JSON ({exc})")
+
+    # 5. Codex TOML & Gemini command TOML syntax verification
+    try:
+        import tomllib
+    except ModuleNotFoundError:
+        tomllib = None  # type: ignore[assignment]
+
+    if tomllib is not None:
+        codex_toml = (
+            root / "adapters" / "codex" / "config.toml" if mode == "framework" else root / ".codex" / "config.toml"
+        )
+        if codex_toml.exists():
+            rel_ct = codex_toml.relative_to(root).as_posix()
+            try:
+                tomllib.loads(codex_toml.read_text(encoding="utf-8"))
+            except Exception as exc:
+                _emit(f"{rel_ct}: invalid TOML ({exc})")
+
+        gemini_cmd_dir = (
+            root / "adapters" / "gemini-cli" / "commands"
+            if mode == "framework"
+            else root / ".gemini" / "commands"
+        )
+        if gemini_cmd_dir.exists():
+            for toml_path in sorted(gemini_cmd_dir.glob("*.toml")):
+                rel_gc = toml_path.relative_to(root).as_posix()
+                try:
+                    parsed_toml = tomllib.loads(toml_path.read_text(encoding="utf-8"))
+                    if not isinstance(parsed_toml.get("prompt"), str) or not parsed_toml["prompt"].strip():
+                        _emit(f"{rel_gc}: Gemini command TOML missing non-empty 'prompt'")
+                except Exception as exc:
+                    _emit(f"{rel_gc}: invalid TOML ({exc})")
+
+    return errors
+
+
+def check_adapter_sync(
+    root: Path,
+    mode: str = "framework",
+    warnings: List[str] | None = None,
+) -> List[str]:
     if mode == "framework":
         if str(SCRIPT_DIR) not in sys.path:
             sys.path.insert(0, str(SCRIPT_DIR))
         import sync_adapters  # noqa: E402
 
         ok, drifted = sync_adapters.sync_adapters(root, check_only=True)
-        if not ok:
-            return [f"Platform adapter out of sync with canonical source: {p}" for p in drifted]
-        return []
+        errs = [f"Platform adapter out of sync with canonical source: {p}" for p in drifted] if not ok else []
+        errs.extend(check_m9_agent_and_settings_contracts(root, mode="framework", warnings=warnings))
+        return errs
 
     # Consumer mode: check enabled platforms in project.framework.json
     errors: List[str] = []
@@ -535,10 +1304,29 @@ def check_adapter_sync(root: Path, mode: str = "framework") -> List[str]:
         except Exception:
             pass
 
+    controls, _, _ = _load_consumer_overlay_controls(root)
+    disabled_ctrl: Dict[str, object] = controls["disabled"]  # type: ignore[assignment]
+    disabled_agents = set(disabled_ctrl.get("agents", set()))  # type: ignore[arg-type]
+    disabled_mechs = set(disabled_ctrl.get("mechanisms", set()))  # type: ignore[arg-type]
+    disabled_phases = set(disabled_ctrl.get("phases", set()))  # type: ignore[arg-type]
+    reviewer_disabled = (
+        ("code-reviewer" in disabled_agents)
+        or ("code-review" in disabled_mechs)
+        or (10 in disabled_phases)
+    )
+
     for plat in enabled_platforms:
         for req_rel in CONSUMER_PLATFORM_FILES.get(plat, []):
+            if reviewer_disabled and req_rel in {
+                ".github/agents/code-reviewer.agent.md",
+                ".claude/agents/framework-code-reviewer.md",
+            }:
+                continue
             if not (root / Path(req_rel)).exists():
                 errors.append(f"Missing consumer adapter file for platform '{plat}': {req_rel}")
+
+    errors.extend(check_consumer_adapter_references(root, warnings=warnings))
+    errors.extend(check_m9_agent_and_settings_contracts(root, mode="consumer", warnings=warnings))
     return errors
 
 
@@ -617,25 +1405,48 @@ def check_secrets(root: Path) -> List[str]:
     return errors
 
 
-def run_validation(root: Path, mode: str = "auto") -> Tuple[bool, Dict[str, List[str]]]:
+def run_validation_full(
+    root: Path,
+    mode: str = "auto",
+    home_dir: Path | None = None,
+) -> Tuple[bool, Dict[str, List[str]], List[str], List[str]]:
     effective_mode = detect_validation_mode(root) if mode == "auto" else mode
     if effective_mode not in {"framework", "consumer"}:
         raise ValueError(f"Unsupported validation mode '{mode}'. Choose from: auto, framework, consumer")
 
+    warnings: List[str] = []
+    info: List[str] = []
     report: Dict[str, List[str]] = {
         "required_files": check_required_files(root, mode=effective_mode),
         "json_syntax": check_json_files(root),
-        "agents_frontmatter": check_agents_frontmatter(root),
+        "agents_frontmatter": check_agents_frontmatter(root, mode=effective_mode),
         "skills_and_registry": check_skills_and_registry(root),
-        "adapter_sync": check_adapter_sync(root, mode=effective_mode),
+        "adapter_sync": check_adapter_sync(root, mode=effective_mode, warnings=warnings),
         "markdown_links": check_markdown_links(root),
         "secret_scan": check_secrets(root),
     }
+    if effective_mode == "framework":
+        report["platform_capabilities"] = check_platform_capabilities(root)
     if effective_mode == "consumer":
-        report["consumer_state"] = check_consumer_state(root)
+        report["consumer_state"] = check_consumer_state(
+            root, warnings=warnings, info=info, home_dir=home_dir
+        )
 
     all_passed = all(len(errs) == 0 for errs in report.values())
-    return all_passed, report
+    return all_passed, report, warnings, info
+
+
+def run_validation_with_warnings(
+    root: Path,
+    mode: str = "auto",
+) -> Tuple[bool, Dict[str, List[str]], List[str]]:
+    passed, report, warnings, _ = run_validation_full(root, mode=mode)
+    return passed, report, warnings
+
+
+def run_validation(root: Path, mode: str = "auto") -> Tuple[bool, Dict[str, List[str]]]:
+    passed, report, _, _ = run_validation_full(root, mode=mode)
+    return passed, report
 
 
 def main(argv: List[str] | None = None) -> int:
@@ -653,7 +1464,7 @@ def main(argv: List[str] | None = None) -> int:
 
     root = args.root.resolve()
     effective_mode = detect_validation_mode(root) if args.mode == "auto" else args.mode
-    passed, report = run_validation(root, mode=effective_mode)
+    passed, report, warnings, info = run_validation_full(root, mode=effective_mode)
     total_errors = sum(len(v) for v in report.values())
 
     if args.json:
@@ -663,7 +1474,11 @@ def main(argv: List[str] | None = None) -> int:
                     "mode": effective_mode,
                     "status": "PASS" if passed else "FAIL",
                     "total_errors": total_errors,
+                    "total_warnings": len(warnings),
+                    "total_info": len(info),
                     "checks": report,
+                    "warnings": warnings,
+                    "info": info,
                 },
                 indent=2,
             )
@@ -677,7 +1492,20 @@ def main(argv: List[str] | None = None) -> int:
         for err in errs:
             print(f"      - {err}")
 
-    print(f"\nOVERALL STATUS: {'PASS' if passed else 'FAIL'} ({total_errors} total error(s))")
+    if warnings:
+        print(f"\n  [WARNINGS ({len(warnings)})]")
+        for warn in warnings:
+            print(f"      - {warn}")
+
+    if info:
+        print(f"\n  [INFO ({len(info)})]")
+        for item in info:
+            print(f"      - {item}")
+
+    print(
+        f"\nOVERALL STATUS: {'PASS' if passed else 'FAIL'} "
+        f"({total_errors} total error(s), {len(warnings)} warning(s), {len(info)} info)"
+    )
     return 0 if passed else 1
 
 

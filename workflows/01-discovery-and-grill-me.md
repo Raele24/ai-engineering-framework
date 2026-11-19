@@ -8,7 +8,9 @@
 ---
 
 ## Step 1: Phase 1 — Discovery & Context Inspection
-1. If `graphify-out/graph.json` exists in the repository, run `graphify query "<feature/module>"` to map affected components.
+1. **Knowledge Graph Discovery (`graphify`):**
+   - If `graphify-out/graph.json` exists in the repository, run `graphify query "<feature/module>"` to map affected components.
+   - If `graphify-out/graph.json` does **not** exist yet on a repository with $\ge 15$ tracked code/doc files (or $> 2,000$ LOC) and `graphify` is not disabled in `project.framework.json`: check if the `graphify` CLI is installed. If available, run `graphify .` once to build it; if **not** installed, **report explicitly to the user** (`Graphify CLI is not installed — optional knowledge graph skipped; install with 'pipx install graphifyy' or 'pip install graphifyy'`) and continue with direct file inspection.
 2. Read relevant existing documentation and module interfaces.
 3. Generate `docs/specs/01-discovery-brief.md` using [`templates/PRD.template.md`](../templates/PRD.template.md).
 4. List every unresolved scope, data, security, or edge-case question under Section 5 (`Open Ambiguities`).

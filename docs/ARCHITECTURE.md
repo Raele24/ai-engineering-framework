@@ -1,7 +1,7 @@
 # Architecture Guide (`ARCHITECTURE.md`)
 
 **Status:** Canonical Architecture Specification  
-**Version:** `0.1.0`  
+**Version:** `0.4.0`  
 
 ---
 
@@ -17,21 +17,21 @@ The **AI Engineering Framework** is designed as a **layered, vendor-neutral engi
 flowchart TD
     subgraph T1["Tier 1: Canonical Framework Core (Immutable / Framework-Managed)"]
         CR["core/rules/ (Engineering & Security Laws)"]
-        CS["core/schemas/ (JSON Validation Schemas)"]
+        CS["core/schemas/ & core/platform-capabilities.json"]
         WF["docs/WORKFLOW.md & workflows/ (15-Phase SDLC)"]
         AG["agents/ (8 Vendor-Neutral Role Specs)"]
-        SK["skills/core/ & skills/optional/ (SKILL.md Standard)"]
+        SK["skills/core/ & skills/optional/ (SKILL.md + registry.json)"]
         QL["quality/ & security/ (Rubrics, TDD, Strix Profiles)"]
-        SC["scripts/ (bootstrap.py, validate.py, sync_adapters.py)"]
+        SC["scripts/ (bootstrap, validate, sync_adapters, preflight, readiness, run_tests)"]
     end
 
-    subgraph T2["Tier 2: Platform Adapter Layer (Generated / Synced via sync_adapters.py)"]
+    subgraph T2["Tier 2: Thin Platform Adapters (Upstream sync_adapters.py & Consumer bootstrap.py)"]
         A_UNI["Universal Entry Points: AGENTS.md, CLAUDE.md, GEMINI.md"]
-        A_COP["GitHub Copilot: .github/copilot-instructions.md, .github/agents/"]
-        A_AGY["Google Antigravity: .agents/rules/, .agents/skills/, hooks.json"]
-        A_CLC["Claude Code: .claude/agents/, .claude/commands/, .claude/settings.json"]
+        A_COP["GitHub Copilot: .github/copilot-instructions.md, .github/agents/, .agents/skills/"]
+        A_AGY["Google Antigravity: .agents/rules/, .agents/skills.json, .agents/skills/, hooks.json"]
+        A_CLC["Claude Code: .claude/agents/, .claude/commands/, .claude/skills/, settings.json"]
         A_CDX["OpenAI Codex: .codex/config.toml, .agents/skills/"]
-        A_GEM["Gemini CLI: .gemini/commands/*.toml, .gemini/settings.json"]
+        A_GEM["Gemini CLI: .gemini/commands/*.toml, .gemini/settings.json, .agents/skills/"]
     end
 
     subgraph T3["Tier 3: Consumer Project Layer (Project-Owned / Never Overwritten)"]
@@ -41,21 +41,22 @@ flowchart TD
         PPLAN["docs/plans/ (Implementation Plans & Task Backlogs)"]
     end
 
-    subgraph T4["Tier 4: Ephemeral Runtime & Knowledge State"]
-        FSTATE[".framework-state/ (manifest.json & phase-NN-handoff.json)"]
+    subgraph T4["Tier 4: Runtime & Lockfile State (.framework-state/ & .framework-lock.json)"]
+        FSTATE[".framework-state/ (manifest.json, handoffs/, scratch/)"]
+        FLOCK[".framework-lock.json (v2.0.0 Ownership & SHA-256 Registry)"]
         GRAPH["graphify-out/ (graph.json, GRAPH_REPORT.md)"]
     end
 
-    T1 -->|"Compiled / Bridged by sync_adapters.py"| T2
-    T1 -->|"Instantiates Templates"| T3
+    T1 -->|"Upstream Sync / Consumer Bootstrap"| T2
+    T1 -->|"Instantiates Tier 3 Config & Templates"| T3
     T2 -->|"Executes Against"| T3
     T3 -->|"Reads & Writes State"| T4
 ```
 
 ### 2.1 Why Four Tiers?
-1. **Zero Config Drift (Tier 1 $\rightarrow$ Tier 2):** Editing a rule in `core/rules/` or adding an agent role in `agents/` requires running `python scripts/sync_adapters.py`. The script regenerates or verifies all platform adapter files so Copilot, Antigravity, Claude Code, Codex, and Gemini CLI never diverge.
-2. **Safe Downstream Upgrades (Tier 1/2 vs. Tier 3):** When a consumer project upgrades from Framework `v0.1.0` to `v0.2.0` via `python scripts/bootstrap.py --update`, only unmodified Tier 1 and Tier 2 files tracked in `.framework-lock.json` are updated. Tier 3 project artifacts (`project.framework.json`, `docs/specs/`, `docs/adr/`, application source code) are never overwritten.
-3. **Clean Version Control (Tier 3 vs. Tier 4):** Ephemeral orchestration checkpoints in `.framework-state/` are git-ignored by default while permanent engineering decisions (`docs/specs/`, `docs/adr/`) are committed to Git.
+1. **Zero Config Drift (Tier 1 $\rightarrow$ Tier 2):** Editing a rule in `core/rules/`, capability metadata in `core/platform-capabilities.json`, a role in `agents/`, or `workflows/` requires running `python scripts/sync_adapters.py` in the upstream framework repo. When installing into a consumer repo, `scripts/bootstrap.py` projects consumer-safe adapter templates (pointing to `validate.py --mode consumer`, never `sync_adapters.py`) and native skill folders (`.agents/skills/<name>/` and, when `claude-code` is enabled, `.claude/skills/<name>/`).
+2. **Safe Downstream Upgrades & Six-Class Ownership (Tier 1/2 vs. Tier 3):** When a consumer project upgrades (including automatic migration from legacy `v0.3.0` lockfiles with backup to `.framework-state/lock-backups/framework-lock-v0.3.0.json`) via `python scripts/bootstrap.py --update`, `.framework-lock.json` (`schema_version: "2.0.0"`) tracks ownership across `framework_managed`, `platform_projected_skill`, `consumer_owned`, `consumer_customized_generated`, `obsolete_framework_managed`, and `unknown_untracked`. Unmodified managed/projected files update cleanly via two-phase atomic writes; locally modified files are preserved; deselected packs or removed exclusive platforms are pruned safely only with verified provenance and reparse/traversal guards.
+3. **Clean Version Control (Tier 3 vs. Tier 4):** Ephemeral orchestration checkpoints in `.framework-state/` (including `.framework-state/scratch/`) are git-ignored by default while permanent engineering decisions (`docs/specs/`, `docs/adr/`) and `project.framework.json` remain under project Git control.
 
 ---
 
@@ -64,14 +65,14 @@ flowchart TD
 | Component | Path | Responsibility | Upstream Dependencies | Downstream Consumers |
 | :--- | :--- | :--- | :--- | :--- |
 | **Core Rules** | `core/rules/` | Defines non-negotiable engineering, approval, context-handoff, and security invariants | None | All agents, workflows, and platform adapters |
-| **Core Schemas** | `core/schemas/` | Defines JSON schemas for roles, skills, handoff packets, and project config | None | `scripts/validate.py`, `scripts/bootstrap.py` |
+| **Core Schemas & Capabilities** | `core/schemas/`, `core/platform-capabilities.json` | Defines JSON schemas for roles, skills, handoffs, and config, plus declarative verified platform capability states | None | `scripts/platform_capabilities.py`, `scripts/validate.py`, `scripts/bootstrap.py`, `scripts/sync_adapters.py` |
 | **Canonical Roles** | `agents/` | Defines the 8 specialized engineering roles, tool permissions, and boundaries | `core/schemas/agent-role.schema.json` | `workflows/`, `adapters/` |
-| **Skill Library** | `skills/` | Provides on-demand procedural runbooks (`SKILL.md`) split into `core/` and `optional/` | `core/schemas/skill-frontmatter.schema.json` | `agents/`, host skill loaders (`.agents/skills/`) |
-| **Workflow Runbooks** | `workflows/` | Operational stage playbooks implementing the 15 phases of `docs/WORKFLOW.md` | `core/rules/`, `agents/`, `skills/` | Host agents, slash commands, orchestrators |
-| **Platform Adapters** | `adapters/` | Maps canonical roles, rules, and workflows to native platform files | `core/`, `agents/`, `skills/`, `workflows/` | Copilot, Antigravity, Claude Code, Codex, Gemini CLI |
-| **Quality & Security** | `quality/`, `security/` | Enforces TDD contracts, review rubrics, secret scanning, and Strix authorization | `core/rules/security-guardrails.md` | Phases 9–12 (`implementation-engineer`, `code-reviewer`, `qa-engineer`, `security-engineer`) |
-| **Integrations** | `integrations/` | Bridges optional MCP servers, Graphify knowledge graphs, and external orchestrators | `core/` | Optional project workflows |
-| **CLI Scripts** | `scripts/` | Cross-platform Python utilities for bootstrap, adapter sync, and validation | Python 3.10+ stdlib, `core/schemas/` | Developers, agents, and GitHub Actions CI |
+| **Skill Library & Projections** | `skills/`, `.agents/skills/`, `.claude/skills/` | Stores canonical `core/` and `optional/` runbooks (`SKILL.md`, `registry.json`); `bootstrap.py` projects active skills into native runtime directories (excluding `UPSTREAM_SKILL.md`/`__pycache__`) and rewrites relocated links | `core/schemas/skill-frontmatter.schema.json`, `core/platform-capabilities.json` | `agents/`, host skill loaders |
+| **Workflow Runbooks** | `workflows/` | Operational stage playbooks implementing the 15 phases of `docs/WORKFLOW.md` (incl. PowerShell 5.1 & readiness protocols) | `core/rules/`, `agents/`, `skills/` | Host agents, slash commands, orchestrators |
+| **Platform Adapters** | `adapters/` | Maps canonical roles, rules, tools, and workflows to native platform files; evidence status tracked in `core/platform-capabilities.json` | `core/`, `agents/`, `skills/`, `workflows/` | Antigravity (`RUNTIME_VERIFIED`), Codex (`PARTIAL_RUNTIME_VERIFIED`), Copilot / Claude Code / Gemini CLI (`CONTRACT_VALIDATED`) |
+| **Quality & Security** | `quality/`, `security/` | Enforces TDD contracts, review rubrics, secret scanning, and Strix authorization (`Gate-Sec`) | `core/rules/security-guardrails.md` | Phases 9–12 (`implementation-engineer`, `code-reviewer`, `qa-engineer`, `security-engineer`) |
+| **Integrations** | `integrations/` | Bridges optional MCP servers, Graphify knowledge graphs, RTK, and external orchestrators | `core/` | Optional project workflows |
+| **CLI Scripts** | `scripts/`, `aief_cli/` | Pure-stdlib utilities: `bootstrap.py`, `compose.py`, `validate.py`, `sync_adapters.py`, `preflight.py`, `platform_capabilities.py`, `readiness.py`, `run_tests.py` + `aief` CLI | Python 3.11+ stdlib, `core/schemas/` | Developers, agents, consumer repos, CI runners |
 
 ---
 
@@ -87,7 +88,7 @@ Multiple agents exist in this framework **to isolate context windows**, not to s
 
 ### 4.2 Progressive Skill Disclosure & Domain Isolation
 Loading every guideline into the global system prompt causes the **Lost-in-the-Middle Effect** and wastes token budget.
-- **Always-On Context (`AGENTS.md` / `CLAUDE.md` / `GEMINI.md`):** Kept concise (< 6 KB). Contains only core workflow routing, safety/approval gates, and a compact metadata index (~1,245 tokens for all 30 registered skills — a **98.4% reduction** compared to loading all `SKILL.md` bodies).
+- **Always-On Context (`AGENTS.md` / `CLAUDE.md` / `GEMINI.md`):** Kept concise. Contains only core workflow routing, safety/approval gates, and a compact metadata index (`9,098 bytes` / `~2,274 tokens` in total for `AGENTS.md` across all 33 registered skills — keeping full `SKILL.md` bodies out of startup context).
 - **On-Demand Context (`skills/`):** Organized into `skills/core/` (8 core SDLC, YAGNI `ponytail`, and `graphify` skills) and 5 isolated optional domain packs (`communication`, `context-engineering`, `agent-architecture`, `frontend-design`, `growth-media`). See [`docs/SKILL_COMPATIBILITY_MATRIX.md`](./SKILL_COMPATIBILITY_MATRIX.md) and [`docs/TOKEN_OPTIMIZATION.md`](./TOKEN_OPTIMIZATION.md).
 - **Offline Script & Database Execution:** Heavy reference assets (such as the 28 CSV databases in `ui-ux-pro-max` or the 36 Angular guides in `angular-developer`) remain on disk and are queried via standard-library Python scripts (`search.py`) or targeted `read_file` calls.
 

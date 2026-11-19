@@ -1,8 +1,8 @@
 # Skill & Tool Installation Guide (`SKILL_INSTALLATION_GUIDE.md`)
 
 **Project:** AI Engineering Framework (`ai-engineering-framework`)  
-**Version:** `0.2.0`  
-**Date:** 2026-11-16  
+**Version:** `0.4.0`  
+**Date:** `2026-11-19`  
 
 ---
 
@@ -21,35 +21,43 @@ Every skill and tool in the framework is governed by one of three installation p
 
 ## 2. Installing Repository-Local Skills into a Consumer Project (Policy A)
 
-Use `scripts/bootstrap.py` to install core skills and selected optional skill packs into any target project without overwriting consumer-owned files:
+Use `scripts/bootstrap.py` to install core skills and selected optional skill packs into any target project without overwriting consumer-owned files. Installed skills are copied into canonical `skills/core/` + `skills/optional/<pack>/` (preserving `UPSTREAM_SKILL.md` attribution) and **automatically projected** into `.agents/skills/<name>/` (for Antigravity, Copilot, Codex, Gemini CLI) and `.claude/skills/<name>/` (for Claude Code), tracked in `.framework-lock.json` (`schema_version: "2.0.0"`):
 
-```powershell
-# 1. Default Engineering Bootstrap (Core + Communication + Context Engineering + Agent Architecture)
-python D:\PROGETTI\ai-engineering-framework\scripts\bootstrap.py `
-  --target D:\PROGETTI\your-target-project `
+```bash
+# 1. Default Engineering Bootstrap (Core + Communication + Context Engineering + Agent Architecture = 18 skills)
+python /path/to/ai-engineering-framework/scripts/bootstrap.py \
+  --target /path/to/your-target-project \
   --platforms antigravity,copilot,claude-code,codex,gemini-cli
 
-# 2. Full-Stack / Angular Frontend Project (Add frontend-design pack: ui-ux-pro-max, angular-developer, etc.)
-python D:\PROGETTI\ai-engineering-framework\scripts\bootstrap.py `
-  --target D:\PROGETTI\your-angular-app `
-  --optional-packs communication,context-engineering,agent-architecture,frontend-design
+# 2. Core-Only Minimal Install (8 mandatory core skills)
+python /path/to/ai-engineering-framework/scripts/bootstrap.py \
+  --target /path/to/your-minimal-project \
+  --platforms antigravity \
+  --optional-packs none
 
-# 3. Public Docs / Marketing Portal (Add growth-media pack: seo-audit, ai-seo, content-strategy, pricing, video-*)
-python D:\PROGETTI\ai-engineering-framework\scripts\bootstrap.py `
-  --target D:\PROGETTI\your-public-portal `
-  --optional-packs communication,context-engineering,frontend-design,growth-media
+# 3. Full-Stack / Angular Frontend Project (Add frontend-design pack, alias design-ui)
+python /path/to/ai-engineering-framework/scripts/bootstrap.py \
+  --target /path/to/your-angular-app \
+  --optional-packs communication,context-engineering,agent-architecture,frontend-design \
+  --stacks dotnet,node/angular
+
+# 4. Public Docs / Marketing Portal (Add growth-media pack: seo-audit, ai-seo, content-strategy, pricing, brand-strategy, video-*)
+python /path/to/ai-engineering-framework/scripts/bootstrap.py \
+  --target /path/to/your-public-portal \
+  --optional-packs all
 ```
 
 ### Available `--optional-packs` Values
 
 | Pack ID | Skills Included | Default in `bootstrap.py` |
 | :--- | :--- | :--- |
-| *(Core — Always Installed)* | `grill-me`, `tdd-cycle`, `ponytail`, `adr-writer`, `graphify`, `agent-browser`, `find-skills`, `anti-slop` | **Always On** |
-| `communication` | `caveman`, `rtk-cli` | **Enabled by Default** |
-| `context-engineering` | `context-optimization`, `context-compression`, `filesystem-context`, `memory-systems` | **Enabled by Default** |
-| `agent-architecture` | `multi-agent-patterns`, `tool-design`, `evaluation`, `self-improvement-loops` | **Enabled by Default** |
-| `frontend-design` | `ui-ux-pro-max` (with BM25 `search.py` + 28 CSVs), `angular-developer` (with 36 reference docs), `angular-new-app`, `web-design-guidelines`, `canvas-design` | Opt-In (`--optional-packs ...frontend-design`) |
-| `growth-media` | `seo-audit`, `ai-seo`, `content-strategy`, `pricing`, `brand-strategy`, `video-lens`, `video-use` | Opt-In (`--optional-packs ...growth-media`) |
+| *(Core — Always Installed)* | `grill-me`, `tdd-cycle`, `ponytail`, `adr-writer`, `graphify`, `agent-browser`, `find-skills`, `anti-slop` (`8`) | **Always On** |
+| `communication` | `caveman`, `rtk-cli` (`2`) | **Enabled by Default** |
+| `context-engineering` | `context-optimization`, `context-compression`, `filesystem-context`, `memory-systems` (`4`) | **Enabled by Default** |
+| `agent-architecture` | `multi-agent-patterns`, `tool-design`, `evaluation`, `self-improvement-loops` (`4`) | **Enabled by Default** |
+| `frontend-design` *(alias `design-ui`)* | `ui-ux-pro-max` (BM25 `search.py` + 28 CSVs), `angular-developer` (36 reference docs), `angular-new-app`, `web-design-guidelines`, `canvas-design` (`5`) | Opt-In |
+| `growth-media` | `seo-audit`, `ai-seo`, `content-strategy`, `pricing`, `brand-strategy`, `video-lens`, `video-use` (`7`) | Opt-In |
+| `none` / `all` | Core-only (`8` skills) or all `5` optional packs (`30` total skills) | CLI aliases |
 
 ---
 
@@ -74,7 +82,7 @@ rtk gain
 `graphify 0.9.48` is already installed and verified on this host. For repositories with **$\ge 15$ files or $> 2,000$ LOC**, you can optionally install local Git hooks so the AST graph updates automatically after commits:
 
 ```powershell
-Set-Location "D:\PROGETTI\ai-engineering-framework"
+Set-Location "/path/to/ai-engineering-framework"
 graphify hook install
 graphify hook status
 ```
@@ -83,11 +91,14 @@ graphify hook status
 
 ## 4. Verifying Installed Skills and Provenance
 
-Run the framework validator at any time to verify that all 30 skills in `skills/registry.json`, their `UPSTREAM_SKILL.md` snapshots, YAML frontmatter schemas, and platform adapters are intact:
+Run the framework validator at any time to verify that all 33 skills in `skills/registry.json`, their `UPSTREAM_SKILL.md` snapshots, YAML frontmatter schemas, and platform adapters are intact:
 
-```powershell
-Set-Location "D:\PROGETTI\ai-engineering-framework"
+```bash
+# In the upstream framework repository:
 python scripts/sync_adapters.py --check
-python scripts/validate.py
-python -m unittest discover -s tests -v
+python scripts/validate.py --mode framework
+python scripts/run_tests.py --fail-on-skip
+
+# In a bootstrapped consumer project:
+python scripts/validate.py --mode consumer
 ```

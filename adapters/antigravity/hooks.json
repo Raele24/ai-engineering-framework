@@ -1,9 +1,12 @@
 {
-  "description": "Google Antigravity lifecycle hooks template for AI Engineering Framework",
-  "hooks": {
-    "preCommit": {
-      "command": "python scripts/validate.py",
-      "description": "Validate schemas, adapters, links, and secret patterns before commit"
-    }
+  "framework-validation-reminder": {
+    "enabled": false,
+    "Stop": [
+      {
+        "type": "command",
+        "command": "python scripts/validate.py --json",
+        "timeout": 30
+      }
+    ]
   }
 }

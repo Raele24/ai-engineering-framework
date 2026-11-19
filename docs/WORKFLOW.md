@@ -1,7 +1,7 @@
 # Canonical Software Development Workflow (`WORKFLOW.md`)
 
 **Status:** Canonical Source of Truth  
-**Version:** `0.1.0`  
+**Version:** `0.4.0`  
 **Applies To:** All supported AI coding agents and platform adapters  
 
 ---
@@ -48,16 +48,18 @@ sequenceDiagram
 ```
 
 ### 2.2 Canonical Handoff Packet Structure
-Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json` contains:
-- `phase_id`: Integer (`1` through `15`) and slug (`"03-specification"`).
+Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json` must conform strictly to [`core/schemas/handoff-packet.schema.json`](../core/schemas/handoff-packet.schema.json) and [`templates/HANDOFF_PACKET.template.json`](../templates/HANDOFF_PACKET.template.json), containing:
+- `schema_version`: String constant (`"1.0.0"`).
+- `phase_number`: Integer (`1` through `15`) and `phase_slug`: string (e.g., `"03-specification"`).
 - `status`: `"completed"` | `"blocked"` | `"awaiting_human_approval"`.
+- `timestamp_utc`: ISO-8601 UTC timestamp string.
 - `producer_role`: Canonical role ID (e.g., `"product-analyst"`).
 - `next_role`: Target role ID (e.g., `"software-architect"`).
-- `input_artifacts`: Array of file paths consumed (with SHA-256 hashes).
-- `output_artifacts`: Array of file paths produced (with SHA-256 hashes).
+- `input_artifacts`: Array of `{ "path", "sha256" }` objects consumed from disk.
+- `output_artifacts`: Array of `{ "path", "sha256" }` objects produced on disk.
 - `decisions_locked`: Array of explicit constraints that downstream agents must not violate.
 - `open_risks`: Unresolved risks requiring downstream verification.
-- `human_approval`: Object recording gate ID, approver status, and timestamp.
+- `human_approval`: Object recording `gate_id`, `required`, `approved`, and optional `notes`.
 
 ---
 
@@ -204,7 +206,7 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Human Approval Requirements:** **Mandatory (`Gate-03: Implementation Plan Approval`)** before executing multi-phase builds.
 - **Failure and Recovery Procedures:**
   - *Failure:* Plan contains circular dependencies or unverified environment assumptions.
-  - *Recovery:* Cross-check plan against `docs/ENVIRONMENT_AUDIT.md` and reorder phases so prerequisites are built and tested first.
+  - *Recovery:* Cross-check plan against `docs/ENVIRONMENT_PREFLIGHT.md` / `scripts/preflight.py` and reorder phases so prerequisites are built and tested first.
 
 ---
 
@@ -353,11 +355,12 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
   - Remote GitHub push, Pull Request, or Release (after approval).
   - `.framework-state/handoffs/phase-13-handoff.json`.
 - **Responsible Agent Role:** `devops-release-engineer`.
-- **Tools and Skills:** `git`, `gh` CLI, `python scripts/validate.py`, GitHub Actions workflows.
-- **Entry Criteria:** Phases 10, 11, and 12 all report `PASS`.
-- **Exit Criteria:** Local validation script (`validate.py`) exits `0`, Git working tree is clean, and approved release artifacts are published.
+- **Tools and Skills:** `git`, `gh` CLI, `python scripts/validate.py --mode consumer` (or `--mode framework` + `python scripts/run_tests.py --fail-on-skip` in the upstream framework repo), GitHub Actions workflows.
+- **Entry Criteria:** Phases 10, 11, and 12 all report `PASS` (no `CRITICAL` or `HIGH` findings, and no `NOT_RUN`/`BLOCKED` checks mislabeled as `PASS`).
+- **Exit Criteria:** Local validation script (`python scripts/validate.py --mode auto`) exits `0`, Git working tree is clean, and approved release artifacts are published.
 - **Quality Gates:**
-  - `python scripts/validate.py` and `python scripts/sync_adapters.py --check` pass with 0 errors.
+  - Inside consumer projects: `python scripts/validate.py --mode consumer` exits `0`. Inside the upstream framework repo: `python scripts/sync_adapters.py --check`, `python scripts/validate.py --mode framework`, and `python scripts/run_tests.py --fail-on-skip` pass with 0 errors.
+  - Note: Phase 11 live E2E startup verification should derive endpoints from config and poll via `scripts/readiness.py` under PowerShell `5.1`-safe commands (see [`workflows/05-review-qa-and-security.md`](../workflows/05-review-qa-and-security.md)).
   - Rollback procedure is documented before deployment executes.
 - **Human Approval Requirements:** **Mandatory (`Gate-04: Release & Publish Approval`)** before pushing commits/tags to remote GitHub repositories, creating public releases, or deploying to staging/production environments.
 - **Failure and Recovery Procedures:**

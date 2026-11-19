@@ -1,8 +1,8 @@
 {
   "schema_version": "2.0.0",
-  "framework_version": "0.3.0",
+  "framework_version": "0.4.0",
   "description": "Central registry of First-Party, Vendored Third-Party, and External Tool Bridge skills in the AI Engineering Framework",
-  "total_skills": 30,
+  "total_skills": 33,
   "skills": [
     {
       "name": "grill-me",
@@ -1050,6 +1050,129 @@
         14
       ],
       "sha256": "a3d8e14ba388ff2c9af7a7ed5729de3233bc8ea30aa870e8eb51feb431dc106d"
+    },
+    {
+      "name": "i-have-adhd",
+      "description": "Formats responses for ADHD-friendly execution: leads with concrete next actions, uses bounded numbered steps (max 5), restates state across turns, suppresses tangents, and eliminates filler.",
+      "version": "1.0.0",
+      "source": "https://github.com/ayghri/i-have-adhd",
+      "license": "MIT",
+      "category": "token-optimization",
+      "tier": "optional-communication",
+      "origin_type": "vendored-third-party",
+      "priority": "P1",
+      "path": "skills/optional/communication/i-have-adhd/SKILL.md",
+      "upstream_preserved_path": "skills/optional/communication/i-have-adhd/UPSTREAM_SKILL.md",
+      "platforms": [
+        "antigravity",
+        "copilot",
+        "claude-code",
+        "codex",
+        "gemini-cli"
+      ],
+      "requires_tools": [
+        "read_file"
+      ],
+      "dependencies": [],
+      "security_scope": "read-only",
+      "default_enabled": true,
+      "workflow_phases": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "sha256": "f2345b9b6baa3d1edfcfa324c82a8f6877896d3e20429df70d8685a6f063ba52"
+    },
+    {
+      "name": "humanizer",
+      "description": "Removes AI-generated writing tells from prose (inflated symbolism, -ing analyses, negative parallelisms, rule of three, em dash overuse, filler) based on Wikipedia Signs of AI writing.",
+      "version": "2.10.2",
+      "source": "https://github.com/blader/humanizer",
+      "license": "MIT",
+      "category": "token-optimization",
+      "tier": "optional-communication",
+      "origin_type": "vendored-third-party",
+      "priority": "P1",
+      "path": "skills/optional/communication/humanizer/SKILL.md",
+      "upstream_preserved_path": "skills/optional/communication/humanizer/UPSTREAM_SKILL.md",
+      "platforms": [
+        "antigravity",
+        "copilot",
+        "claude-code",
+        "codex",
+        "gemini-cli"
+      ],
+      "requires_tools": [
+        "read_file",
+        "edit_file"
+      ],
+      "dependencies": [],
+      "security_scope": "workspace-write",
+      "default_enabled": true,
+      "workflow_phases": [
+        3,
+        10,
+        14
+      ],
+      "sha256": "82d06d0b381787173d47522ecec81130884cabfba63b1ba25e5a5418dea5db18"
+    },
+    {
+      "name": "session-handoff",
+      "description": "Creates and validates structured session handoff documents (.framework-state/session-handoffs/) with staleness checks for seamless chat resets and multi-session transfers.",
+      "version": "1.0.0",
+      "source": "https://github.com/softaworks/agent-toolkit",
+      "license": "MIT",
+      "category": "context-engineering",
+      "tier": "optional-context",
+      "origin_type": "vendored-third-party",
+      "priority": "P0",
+      "path": "skills/optional/context-engineering/session-handoff/SKILL.md",
+      "upstream_preserved_path": "skills/optional/context-engineering/session-handoff/UPSTREAM_SKILL.md",
+      "platforms": [
+        "antigravity",
+        "copilot",
+        "claude-code",
+        "codex",
+        "gemini-cli"
+      ],
+      "requires_tools": [
+        "read_file",
+        "write_file",
+        "run_command"
+      ],
+      "dependencies": [],
+      "security_scope": "workspace-write",
+      "default_enabled": true,
+      "workflow_phases": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "sha256": "93614b7f45bc5ad741782cf411b83f5d66bc7efde08c06f63bc8272d2dd7ae4f"
     }
   ]
 }

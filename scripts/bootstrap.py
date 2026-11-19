@@ -5,16 +5,10 @@ Key Guarantees:
 1. Tier 3 Consumer-Owned Files (project.framework.json, .framework-state/manifest.json, .gitignore,
    docs/specs/, docs/adr/, docs/plans/, README.md) are NEVER overwritten if they already exist.
 2. Tier 1 & Tier 2 Framework-Managed Files (core/, agents/, skills/, workflows/, platform adapters)
-   are tailored to the consumer's selected optional skill packs and tracked in `.framework-lock.json`.
-3. During `--update`, if a user has locally customized a framework-managed file (its current SHA-256 differs
-   from the hash recorded in `.framework-lock.json`), the file is preserved and skipped rather than overwritten.
-
-Usage:
-    python scripts/bootstrap.py --target /path/to/project --dry-run
-    python scripts/bootstrap.py --target /path/to/project --platforms antigravity,copilot,claude-code
-    python scripts/bootstrap.py --target /path/to/project --optional-packs communication,context-engineering,design-ui
-    python scripts/bootstrap.py --target /path/to/project --optional-packs none --stacks dotnet,node/angular
-    python scripts/bootstrap.py --target /path/to/project --update
+   and Native Platform Skill Projections (.agents/skills/, .claude/skills/) are tailored to the
+   consumer's selected platforms and optional packs and tracked in `.framework-lock.json` (v2.0.0).
+3. Ownership, hash integrity, atomic two-phase lockfile commits, and path-safety guards prevent
+   overwriting locally customized files, deleting untracked files, or following symlinks/junctions.
 """
 
 from __future__ import annotations
@@ -22,30 +16,39 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import posixpath
 import re
+import shutil
+import stat
 import sys
-from typing import Dict, List, Set, Tuple
+from typing import Dict, Iterable, List, Set, Tuple
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+import compose  # noqa: E402
+import platform_capabilities  # noqa: E402
 import preflight  # noqa: E402
 import sync_adapters  # noqa: E402
 
 FRAMEWORK_ROOT = SCRIPT_DIR.parent
-FRAMEWORK_VERSION = "0.3.0"
+FRAMEWORK_VERSION = "0.4.0"
 LOCKFILE_NAME = ".framework-lock.json"
+LOCKFILE_SCHEMA_VERSION = "2.0.0"
+LOCKFILE_BACKUP_REL = ".framework-state/lock-backups/framework-lock-v0.3.0.json"
 
-ALL_PLATFORMS = ["antigravity", "copilot", "claude-code", "codex", "gemini-cli"]
+ALL_PLATFORMS: List[str] = list(
+    platform_capabilities.load_platform_capabilities()["platform_ids"]
+)
 
 CORE_MANAGED_GLOBS = [
     "core/rules/*.md",
     "core/schemas/*.json",
+    "core/platform-capabilities.json",
     "agents/*.md",
-    "skills/core/*/*.md",
     "workflows/*.md",
     "quality/*.md",
     "security/*.md",
@@ -53,8 +56,11 @@ CORE_MANAGED_GLOBS = [
     "templates/*.md",
     "templates/*.json",
     "templates/stacks/*.gitignore",
+    "scripts/compose.py",
     "scripts/validate.py",
     "scripts/preflight.py",
+    "scripts/platform_capabilities.py",
+    "scripts/readiness.py",
 ]
 
 PLATFORM_ADAPTER_MAPPINGS: Dict[str, List[Tuple[str, str]]] = {
@@ -109,10 +115,73 @@ OPTIONAL_PACK_ALIASES: Dict[str, str] = {
     "growth-media": "growth-media",
 }
 
+SUPPORTED_PROJECTION_ROOTS: Set[str] = {".agents/skills", ".claude/skills"}
+TEXT_SUFFIXES: Set[str] = {".md", ".json", ".py", ".csv", ".cjs", ".js", ".ts", ".txt", ".yaml", ".yml", ".toml", ".gitignore"}
+
+CONSUMER_OWNED_EXACT: Set[str] = {
+    "project.framework.json",
+    ".gitignore",
+    ".gitignore.framework-recommended",
+    "README.md",
+}
+CONSUMER_OWNED_PREFIXES: Tuple[str, ...] = (
+    "docs/",
+    ".framework-state/",
+    ".framework-custom/",
+)
+ALLOWED_SKILL_PRUNE_ROOTS: Tuple[str, ...] = (
+    ".agents/skills/",
+    ".claude/skills/",
+    "skills/optional/",
+)
+ALLOWED_MANAGED_ADAPTER_PRUNE_EXACT: Set[str] = {
+    "CLAUDE.md",
+    "GEMINI.md",
+    "adapters/antigravity/hooks.json",
+    "adapters/antigravity/mcp_config.json",
+    ".agents/skills.json",
+    ".mcp.json",
+    ".vscode/mcp.json",
+}
+ALLOWED_MANAGED_ADAPTER_PRUNE_PREFIXES: Tuple[str, ...] = (
+    ".agents/rules/",
+    ".claude/agents/",
+    ".claude/commands/",
+    ".claude/settings.json",
+    ".github/agents/",
+    ".github/copilot-instructions.md",
+    ".github/instructions/",
+    ".github/prompts/",
+    ".codex/",
+    ".gemini/",
+)
+VALID_OWNERSHIP_CLASSES: Set[str] = {
+    "framework_managed",
+    "platform_projected_skill",
+    "consumer_owned",
+    "consumer_customized_generated",
+    "consumer_custom_skill",
+    "consumer_custom_agent",
+    "consumer_custom_prompt",
+    "consumer_custom_mcp",
+    "obsolete_framework_managed",
+    "unknown_untracked",
+}
+
 FENCED_CODE_RE = re.compile(r"```.*?```", re.DOTALL)
 INLINE_CODE_RE = re.compile(r"`[^`\n]+`")
 MD_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 REQUIRED_SKILLS_LINE_RE = re.compile(r"^(required_skills:\s*\[)([^\]]*)(\]\s*)$", re.MULTILINE)
+SHA256_HEX_RE = re.compile(r"^[0-9a-fA-F]{64}$")
+WINDOWS_DRIVE_RE = re.compile(r"^[A-Za-z]:")
+
+
+class BootstrapSecurityError(ValueError):
+    """Raised when path safety, symlink/junction checks, or case collision guards fail."""
+
+
+class LockfileError(ValueError):
+    """Raised when .framework-lock.json is corrupted or ambiguous (fail-closed)."""
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -121,6 +190,101 @@ def sha256_bytes(data: bytes) -> str:
 
 def sha256_file(path: Path) -> str:
     return sha256_bytes(path.read_bytes())
+
+
+def validate_safe_rel_path(rel_path: str, label: str = "path") -> str:
+    """Reject traversal, absolute paths, drive prefixes, and NUL bytes; return POSIX rel path."""
+    if not isinstance(rel_path, str) or not rel_path.strip():
+        raise BootstrapSecurityError(f"Unsafe empty {label}")
+    if "\x00" in rel_path:
+        raise BootstrapSecurityError(f"NUL byte rejected in {label}: {rel_path!r}")
+    normalized_raw = rel_path.replace("\\", "/")
+    if normalized_raw.startswith("/") or WINDOWS_DRIVE_RE.match(normalized_raw):
+        raise BootstrapSecurityError(f"Absolute or drive-qualified {label} rejected: {rel_path}")
+    parts = [p for p in normalized_raw.split("/") if p != ""]
+    if not parts or any(part in {".", ".."} for part in parts):
+        raise BootstrapSecurityError(f"Path traversal or dot segment rejected in {label}: {rel_path}")
+    return "/".join(parts)
+
+
+def _is_reparse_or_symlink(path: Path) -> bool:
+    """Return True if path is a symlink or Windows junction/reparse point without following it."""
+    if path.is_symlink():
+        return True
+    try:
+        st = os.lstat(path)
+    except OSError:
+        return False
+    attrs = getattr(st, "st_file_attributes", 0)
+    reparse_flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x0400)
+    return bool(attrs & reparse_flag)
+
+
+def assert_safe_target_path(base_root: Path, rel_path: str, label: str = "destination") -> Path:
+    """Validate rel_path is inside base_root and traverses no symlinks or Windows junctions."""
+    safe_rel = validate_safe_rel_path(rel_path, label=label)
+    base_resolved = base_root.resolve()
+    current = base_root
+    for segment in safe_rel.split("/"):
+        current = current / segment
+        if current.exists() or _is_reparse_or_symlink(current):
+            if _is_reparse_or_symlink(current):
+                raise BootstrapSecurityError(
+                    f"Symlink or reparse point rejected at {current.relative_to(base_root).as_posix()}"
+                )
+    dst = (base_root / Path(safe_rel))
+    resolved = dst.resolve(strict=False)
+    if not resolved.is_relative_to(base_resolved):
+        raise BootstrapSecurityError(f"Resolved {label} escapes target root: {rel_path}")
+    return dst
+
+
+def check_case_collisions(rel_paths: Iterable[str]) -> None:
+    """Reject distinct relative paths that collide case-insensitively on Windows."""
+    seen: Dict[str, str] = {}
+    for rel in rel_paths:
+        key = rel.casefold()
+        if key in seen and seen[key] != rel:
+            raise BootstrapSecurityError(
+                f"Case-insensitive path collision detected: '{seen[key]}' vs '{rel}'"
+            )
+        seen[key] = rel
+
+
+def _is_consumer_owned_path(rel_path: str) -> bool:
+    return rel_path in CONSUMER_OWNED_EXACT or rel_path.startswith(CONSUMER_OWNED_PREFIXES)
+
+
+def _is_prunable_path(rel_path: str, ownership: str) -> bool:
+    if _is_consumer_owned_path(rel_path):
+        return False
+    if rel_path.startswith(ALLOWED_SKILL_PRUNE_ROOTS):
+        return ownership in {"framework_managed", "platform_projected_skill", "consumer_custom_skill"}
+    if ownership in {"framework_managed", "consumer_custom_agent", "consumer_custom_prompt", "consumer_custom_mcp"}:
+        return (
+            rel_path in ALLOWED_MANAGED_ADAPTER_PRUNE_EXACT
+            or rel_path.startswith(ALLOWED_MANAGED_ADAPTER_PRUNE_PREFIXES)
+        )
+    return False
+
+
+def _atomic_write_bytes(target_path: Path, data: bytes) -> None:
+    """Atomically write data to target_path using a same-directory temp file and os.replace."""
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = target_path.with_name(f".{target_path.name}.{os.getpid()}.tmp")
+    try:
+        with tmp_path.open("wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_path, target_path)
+    except Exception:
+        if tmp_path.exists():
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass
+        raise
 
 
 def normalize_optional_packs(raw_packs: List[str]) -> List[str]:
@@ -222,6 +386,40 @@ def rewrite_markdown_relative_links(
         rewritten = rewritten.replace(f"\x00FENCED_{idx}\x00", block)
 
     return rewritten
+
+
+def _verify_projected_markdown_links(
+    dst_rel: str,
+    markdown_text: str,
+    available_targets: Set[str],
+) -> None:
+    """Verify relative links in relocated projected Markdown resolve inside root to known targets."""
+    dst_dir = posixpath.dirname(dst_rel.replace("\\", "/"))
+    masked = FENCED_CODE_RE.sub("", markdown_text)
+    masked = INLINE_CODE_RE.sub("", masked)
+    for match in MD_LINK_RE.finditer(masked):
+        target_raw = match.group(2).strip()
+        if (
+            not target_raw
+            or target_raw.startswith("http://")
+            or target_raw.startswith("https://")
+            or target_raw.startswith("mailto:")
+            or target_raw.startswith("#")
+            or target_raw.startswith("file://")
+            or target_raw.startswith("customization://")
+            or target_raw.startswith("conversation://")
+        ):
+            continue
+        if target_raw.startswith("/") or WINDOWS_DRIVE_RE.match(target_raw):
+            raise BootstrapSecurityError(f"Projected skill link cannot be absolute: {dst_rel} -> {target_raw}")
+        path_part = target_raw.split("#", 1)[0].strip()
+        if not path_part:
+            continue
+        resolved = posixpath.normpath(posixpath.join(dst_dir, path_part) if dst_dir else path_part)
+        if resolved == ".." or resolved.startswith("../") or "/../" in resolved:
+            raise BootstrapSecurityError(f"Projected skill link escapes workspace root: {dst_rel} -> {target_raw}")
+        if resolved not in available_targets:
+            raise ValueError(f"Broken relocated link in projected skill {dst_rel}: '{target_raw}' -> '{resolved}'")
 
 
 def build_filtered_registry(
@@ -327,60 +525,180 @@ def build_consumer_antigravity_skills_json(optional_packs: List[str]) -> str:
     return json.dumps({"entries": entries}, indent=2) + "\n"
 
 
-def collect_managed_plan_bytes(
+def _resolve_platform_projection_roots(
+    framework_root: Path,
+    platforms: List[str],
+) -> Tuple[Dict[str, List[str]], Dict[str, str]]:
+    """Derive {projection_root: [platform_ids]} and {platform_id: projection_root} from capabilities."""
+    cap_path = framework_root / "core" / "platform-capabilities.json"
+    model = platform_capabilities.load_platform_capabilities(cap_path)
+
+    root_to_platforms: Dict[str, List[str]] = {}
+    platform_to_root: Dict[str, str] = {}
+    for pid in platforms:
+        cap = platform_capabilities.get_platform(model, pid)
+        native_paths = cap.get("native_skill_dirs", {}).get("paths", [])
+        chosen_root = ""
+        for pattern in native_paths:
+            prefix = str(pattern).split("/<name>/", 1)[0].rstrip("/")
+            if prefix in SUPPORTED_PROJECTION_ROOTS:
+                chosen_root = prefix
+                break
+        if chosen_root:
+            platform_to_root[pid] = chosen_root
+            root_to_platforms.setdefault(chosen_root, [])
+            if pid not in root_to_platforms[chosen_root]:
+                root_to_platforms[chosen_root].append(pid)
+
+    return root_to_platforms, {pid: root for pid, root in platform_to_root.items()}
+
+
+def _read_normalized_skill_file(src: Path) -> bytes:
+    if src.suffix.lower() in TEXT_SUFFIXES:
+        try:
+            return src.read_text(encoding="utf-8").replace("\r\n", "\n").encode("utf-8")
+        except UnicodeDecodeError:
+            return src.read_bytes()
+    return src.read_bytes()
+
+
+def _assert_overlay_safe(target_dir: Path, overlay_rel: str) -> None:
+    """Validate overlay directory and every nested path are symlink/reparse safe."""
+    assert_safe_target_path(target_dir, overlay_rel, label="overlayDir")
+    overlay_root = target_dir / Path(overlay_rel)
+    if _is_reparse_or_symlink(overlay_root):
+        raise BootstrapSecurityError(f"Symlink or reparse point rejected at {overlay_rel}")
+    if overlay_root.exists() and overlay_root.is_dir():
+        for item in sorted(overlay_root.rglob("*")):
+            if _is_reparse_or_symlink(item):
+                raise BootstrapSecurityError(
+                    f"Symlink or reparse point rejected at {item.relative_to(target_dir).as_posix()}"
+                )
+
+
+def collect_managed_plan_details(
     framework_root: Path,
     platforms: List[str],
     optional_packs: List[str],
-) -> Dict[str, bytes]:
-    """Return mapping of {target_rel_posix_path: content_bytes} for all managed files."""
-    plan_bytes: Dict[str, bytes] = {}
-    consumer_reg, installed_skill_names = build_filtered_registry(framework_root, optional_packs)
+    target_dir: Path | None = None,
+    config_data: Dict[str, object] | None = None,
+    profile: str = "standard",
+    extra_imported: List[Tuple[str, str]] | None = None,
+) -> Tuple[Dict[str, Dict[str, object]], Dict[str, Dict[str, object]]]:
+    """Build deterministic detailed plan and projected_skills summary from canonical metadata."""
+    entries: Dict[str, Dict[str, object]] = {}
+    cfg = dict(config_data or {})
+    controls = compose.normalize_project_controls(cfg)
+    overlay_rel = str(controls["customizations"]["overlayDir"])
+    if target_dir is not None:
+        _assert_overlay_safe(target_dir, overlay_rel)
+        overlay = compose.load_project_overlay(target_dir, overlay_rel)
+    else:
+        overlay = {
+            "overlay_rel": overlay_rel,
+            "instruction_sections": [],
+            "custom_skills": {},
+            "agent_overrides": {},
+            "agent_appends": {},
+            "custom_prompts": {},
+            "custom_mcp": {},
+        }
 
+    if extra_imported:
+        existing_srcs = {src for src, _ in overlay["instruction_sections"]}  # type: ignore[attr-defined]
+        for imp_rel, imp_text in extra_imported:
+            if imp_rel not in existing_srcs and imp_text.strip():
+                overlay["instruction_sections"].append((imp_rel, imp_text.strip()))  # type: ignore[attr-defined]
+
+    digest = sync_adapters.compute_canonical_digest(framework_root)
+    comp = compose.compose_consumer_artifacts(
+        source_root=framework_root,
+        target_dir=target_dir if target_dir is not None else framework_root,
+        platforms=platforms,
+        profile=profile,
+        optional_packs=optional_packs,
+        config_data=cfg,
+        overlay=overlay,
+        digest=digest,
+    )
+    consumer_reg = comp["consumer_registry"]
+
+    def _add_managed(
+        rel: str,
+        data: bytes,
+        source: str | None,
+        owners: List[str],
+        ownership: str = "framework_managed",
+    ) -> None:
+        safe_rel = validate_safe_rel_path(rel, label="managed destination")
+        if safe_rel in entries:
+            merged = sorted(set(entries[safe_rel]["platforms"]) | set(owners))
+            entries[safe_rel]["platforms"] = merged
+            entries[safe_rel]["bytes"] = data
+            entries[safe_rel]["ownership"] = ownership
+            if source is not None:
+                entries[safe_rel]["source"] = source
+            return
+        entries[safe_rel] = {
+            "bytes": data,
+            "ownership": ownership,
+            "source": source,
+            "skill": None,
+            "platforms": sorted(set(owners)),
+        }
+
+    # 1. Core framework managed globs (excluding dynamically composed agents/*.md)
     for pattern in CORE_MANAGED_GLOBS:
         for src in sorted(framework_root.glob(pattern)):
             if src.is_file():
                 rel = src.relative_to(framework_root).as_posix()
                 if rel.startswith("agents/") and rel.endswith(".md"):
-                    raw_text = src.read_text(encoding="utf-8").replace("\r\n", "\n")
-                    filtered_text = filter_agent_required_skills(raw_text, installed_skill_names)
-                    plan_bytes[rel] = filtered_text.encode("utf-8")
-                elif src.suffix in {".md", ".json", ".yaml", ".yml", ".py", ".gitignore", ".toml"}:
-                    norm_text = src.read_text(encoding="utf-8").replace("\r\n", "\n")
-                    plan_bytes[rel] = norm_text.encode("utf-8")
-                else:
-                    plan_bytes[rel] = src.read_bytes()
+                    continue
+                _add_managed(rel, _read_normalized_skill_file(src), rel, ["core"])
 
-    # Filtered consumer skills/registry.json
-    plan_bytes["skills/registry.json"] = (json.dumps(consumer_reg, indent=2) + "\n").encode("utf-8")
+    for agent_rel, agent_bytes in comp["composed_agent_files"].items():  # type: ignore[attr-defined]
+        _add_managed(agent_rel, agent_bytes, agent_rel, ["core"])
 
-    # Selected optional skill pack files
+    # 2. Canonical core skills subtree (preserving UPSTREAM_SKILL.md under skills/)
+    core_skills_root = framework_root / "skills" / "core"
+    if core_skills_root.exists():
+        for src in sorted(core_skills_root.rglob("*")):
+            if src.is_file() and "__pycache__" not in src.parts and src.suffix != ".pyc":
+                rel = src.relative_to(framework_root).as_posix()
+                _add_managed(rel, _read_normalized_skill_file(src), rel, ["core"])
+
+    # 3. Filtered consumer skills/registry.json
+    _add_managed(
+        "skills/registry.json",
+        (json.dumps(consumer_reg, indent=2) + "\n").encode("utf-8"),
+        "skills/registry.json",
+        ["core"],
+    )
+
+    # 4. Selected optional skill pack subtrees under skills/optional/
     for pack in optional_packs:
         pack_rel_dir = OPTIONAL_PACK_DIRS.get(pack)
         if pack_rel_dir:
             pack_dir = framework_root / Path(pack_rel_dir)
             if pack_dir.exists():
                 for src in sorted(pack_dir.rglob("*")):
-                    if src.is_file() and "__pycache__" not in src.parts:
+                    if src.is_file() and "__pycache__" not in src.parts and src.suffix != ".pyc":
                         rel = src.relative_to(framework_root).as_posix()
-                        if src.suffix in {".md", ".json", ".py", ".csv", ".cjs", ".js", ".ts"}:
-                            try:
-                                norm_text = src.read_text(encoding="utf-8").replace("\r\n", "\n")
-                                plan_bytes[rel] = norm_text.encode("utf-8")
-                            except UnicodeDecodeError:
-                                plan_bytes[rel] = src.read_bytes()
-                        else:
-                            plan_bytes[rel] = src.read_bytes()
+                        _add_managed(rel, _read_normalized_skill_file(src), rel, ["core"])
 
-    consumer_agents_md_bytes = build_consumer_agents_md(framework_root, consumer_reg).encode("utf-8")
-    consumer_agy_skills_bytes = build_consumer_antigravity_skills_json(optional_packs).encode("utf-8")
+    # 5. Platform adapters (inline rules + overlay + active custom agents + static fallback)
+    consumer_overrides = sync_adapters.generate_consumer_adapter_files(framework_root, digest=digest)
+    composed_platform_files: Dict[str, str] = comp["platform_files"]  # type: ignore[assignment]
 
     for plat in platforms:
         for src_rel, dst_rel in PLATFORM_ADAPTER_MAPPINGS.get(plat, []):
-            if dst_rel == "AGENTS.md":
-                plan_bytes[dst_rel] = consumer_agents_md_bytes
+            if dst_rel in {".claude/agents/framework-code-reviewer.md", ".github/agents/code-reviewer.agent.md"}:
                 continue
-            if dst_rel in {".agents/skills.json", "adapters/antigravity/skills.json"}:
-                plan_bytes[dst_rel] = consumer_agy_skills_bytes
+            if dst_rel in composed_platform_files:
+                _add_managed(dst_rel, composed_platform_files[dst_rel].encode("utf-8"), src_rel, [plat])
+                continue
+            if dst_rel in consumer_overrides:
+                _add_managed(dst_rel, consumer_overrides[dst_rel].encode("utf-8"), src_rel, [plat])
                 continue
 
             src = framework_root / Path(src_rel)
@@ -390,11 +708,52 @@ def collect_managed_plan_bytes(
             raw_text = src.read_text(encoding="utf-8").replace("\r\n", "\n")
             if dst_rel.endswith(".md") and src_rel != dst_rel:
                 rewritten_text = rewrite_markdown_relative_links(raw_text, src_rel, dst_rel)
-                plan_bytes[dst_rel] = rewritten_text.encode("utf-8")
+                _add_managed(dst_rel, rewritten_text.encode("utf-8"), src_rel, [plat])
             else:
-                plan_bytes[dst_rel] = raw_text.encode("utf-8")
+                _add_managed(dst_rel, raw_text.encode("utf-8"), src_rel, [plat])
 
-    return plan_bytes
+    if "claude-code" in platforms:
+        for rel, (data, own) in comp["claude_agent_entries"].items():  # type: ignore[attr-defined]
+            _add_managed(rel, data, rel, ["claude-code"], ownership=own)
+        for rel, (data, own) in comp["claude_prompt_entries"].items():  # type: ignore[attr-defined]
+            _add_managed(rel, data, rel, ["claude-code"], ownership=own)
+    if "copilot" in platforms:
+        for rel, (data, own) in comp["copilot_agent_entries"].items():  # type: ignore[attr-defined]
+            _add_managed(rel, data, rel, ["copilot"], ownership=own)
+        for rel, (data, own) in comp["copilot_prompt_entries"].items():  # type: ignore[attr-defined]
+            _add_managed(rel, data, rel, ["copilot"], ownership=own)
+    if "gemini-cli" in platforms:
+        for rel, (data, own) in comp["gemini_prompt_entries"].items():  # type: ignore[attr-defined]
+            _add_managed(rel, data, rel, ["gemini-cli"], ownership=own)
+    for rel, (data, own, owners) in comp["mcp_entries"].items():  # type: ignore[attr-defined]
+        active_owners = [p for p in owners if p in platforms]
+        if active_owners:
+            _add_managed(rel, data, rel, active_owners, ownership=own)
+
+    # 6. Native platform skill projections (active framework skills + consumer custom skills)
+    projected_skills_summary: Dict[str, Dict[str, object]] = comp["projected_skills_summary"]  # type: ignore[assignment]
+    for dst_rel, meta in comp["projected_files"].items():  # type: ignore[attr-defined]
+        entries[dst_rel] = meta
+
+    # Verify Windows case-insensitive collisions across all planned paths
+    check_case_collisions(entries.keys())
+
+    # Verify every relocated link in projected Markdown resolves cleanly inside consumer workspace
+    available_targets = set(entries.keys())
+    for dst_rel, rewritten_text in comp["projected_md_checks"]:  # type: ignore[attr-defined]
+        _verify_projected_markdown_links(dst_rel, rewritten_text, available_targets)
+
+    return entries, projected_skills_summary
+
+
+def collect_managed_plan_bytes(
+    framework_root: Path,
+    platforms: List[str],
+    optional_packs: List[str],
+) -> Dict[str, bytes]:
+    """Return mapping of {target_rel_posix_path: content_bytes} for all managed and projected files."""
+    details, _ = collect_managed_plan_details(framework_root, platforms, optional_packs)
+    return {rel: bytes(meta["bytes"]) for rel, meta in details.items()}
 
 
 def collect_managed_plan(
@@ -423,6 +782,221 @@ def _compose_stack_gitignore(framework_root: Path, stacks: List[str]) -> str:
     return "\n".join(sections).rstrip() + "\n"
 
 
+def _load_existing_lockfile(lock_path: Path) -> Dict[str, object]:
+    """Load and validate an existing .framework-lock.json cleanly (fail-closed on corruption)."""
+    empty_state: Dict[str, object] = {
+        "exists": False,
+        "version": None,
+        "raw_bytes": b"",
+        "raw": {},
+        "managed_files": {},
+        "projection_state": {"status": "none", "pending_entries": {}, "last_successful_projection": None},
+    }
+    if not lock_path.exists() and not _is_reparse_or_symlink(lock_path):
+        return empty_state
+    if _is_reparse_or_symlink(lock_path):
+        raise LockfileError("Lockfile .framework-lock.json must not be a symlink or reparse point")
+
+    raw_bytes = lock_path.read_bytes()
+    try:
+        raw_data = json.loads(raw_bytes.decode("utf-8"))
+    except Exception as exc:
+        raise LockfileError(
+            f"Corrupted .framework-lock.json ({exc}). Resolve or restore backup before updating."
+        ) from exc
+
+    if not isinstance(raw_data, dict):
+        raise LockfileError("Corrupted .framework-lock.json: root must be a JSON object")
+
+    schema_version = raw_data.get("schema_version")
+    if schema_version is None:
+        # Legacy v0.3.0 lockfile format
+        for req_key in ("framework_version", "platforms", "managed_files"):
+            if req_key not in raw_data:
+                raise LockfileError(f"Malformed legacy .framework-lock.json: missing key '{req_key}'")
+        raw_managed = raw_data.get("managed_files")
+        raw_platforms = raw_data.get("platforms")
+        if not isinstance(raw_managed, dict) or not isinstance(raw_platforms, list):
+            raise LockfileError("Malformed legacy .framework-lock.json: invalid managed_files/platforms types")
+        normalized_managed: Dict[str, Dict[str, object]] = {}
+        for raw_rel, raw_hash in raw_managed.items():
+            try:
+                safe_rel = validate_safe_rel_path(str(raw_rel), label="lockfile path")
+            except BootstrapSecurityError as exc:
+                raise LockfileError(f"Unsafe path in .framework-lock.json: {exc}") from exc
+            if not isinstance(raw_hash, str) or not SHA256_HEX_RE.match(raw_hash):
+                raise LockfileError(f"Malformed SHA-256 hash in .framework-lock.json for '{safe_rel}'")
+            normalized_managed[safe_rel] = {
+                "ownership": "framework_managed",
+                "source": None,
+                "sha256": raw_hash.lower(),
+                "platforms": sorted(str(p) for p in raw_platforms),
+            }
+        return {
+            "exists": True,
+            "version": "0.3.0",
+            "raw_bytes": raw_bytes,
+            "raw": raw_data,
+            "managed_files": normalized_managed,
+            "projection_state": {"status": "completed", "pending_entries": {}, "last_successful_projection": None},
+        }
+
+    if schema_version != LOCKFILE_SCHEMA_VERSION:
+        raise LockfileError(
+            f"Unsupported .framework-lock.json schema_version '{schema_version}'. Expected '{LOCKFILE_SCHEMA_VERSION}'."
+        )
+
+    for req_key in ("framework_version", "enabled_platforms", "optional_packs", "projection_state", "projected_skills", "managed_files"):
+        if req_key not in raw_data:
+            raise LockfileError(f"Corrupted v2 .framework-lock.json: missing key '{req_key}'")
+
+    proj_state = raw_data.get("projection_state")
+    raw_managed = raw_data.get("managed_files")
+    if not isinstance(proj_state, dict) or not isinstance(raw_managed, dict):
+        raise LockfileError("Corrupted v2 .framework-lock.json: invalid projection_state/managed_files")
+    if proj_state.get("status") not in {"in_progress", "completed"}:
+        raise LockfileError(f"Corrupted v2 .framework-lock.json: invalid projection_state.status '{proj_state.get('status')}'")
+    pending_raw = proj_state.get("pending_entries", {})
+    if not isinstance(pending_raw, dict):
+        raise LockfileError("Corrupted v2 .framework-lock.json: invalid pending_entries")
+
+    def _normalize_v2_map(src_map: Dict[str, object]) -> Dict[str, Dict[str, object]]:
+        out: Dict[str, Dict[str, object]] = {}
+        for raw_rel, entry in src_map.items():
+            try:
+                safe_rel = validate_safe_rel_path(str(raw_rel), label="lockfile path")
+            except BootstrapSecurityError as exc:
+                raise LockfileError(f"Unsafe path in .framework-lock.json: {exc}") from exc
+            if not isinstance(entry, dict):
+                raise LockfileError(f"Malformed lockfile entry for '{safe_rel}'")
+            ownership = entry.get("ownership")
+            sha_val = entry.get("sha256")
+            plats = entry.get("platforms")
+            if ownership not in VALID_OWNERSHIP_CLASSES:
+                raise LockfileError(f"Invalid ownership '{ownership}' in .framework-lock.json for '{safe_rel}'")
+            if not isinstance(sha_val, str) or not SHA256_HEX_RE.match(sha_val):
+                raise LockfileError(f"Invalid SHA-256 hash in .framework-lock.json for '{safe_rel}'")
+            if not isinstance(plats, list):
+                raise LockfileError(f"Invalid platforms list in .framework-lock.json for '{safe_rel}'")
+            normalized_entry: Dict[str, object] = {
+                "ownership": ownership,
+                "source": entry.get("source"),
+                "sha256": sha_val.lower(),
+                "platforms": sorted(str(p) for p in plats),
+            }
+            if entry.get("skill") is not None:
+                normalized_entry["skill"] = str(entry["skill"])
+            out[safe_rel] = normalized_entry
+        return out
+
+    normalized_managed = _normalize_v2_map(raw_managed)
+    normalized_pending = _normalize_v2_map(pending_raw)
+    return {
+        "exists": True,
+        "version": LOCKFILE_SCHEMA_VERSION,
+        "raw_bytes": raw_bytes,
+        "raw": raw_data,
+        "managed_files": normalized_managed,
+        "projection_state": {
+            "status": proj_state["status"],
+            "pending_entries": normalized_pending,
+            "last_successful_projection": proj_state.get("last_successful_projection"),
+        },
+    }
+
+
+def _build_lockfile_entry(meta: Dict[str, object], data_hash: str | None = None) -> Dict[str, object]:
+    entry: Dict[str, object] = {
+        "ownership": meta["ownership"],
+        "source": meta.get("source"),
+        "sha256": data_hash if data_hash is not None else sha256_bytes(bytes(meta["bytes"])),
+        "platforms": sorted(str(p) for p in meta.get("platforms", [])),
+    }
+    if meta.get("skill") is not None:
+        entry["skill"] = str(meta["skill"])
+    return entry
+
+
+def _build_v2_lock_payload(
+    platforms: List[str],
+    canonical_packs: List[str],
+    normalized_stacks: List[str],
+    canonical_digest: str,
+    status: str,
+    projected_skills: Dict[str, Dict[str, object]],
+    managed_files: Dict[str, Dict[str, object]],
+    last_successful: Dict[str, object] | None,
+    pending_entries: Dict[str, Dict[str, object]],
+) -> Dict[str, object]:
+    if status == "completed":
+        skill_names: Set[str] = set()
+        for pdata in projected_skills.values():
+            skill_names.update(str(s) for s in pdata.get("skills", []))
+        projected_file_count = sum(
+            1
+            for v in managed_files.values()
+            if v.get("ownership") in {"platform_projected_skill", "consumer_custom_skill"}
+        )
+        effective_last = {
+            "framework_version": FRAMEWORK_VERSION,
+            "enabled_platforms": sorted(set(platforms)),
+            "projected_skill_count": len(skill_names),
+            "projected_file_count": projected_file_count,
+        }
+    else:
+        effective_last = last_successful
+
+    return {
+        "schema_version": LOCKFILE_SCHEMA_VERSION,
+        "framework_version": FRAMEWORK_VERSION,
+        "enabled_platforms": sorted(set(platforms)),
+        "optional_packs": list(canonical_packs),
+        "stacks": list(normalized_stacks),
+        "projection_state": {
+            "status": status,
+            "canonical_digest": canonical_digest,
+            "last_successful_projection": effective_last,
+            "pending_entries": {k: pending_entries[k] for k in sorted(pending_entries.keys())},
+        },
+        "projected_skills": {k: projected_skills[k] for k in sorted(projected_skills.keys())},
+        "managed_files": {k: managed_files[k] for k in sorted(managed_files.keys())},
+    }
+
+
+def _cleanup_empty_dirs(target_dir: Path, pruned_paths: List[str] | None = None) -> None:
+    """Prune empty subdirectories bottom-up strictly inside managed skill/adapter roots."""
+    target_resolved = target_dir.resolve()
+    for base_rel in (".agents/skills", ".claude/skills", "skills/optional"):
+        base = target_dir / Path(base_rel)
+        if not base.exists() or _is_reparse_or_symlink(base):
+            continue
+        for sub in sorted(base.rglob("*"), key=lambda p: len(p.parts), reverse=True):
+            if sub.is_dir() and not _is_reparse_or_symlink(sub):
+                try:
+                    next(sub.iterdir())
+                except StopIteration:
+                    sub.rmdir()
+        try:
+            next(base.iterdir())
+        except StopIteration:
+            base.rmdir()
+
+    # Clean empty parent adapter directories left behind by pruned files (never target_dir itself)
+    if pruned_paths:
+        candidates: Set[Path] = set()
+        for rel in pruned_paths:
+            parent = (target_dir / Path(rel)).parent
+            while parent != target_dir and parent.resolve(strict=False).is_relative_to(target_resolved):
+                candidates.add(parent)
+                parent = parent.parent
+        for d in sorted(candidates, key=lambda p: len(p.parts), reverse=True):
+            if d.exists() and d.is_dir() and not _is_reparse_or_symlink(d):
+                try:
+                    next(d.iterdir())
+                except StopIteration:
+                    d.rmdir()
+
+
 def bootstrap_project(
     target_dir: Path,
     platforms: List[str],
@@ -432,92 +1006,186 @@ def bootstrap_project(
     update_mode: bool = False,
     dry_run: bool = False,
     framework_root: Path = FRAMEWORK_ROOT,
-) -> Dict[str, List[str]]:
-    """Bootstrap or update the framework in target_dir non-destructively."""
-    raw_packs = (
-        optional_packs
-        if optional_packs is not None
-        else ["communication", "context-engineering", "agent-architecture"]
-    )
+) -> Dict[str, object]:
+    """Bootstrap or update the framework in target_dir non-destructively using Lockfile v2."""
+    raw_packs = optional_packs if optional_packs is not None else ["all"]
     canonical_packs = normalize_optional_packs(raw_packs)
     normalized_stacks = preflight.normalize_stacks(stacks or [])
     target_dir = target_dir.resolve()
 
     lock_path = target_dir / LOCKFILE_NAME
-    existing_lock: Dict[str, object] = {}
-    locked_hashes: Dict[str, str] = {}
-    if lock_path.exists():
-        existing_lock = json.loads(lock_path.read_text(encoding="utf-8"))
-        locked_hashes = dict(existing_lock.get("managed_files", {}))
-
-    plan_bytes = collect_managed_plan_bytes(framework_root, platforms, canonical_packs)
+    existing_lock = _load_existing_lockfile(lock_path)
+    prev_managed: Dict[str, Dict[str, object]] = dict(existing_lock["managed_files"])
+    proj_state = dict(existing_lock["projection_state"])
+    pending_recovery: Dict[str, Dict[str, object]] = (
+        dict(proj_state.get("pending_entries", {})) if proj_state.get("status") == "in_progress" else {}
+    )
+    migrated_from = "0.3.0" if (existing_lock["version"] == "0.3.0" and update_mode) else None
 
     created: List[str] = []
     updated: List[str] = []
     unchanged: List[str] = []
     skipped_modified: List[str] = []
+    pruned: List[str] = []
+    conflicts_preserved: List[str] = []
+    unknown_preserved: List[str] = []
+    recovered: List[str] = []
+    imported_files: List[str] = []
+    tier3_writes: List[Tuple[str, bytes]] = []
 
-    new_locked_hashes: Dict[str, str] = dict(locked_hashes)
+    config_rel = "project.framework.json"
+    config_path = target_dir / config_rel
+    existing_cfg_for_plan: Dict[str, object] = {}
+    if config_path.exists() and not _is_reparse_or_symlink(config_path):
+        try:
+            loaded_cfg = json.loads(config_path.read_text(encoding="utf-8"))
+            if isinstance(loaded_cfg, dict):
+                existing_cfg_for_plan = loaded_cfg
+        except Exception:
+            existing_cfg_for_plan = {}
 
-    if not dry_run:
-        target_dir.mkdir(parents=True, exist_ok=True)
-        for sub in [
-            "docs/specs",
-            "docs/adr",
-            "docs/plans",
-            "docs/retrospectives",
-            ".framework-state/handoffs",
-            ".framework-state/scratch",
-        ]:
-            (target_dir / Path(sub)).mkdir(parents=True, exist_ok=True)
+    controls_pre = compose.normalize_project_controls(existing_cfg_for_plan)
+    overlay_rel = str(controls_pre["customizations"]["overlayDir"])
+    _assert_overlay_safe(target_dir, overlay_rel)
 
-    # If update_mode or optional_packs changed, prune previously managed optional skills that are no longer in plan_bytes
-    if not dry_run and locked_hashes:
-        for old_rel in list(locked_hashes.keys()):
-            if old_rel not in plan_bytes and old_rel.startswith("skills/optional/"):
-                old_file = target_dir / Path(old_rel)
-                if old_file.exists() and sha256_file(old_file) == locked_hashes[old_rel]:
-                    old_file.unlink()
-                new_locked_hashes.pop(old_rel, None)
+    # Brownfield auto-import on first bootstrap (no lockfile): preserve existing root instructions into .framework-custom/imported/
+    imported_entries: Dict[str, str] = {}
+    in_memory_imported: List[Tuple[str, str]] = []
+    if not existing_lock["exists"] and not update_mode:
+        for entry_rel, imp_name in (
+            ("AGENTS.md", "AGENTS.md"),
+            ("CLAUDE.md", "CLAUDE.md"),
+            ("GEMINI.md", "GEMINI.md"),
+            (".github/copilot-instructions.md", "copilot-instructions.md"),
+        ):
+            entry_path = target_dir / Path(entry_rel)
+            if entry_path.exists() and not _is_reparse_or_symlink(entry_path) and entry_path.is_file():
+                raw_entry = entry_path.read_text(encoding="utf-8").replace("\r\n", "\n")
+                if "AUTO-GENERATED" not in raw_entry and raw_entry.strip():
+                    imp_rel = validate_safe_rel_path(f"{overlay_rel}/imported/{imp_name}", label="imported instruction")
+                    assert_safe_target_path(target_dir, imp_rel, label="imported destination")
+                    imported_entries[entry_rel] = imp_rel
+                    if not (target_dir / Path(imp_rel)).exists():
+                        tier3_writes.append((imp_rel, raw_entry.encode("utf-8")))
+                        created.append(imp_rel)
+                        imported_files.append(imp_rel)
+                        in_memory_imported.append((imp_rel, raw_entry.strip()))
 
-    for dst_rel, src_bytes in sorted(plan_bytes.items()):
-        dst_path = target_dir / Path(dst_rel)
+    effective_profile = (
+        str(existing_cfg_for_plan.get("workflowProfile", profile))
+        if (update_mode and existing_cfg_for_plan)
+        else profile
+    )
+    desired_entries, projected_skills_summary = collect_managed_plan_details(
+        framework_root,
+        platforms,
+        canonical_packs,
+        target_dir=target_dir,
+        config_data=existing_cfg_for_plan,
+        profile=effective_profile,
+        extra_imported=in_memory_imported,
+    )
+    canonical_digest = sync_adapters.compute_canonical_digest(framework_root)
+
+    # Pre-validate safety on all desired paths and any existing lockfile paths
+    for rel in desired_entries:
+        assert_safe_target_path(target_dir, rel, label="planned destination")
+    for rel in prev_managed:
+        assert_safe_target_path(target_dir, rel, label="locked file")
+    for rel in pending_recovery:
+        assert_safe_target_path(target_dir, rel, label="pending recovery path")
+
+    writes_to_apply: List[Tuple[str, bytes]] = []
+    prunes_to_apply: List[str] = []
+    pending_entries_payload: Dict[str, Dict[str, object]] = {}
+    new_managed_files: Dict[str, Dict[str, object]] = {}
+
+    # Classify obsolete lockfile entries not in desired plan
+    for old_rel, old_entry in sorted(prev_managed.items()):
+        if old_rel in desired_entries:
+            continue
+        old_path = target_dir / Path(old_rel)
+        if not old_path.exists():
+            continue
+        if _is_prunable_path(old_rel, str(old_entry["ownership"])):
+            disk_hash = sha256_file(old_path)
+            if disk_hash == old_entry["sha256"]:
+                pruned.append(old_rel)
+                prunes_to_apply.append(old_rel)
+            else:
+                conflicts_preserved.append(old_rel)
+                skipped_modified.append(old_rel)
+                preserved_entry = dict(old_entry)
+                preserved_entry["ownership"] = "consumer_customized_generated"
+                preserved_entry["platforms"] = []
+                new_managed_files[old_rel] = preserved_entry
+        else:
+            new_managed_files[old_rel] = dict(old_entry)
+
+    # Classify desired entries
+    for dst_rel, meta in sorted(desired_entries.items()):
+        src_bytes = bytes(meta["bytes"])
         src_hash = sha256_bytes(src_bytes)
+        dst_path = target_dir / Path(dst_rel)
+        desired_lock_entry = _build_lockfile_entry(meta, data_hash=src_hash)
 
         if not dst_path.exists():
             created.append(dst_rel)
-            if not dry_run:
-                dst_path.parent.mkdir(parents=True, exist_ok=True)
-                dst_path.write_bytes(src_bytes)
-            new_locked_hashes[dst_rel] = src_hash
+            writes_to_apply.append((dst_rel, src_bytes))
+            pending_entries_payload[dst_rel] = desired_lock_entry
+            new_managed_files[dst_rel] = desired_lock_entry
             continue
 
         current_hash = sha256_file(dst_path)
+        prev_entry = prev_managed.get(dst_rel)
+        rec_entry = pending_recovery.get(dst_rel)
+
         if current_hash == src_hash:
             unchanged.append(dst_rel)
-            new_locked_hashes[dst_rel] = src_hash
+            if rec_entry and current_hash == rec_entry["sha256"] and not prev_entry:
+                recovered.append(dst_rel)
+            new_managed_files[dst_rel] = desired_lock_entry
             continue
 
-        previous_locked_hash = locked_hashes.get(dst_rel)
-        if update_mode and previous_locked_hash and current_hash == previous_locked_hash:
-            updated.append(dst_rel)
-            if not dry_run:
-                dst_path.write_bytes(src_bytes)
-            new_locked_hashes[dst_rel] = src_hash
-        else:
-            skipped_modified.append(dst_rel)
+        # Interrupted bootstrap recovery: file matches pending_entry or previous locked hash
+        recovered_unmodified = bool(
+            rec_entry and (current_hash == rec_entry["sha256"] or (prev_entry and current_hash == prev_entry["sha256"]))
+        )
+        can_update_existing = bool(
+            (update_mode and prev_entry and current_hash == prev_entry["sha256"]) or recovered_unmodified
+        )
 
-    # Tier 3 Consumer-Owned File 1: project.framework.json
-    config_rel = "project.framework.json"
-    config_path = target_dir / config_rel
+        if can_update_existing:
+            updated.append(dst_rel)
+            if recovered_unmodified:
+                recovered.append(dst_rel)
+            writes_to_apply.append((dst_rel, src_bytes))
+            pending_entries_payload[dst_rel] = desired_lock_entry
+            new_managed_files[dst_rel] = desired_lock_entry
+        elif prev_entry or rec_entry:
+            skipped_modified.append(dst_rel)
+            conflicts_preserved.append(dst_rel)
+            new_managed_files[dst_rel] = dict(prev_entry if prev_entry else rec_entry)
+        elif dst_rel in imported_entries:
+            updated.append(dst_rel)
+            writes_to_apply.append((dst_rel, src_bytes))
+            pending_entries_payload[dst_rel] = desired_lock_entry
+            new_managed_files[dst_rel] = desired_lock_entry
+        else:
+            # Exists on disk with no prior lock provenance -> unknown_untracked, never overwrite
+            skipped_modified.append(dst_rel)
+            unknown_preserved.append(dst_rel)
+
+    # Check Tier 3 consumer-owned files existence (created only if absent)
     optional_packs_payload = {
-        "communication": ["caveman", "rtk-cli"] if "communication" in canonical_packs else [],
+        "communication": ["caveman", "rtk-cli", "i-have-adhd", "humanizer"] if "communication" in canonical_packs else [],
         "contextEngineering": (
             [
                 "context-optimization",
                 "context-compression",
                 "filesystem-context",
                 "memory-systems",
+                "session-handoff",
             ]
             if "context-engineering" in canonical_packs
             else []
@@ -557,6 +1225,7 @@ def bootstrap_project(
             else []
         ),
     }
+
     if not config_path.exists():
         created.append(config_rel)
         config_payload = {
@@ -567,6 +1236,18 @@ def bootstrap_project(
             "enabledPlatforms": platforms,
             "stacks": normalized_stacks,
             "optionalSkillPacks": optional_packs_payload,
+            "disabled": {
+                "skills": [],
+                "agents": [],
+                "phases": [],
+                "gates": [],
+                "mechanisms": [],
+            },
+            "customizations": {
+                "overlayDir": ".framework-custom",
+                "promptInjectionMode": "inline",
+                "inlineMaxBytes": 16384,
+            },
             "qualityGates": {
                 "requireTddRedGreen": True,
                 "requireIndependentCodeReview": True,
@@ -586,14 +1267,16 @@ def bootstrap_project(
                 "stateDir": ".framework-state",
             },
         }
-        if not dry_run:
-            config_path.write_text(json.dumps(config_payload, indent=2) + "\n", encoding="utf-8", newline="\n")
+        tier3_writes.append((config_rel, (json.dumps(config_payload, indent=2) + "\n").encode("utf-8")))
     elif update_mode:
         try:
             existing_cfg = json.loads(config_path.read_text(encoding="utf-8"))
             changed = False
             if existing_cfg.get("frameworkVersion") != FRAMEWORK_VERSION:
                 existing_cfg["frameworkVersion"] = FRAMEWORK_VERSION
+                changed = True
+            if existing_cfg.get("enabledPlatforms") != platforms:
+                existing_cfg["enabledPlatforms"] = list(platforms)
                 changed = True
             if existing_cfg.get("optionalSkillPacks") != optional_packs_payload:
                 existing_cfg["optionalSkillPacks"] = optional_packs_payload
@@ -603,8 +1286,7 @@ def bootstrap_project(
                 changed = True
             if changed:
                 updated.append(config_rel)
-                if not dry_run:
-                    config_path.write_text(json.dumps(existing_cfg, indent=2) + "\n", encoding="utf-8", newline="\n")
+                tier3_writes.append((config_rel, (json.dumps(existing_cfg, indent=2) + "\n").encode("utf-8")))
             else:
                 unchanged.append(config_rel)
         except Exception:
@@ -612,7 +1294,6 @@ def bootstrap_project(
     else:
         unchanged.append(config_rel)
 
-    # Tier 3 Consumer-Owned File 2: .framework-state/manifest.json
     manifest_rel = ".framework-state/manifest.json"
     manifest_path = target_dir / Path(manifest_rel)
     if not manifest_path.exists():
@@ -629,13 +1310,10 @@ def bootstrap_project(
             "active_gate": "Gate-01a",
             "completed_phases": [],
         }
-        if not dry_run:
-            manifest_path.parent.mkdir(parents=True, exist_ok=True)
-            manifest_path.write_text(json.dumps(manifest_payload, indent=2) + "\n", encoding="utf-8", newline="\n")
+        tier3_writes.append((manifest_rel, (json.dumps(manifest_payload, indent=2) + "\n").encode("utf-8")))
     else:
         unchanged.append(manifest_rel)
 
-    # Tier 3 Consumer-Owned Stack Templates (.gitignore & docs/ENVIRONMENT_PREFLIGHT.md)
     if normalized_stacks:
         gitignore_content = _compose_stack_gitignore(framework_root, normalized_stacks)
         gitignore_path = target_dir / ".gitignore"
@@ -644,16 +1322,14 @@ def bootstrap_project(
 
         if not gitignore_path.exists():
             created.append(".gitignore")
-            if not dry_run:
-                gitignore_path.write_text(gitignore_content, encoding="utf-8", newline="\n")
+            tier3_writes.append((".gitignore", gitignore_content.encode("utf-8")))
         else:
             unchanged.append(".gitignore")
             current_gi = gitignore_path.read_text(encoding="utf-8").replace("\r\n", "\n")
             if current_gi != gitignore_content:
                 if not rec_gitignore_path.exists():
                     created.append(rec_gitignore_rel)
-                    if not dry_run:
-                        rec_gitignore_path.write_text(gitignore_content, encoding="utf-8", newline="\n")
+                    tier3_writes.append((rec_gitignore_rel, gitignore_content.encode("utf-8")))
                 else:
                     unchanged.append(rec_gitignore_rel)
 
@@ -662,28 +1338,98 @@ def bootstrap_project(
         if not preflight_path.exists():
             created.append(preflight_rel)
             if not dry_run:
-                pf_report = preflight.run_preflight_checks(normalized_stacks)
+                pf_report = preflight.run_preflight_checks(normalized_stacks, project_root=target_dir)
                 pf_md = preflight.render_preflight_markdown(pf_report)
-                preflight_path.parent.mkdir(parents=True, exist_ok=True)
-                preflight_path.write_text(pf_md, encoding="utf-8", newline="\n")
+                tier3_writes.append((preflight_rel, pf_md.encode("utf-8")))
         else:
             unchanged.append(preflight_rel)
 
+    custom_inst_rel = validate_safe_rel_path(f"{overlay_rel}/instructions.md", label="custom instructions")
+    custom_inst_path = assert_safe_target_path(target_dir, custom_inst_rel, label="custom instructions")
+    if not custom_inst_path.exists():
+        created.append(custom_inst_rel)
+        tier3_writes.append((custom_inst_rel, compose.DEFAULT_CUSTOM_INSTRUCTIONS_TEMPLATE.encode("utf-8")))
+    else:
+        unchanged.append(custom_inst_rel)
+
+    final_lock_payload = _build_v2_lock_payload(
+        platforms=platforms,
+        canonical_packs=canonical_packs,
+        normalized_stacks=normalized_stacks,
+        canonical_digest=canonical_digest,
+        status="completed",
+        projected_skills=projected_skills_summary,
+        managed_files=new_managed_files,
+        last_successful=proj_state.get("last_successful_projection"),
+        pending_entries={},
+    )
+    final_lock_bytes = (json.dumps(final_lock_payload, indent=2) + "\n").encode("utf-8")
+
     if not dry_run:
-        lock_payload = {
-            "framework_version": FRAMEWORK_VERSION,
-            "platforms": platforms,
-            "optional_packs": canonical_packs,
-            "stacks": normalized_stacks,
-            "managed_files": new_locked_hashes,
-        }
-        lock_path.write_text(json.dumps(lock_payload, indent=2) + "\n", encoding="utf-8", newline="\n")
+        target_dir.mkdir(parents=True, exist_ok=True)
+        for sub in [
+            "docs/specs",
+            "docs/adr",
+            "docs/plans",
+            "docs/retrospectives",
+            ".framework-state/handoffs",
+            ".framework-state/scratch",
+        ]:
+            (target_dir / Path(sub)).mkdir(parents=True, exist_ok=True)
+
+        # Back up v0.3.0 lockfile cleanly before upgrading to v2.0.0
+        if migrated_from == "0.3.0" and existing_lock["raw_bytes"]:
+            backup_path = assert_safe_target_path(target_dir, LOCKFILE_BACKUP_REL, label="lockfile backup")
+            if not backup_path.exists():
+                _atomic_write_bytes(backup_path, bytes(existing_lock["raw_bytes"]))
+
+        need_lock_write = not lock_path.exists() or existing_lock["raw_bytes"] != final_lock_bytes
+        if writes_to_apply or prunes_to_apply or pending_recovery:
+            # Phase 1: Flush intent lockfile (status = in_progress, pending_entries)
+            intent_payload = _build_v2_lock_payload(
+                platforms=platforms,
+                canonical_packs=canonical_packs,
+                normalized_stacks=normalized_stacks,
+                canonical_digest=canonical_digest,
+                status="in_progress",
+                projected_skills=projected_skills_summary,
+                managed_files=prev_managed,
+                last_successful=proj_state.get("last_successful_projection"),
+                pending_entries=pending_entries_payload,
+            )
+            _atomic_write_bytes(lock_path, (json.dumps(intent_payload, indent=2) + "\n").encode("utf-8"))
+
+            # Phase 2: Atomic per-file writes and safe pruning
+            for rel, data in writes_to_apply:
+                dst = assert_safe_target_path(target_dir, rel, label="write destination")
+                _atomic_write_bytes(dst, data)
+
+            for old_rel in prunes_to_apply:
+                old_path = assert_safe_target_path(target_dir, old_rel, label="prune destination")
+                if old_path.exists() and not _is_reparse_or_symlink(old_path):
+                    old_path.unlink()
+            if prunes_to_apply:
+                _cleanup_empty_dirs(target_dir, prunes_to_apply)
+
+        for t3_rel, t3_bytes in tier3_writes:
+            dst = assert_safe_target_path(target_dir, t3_rel, label="tier3 destination")
+            _atomic_write_bytes(dst, t3_bytes)
+
+        # Phase 3: Commit final completed lockfile only if needed (zero-write when idempotent)
+        if need_lock_write or writes_to_apply or prunes_to_apply or pending_recovery:
+            _atomic_write_bytes(lock_path, final_lock_bytes)
 
     return {
         "created": created,
         "updated": updated,
         "unchanged": unchanged,
         "skipped_modified": skipped_modified,
+        "pruned": pruned,
+        "conflicts_preserved": conflicts_preserved,
+        "unknown_preserved": unknown_preserved,
+        "recovered": recovered,
+        "imported": imported_files,
+        "migrated_from": migrated_from,
     }
 
 
@@ -697,68 +1443,186 @@ def parse_csv_list(raw: str, allowed: Set[str], flag_name: str) -> List[str]:
     return items
 
 
+def detect_project_stacks(target_dir: Path) -> List[str]:
+    """Auto-detect technology stacks (.NET, Node/Angular, Python) from repository files."""
+    if not target_dir.exists():
+        return []
+    detected: List[str] = []
+    skip_dirs = {".git", "node_modules", "bin", "obj", "dist", ".angular", "__pycache__"}
+
+    # Check root and immediate child directories cleanly without deep scanning
+    candidates: List[Path] = [target_dir]
+    try:
+        for child in sorted(target_dir.iterdir()):
+            if child.is_dir() and child.name not in skip_dirs and not _is_reparse_or_symlink(child):
+                candidates.append(child)
+    except OSError:
+        pass
+
+    has_dotnet = False
+    has_node = False
+    has_python = False
+    for d in candidates:
+        try:
+            for item in d.iterdir():
+                if not item.is_file():
+                    continue
+                if item.suffix.lower() in {".sln", ".csproj", ".fsproj"}:
+                    has_dotnet = True
+                elif item.name in {"package.json", "angular.json"}:
+                    has_node = True
+                elif item.name in {"pyproject.toml", "requirements.txt", "setup.py"}:
+                    has_python = True
+        except OSError:
+            continue
+
+    if has_dotnet:
+        detected.append("dotnet")
+    if has_node:
+        detected.append("node-angular")
+    if has_python:
+        detected.append("python")
+    return detected
+
+
 def main(argv: List[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Bootstrap or update AI Engineering Framework in a target repository.")
-    parser.add_argument("--target", type=Path, required=True, help="Target project directory")
+    parser = argparse.ArgumentParser(
+        description="Bootstrap or update AI Engineering Framework in a target repository."
+    )
+    parser.add_argument(
+        "target_pos",
+        nargs="?",
+        type=Path,
+        help="Target project directory (alternative to --target)",
+    )
+    parser.add_argument("--target", type=Path, dest="target_flag", help="Target project directory")
     parser.add_argument(
         "--platforms",
         type=str,
-        default=",".join(ALL_PLATFORMS),
-        help="Comma-separated platforms (antigravity,copilot,claude-code,codex,gemini-cli)",
+        default=None,
+        help=f"Comma-separated platforms (default: all 5: {','.join(ALL_PLATFORMS)})",
     )
     parser.add_argument(
         "--profile",
         type=str,
         choices=["full", "standard", "hotfix"],
-        default="standard",
-        help="Default workflow profile in project.framework.json",
+        default=None,
+        help="Workflow profile in project.framework.json (default: standard)",
     )
     parser.add_argument(
         "--optional-packs",
         type=str,
-        default="communication,context-engineering,agent-architecture",
-        help="Comma-separated optional packs (none,all,communication,context-engineering,agent-architecture,frontend-design/design-ui,growth-media)",
+        default=None,
+        help="Comma-separated optional packs (default: all; options: none,all,communication,context-engineering,agent-architecture,frontend-design/design-ui,growth-media)",
     )
     parser.add_argument(
         "--stacks",
         type=str,
-        default="",
-        help="Optional comma-separated technology stacks for .gitignore and SDK preflight (dotnet,node/angular,python)",
+        default=None,
+        help="Technology stacks for .gitignore/preflight (default: auto; options: auto,none,dotnet,node/angular,python)",
     )
     parser.add_argument("--update", action="store_true", help="Update unmodified framework-managed files")
     parser.add_argument("--dry-run", action="store_true", help="Preview file operations without writing to disk")
     args = parser.parse_args(argv)
 
+    target_arg = args.target_flag or args.target_pos
+    if target_arg is None:
+        parser.error("Target path required (e.g. `python scripts/bootstrap.py D:\\path\\to\\project`).")
+
+    # Resolve existing consumer preferences automatically during --update when flags are omitted
+    existing_cfg: Dict[str, object] = {}
+    existing_lock_raw: Dict[str, object] = {}
+    if args.update:
+        cfg_file = target_arg / "project.framework.json"
+        lock_file = target_arg / LOCKFILE_NAME
+        if cfg_file.exists():
+            try:
+                loaded = json.loads(cfg_file.read_text(encoding="utf-8"))
+                if isinstance(loaded, dict):
+                    existing_cfg = loaded
+            except Exception:
+                pass
+        if lock_file.exists():
+            try:
+                loaded_lk = json.loads(lock_file.read_text(encoding="utf-8"))
+                if isinstance(loaded_lk, dict):
+                    existing_lock_raw = loaded_lk
+            except Exception:
+                pass
+
     try:
-        platforms = parse_csv_list(args.platforms, set(ALL_PLATFORMS), "--platforms")
-        raw_packs = [p.strip() for p in args.optional_packs.split(",") if p.strip()]
-        optional_packs = normalize_optional_packs(raw_packs)
-        raw_stacks = [s.strip() for s in args.stacks.split(",") if s.strip()]
-        stacks = preflight.normalize_stacks(raw_stacks)
-    except ValueError as exc:
+        if args.platforms is not None:
+            platforms = parse_csv_list(args.platforms, set(ALL_PLATFORMS), "--platforms")
+        elif args.update and isinstance(existing_cfg.get("enabledPlatforms"), list):
+            platforms = parse_csv_list(
+                ",".join(str(p) for p in existing_cfg["enabledPlatforms"]),
+                set(ALL_PLATFORMS),
+                "project.framework.json enabledPlatforms",
+            )
+        else:
+            platforms = list(ALL_PLATFORMS)
+
+        profile = (
+            args.profile
+            or (str(existing_cfg["workflowProfile"]) if args.update and existing_cfg.get("workflowProfile") else "standard")
+        )
+
+        if args.optional_packs is not None:
+            raw_packs = [p.strip() for p in args.optional_packs.split(",") if p.strip()]
+            optional_packs = normalize_optional_packs(raw_packs)
+        elif args.update and isinstance(existing_lock_raw.get("optional_packs"), list):
+            optional_packs = normalize_optional_packs([str(p) for p in existing_lock_raw["optional_packs"]])
+        else:
+            optional_packs = normalize_optional_packs(["all"])
+
+        if args.stacks is not None:
+            raw_stacks_str = args.stacks.strip()
+            if raw_stacks_str.lower() == "none":
+                stacks = []
+            elif raw_stacks_str.lower() == "auto":
+                stacks = detect_project_stacks(target_arg)
+            else:
+                raw_stacks = [s.strip() for s in raw_stacks_str.split(",") if s.strip()]
+                stacks = preflight.normalize_stacks(raw_stacks)
+        elif args.update and isinstance(existing_cfg.get("stacks"), list) and existing_cfg["stacks"]:
+            stacks = preflight.normalize_stacks([str(s) for s in existing_cfg["stacks"]])
+        else:
+            stacks = detect_project_stacks(target_arg)
+
+        summary = bootstrap_project(
+            target_dir=target_arg,
+            platforms=platforms,
+            profile=profile,
+            optional_packs=optional_packs,
+            stacks=stacks,
+            update_mode=args.update,
+            dry_run=args.dry_run,
+        )
+    except (ValueError, LockfileError) as exc:
         print(f"BOOTSTRAP_ERROR: {exc}", file=sys.stderr)
         return 2
 
-    summary = bootstrap_project(
-        target_dir=args.target,
-        platforms=platforms,
-        profile=args.profile,
-        optional_packs=optional_packs,
-        stacks=stacks,
-        update_mode=args.update,
-        dry_run=args.dry_run,
-    )
-
     mode_label = "DRY-RUN" if args.dry_run else ("UPDATE" if args.update else "BOOTSTRAP")
-    print(f"=== AI Engineering Framework {mode_label} ({args.target.resolve()}) ===")
-    print(f"  Platforms:        {', '.join(platforms)}")
-    print(f"  Optional Packs:   {', '.join(optional_packs) if optional_packs else 'none (core-only)'}")
+    print(f"=== AI Engineering Framework {mode_label} ({target_arg.resolve()}) ===")
+    print(f"  Platforms:          {', '.join(platforms)}")
+    print(f"  Optional Packs:     {', '.join(optional_packs) if optional_packs else 'none (core-only)'}")
     if stacks:
-        print(f"  Stacks:           {', '.join(stacks)}")
-    print(f"  Created:          {len(summary['created'])}")
-    print(f"  Updated:          {len(summary['updated'])}")
-    print(f"  Unchanged:        {len(summary['unchanged'])}")
-    print(f"  Skipped/Modified: {len(summary['skipped_modified'])} (user customizations preserved)")
+        print(f"  Stacks (detected):  {', '.join(stacks)}")
+    print(f"  Created:            {len(summary['created'])}")
+    print(f"  Updated:            {len(summary['updated'])}")
+    print(f"  Unchanged:          {len(summary['unchanged'])}")
+    print(f"  Pruned:             {len(summary['pruned'])}")
+    print(f"  Skipped/Modified:   {len(summary['skipped_modified'])} (preserved)")
+    if summary.get("unknown_preserved"):
+        print(f"  Unknown Preserved:  {len(summary['unknown_preserved'])}")
+    if summary.get("recovered"):
+        print(f"  Recovered Pending:  {len(summary['recovered'])}")
+    if summary.get("migrated_from"):
+        print(f"  Lockfile Migrated:  {summary['migrated_from']} -> {LOCKFILE_SCHEMA_VERSION}")
+    if shutil.which("graphify") is None:
+        print("  Graphify CLI:       NOT INSTALLED (optional AST graph; install with 'pipx install graphifyy' or 'pip install graphifyy')")
+    else:
+        print("  Graphify CLI:       AVAILABLE")
     return 0
 
 

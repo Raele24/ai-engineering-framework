@@ -1,6 +1,6 @@
 # Versioning & Release Policy (`VERSIONING.md`)
 
-**Version:** `0.3.0`  
+**Version:** `0.4.0`  
 
 ---
 
@@ -31,8 +31,8 @@ Individual skills in `skills/registry.json` maintain their own semantic `version
 ## 4. Release Checklist (Phase 13)
 
 Before tagging any release (`vX.Y.Z`):
-1. Update `frameworkVersion` in `templates/project.framework.json` and `scripts/bootstrap.py`.
+1. Update `frameworkVersion` / `framework_version` in `templates/project.framework.json`, `scripts/bootstrap.py`, `scripts/compose.py` fallback, `skills/registry.json`, `core/platform-capabilities.json`, and active documentation headers.
 2. Run `python scripts/sync_adapters.py` and verify `python scripts/sync_adapters.py --check`.
-3. Run `python scripts/validate.py` (must exit `0`).
-4. Run `python -m unittest discover -s tests -v` (must pass 100%).
-5. Obtain explicit human approval (**`Gate-04: Release Approval`**) before pushing tags or publishing a GitHub Release.
+3. Run `python scripts/validate.py --mode framework` (must exit `0`).
+4. Run `python scripts/run_tests.py --fail-on-skip` and `python -m unittest discover -s tests -v` (must pass 100%).
+5. Obtain explicit human approval (**`Gate-04: Release Approval`**) before committing, pushing tags, or publishing a GitHub Release.

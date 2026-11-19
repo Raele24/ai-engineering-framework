@@ -4,7 +4,7 @@
 Features:
 - Detects .NET SDKs across system PATH, DOTNET_ROOT, and Windows user-space ($HOME/.dotnet).
 - Detects Node.js / npm / Angular CLI availability.
-- Detects Python 3.10+ runtime availability.
+- Detects Python 3.11+ runtime availability.
 - Never installs SDKs or mutates system state automatically; emits clear remediation guidance.
 """
 
@@ -144,43 +144,135 @@ def detect_dotnet_sdk(
     }
 
 
-def detect_node_angular(env: Dict[str, str] | None = None) -> Dict[str, object]:
-    """Detect Node.js and npm availability."""
+def _probe_version(binary_path: str, env: Dict[str, str]) -> str:
+    try:
+        proc = subprocess.run(
+            [binary_path, "--version"],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        return proc.stdout.strip() if proc.returncode == 0 and proc.stdout.strip() else "unknown"
+    except Exception:
+        return "unknown"
+
+
+def _detect_expected_node_pm(project_root: Path | None) -> str:
+    if project_root is None or not project_root.exists():
+        return "npm"
+    if (project_root / "pnpm-lock.yaml").exists():
+        return "pnpm"
+    if (project_root / "yarn.lock").exists():
+        return "yarn"
+    pkg_json = project_root / "package.json"
+    if pkg_json.is_file():
+        try:
+            pkg_data = json.loads(pkg_json.read_text(encoding="utf-8"))
+            pm_field = str(pkg_data.get("packageManager", "")).strip().lower()
+            if pm_field.startswith("pnpm"):
+                return "pnpm"
+            if pm_field.startswith("yarn"):
+                return "yarn"
+        except Exception:
+            pass
+    return "npm"
+
+
+def detect_node_angular(
+    env: Dict[str, str] | None = None,
+    project_root: Path | None = None,
+) -> Dict[str, object]:
+    """Detect Node.js, npm, and workspace package manager (pnpm/yarn when lockfile present)."""
     effective_env = dict(os.environ) if env is None else dict(env)
     path_str = effective_env.get("PATH", "")
     node_bin = shutil.which("node", path=path_str) if path_str else None
     npm_bin = shutil.which("npm", path=path_str) if path_str else None
+    pnpm_bin = shutil.which("pnpm", path=path_str) if path_str else None
+    yarn_bin = shutil.which("yarn", path=path_str) if path_str else None
+    expected_pm = _detect_expected_node_pm(project_root)
 
-    if node_bin and npm_bin:
-        try:
-            proc = subprocess.run(
-                [node_bin, "--version"],
-                env=effective_env,
-                capture_output=True,
-                text=True,
-                timeout=5,
-                check=False,
-            )
-            node_ver = proc.stdout.strip() if proc.returncode == 0 else "unknown"
-        except Exception:
-            node_ver = "unknown"
-        return {
-            "stack": "node-angular",
-            "status": "AVAILABLE",
-            "node_executable": node_bin,
-            "npm_executable": npm_bin,
-            "node_version": node_ver,
-            "guidance": f"Node.js ({node_ver}) and npm detected on PATH.",
-        }
+    if node_bin:
+        node_ver = _probe_version(node_bin, effective_env)
+        if expected_pm == "pnpm":
+            if pnpm_bin:
+                pnpm_ver = _probe_version(pnpm_bin, effective_env)
+                return {
+                    "stack": "node-angular",
+                    "status": "AVAILABLE",
+                    "package_manager": "pnpm",
+                    "node_executable": node_bin,
+                    "npm_executable": npm_bin,
+                    "pnpm_executable": pnpm_bin,
+                    "node_version": node_ver,
+                    "pnpm_version": pnpm_ver,
+                    "guidance": f"Node.js ({node_ver}) and pnpm ({pnpm_ver}) detected on PATH (pnpm-lock.yaml matched).",
+                }
+            return {
+                "stack": "node-angular",
+                "status": "MISSING",
+                "package_manager": "pnpm",
+                "node_executable": node_bin,
+                "npm_executable": npm_bin,
+                "pnpm_executable": None,
+                "node_version": node_ver,
+                "pnpm_version": None,
+                "guidance": (
+                    f"Node.js ({node_ver}) detected, but project requires pnpm (`pnpm-lock.yaml`) which was not found on PATH.\n"
+                    "  Enable/install manually: corepack enable pnpm   (or: npm install -g pnpm)"
+                ),
+            }
+
+        if expected_pm == "yarn":
+            if yarn_bin:
+                yarn_ver = _probe_version(yarn_bin, effective_env)
+                return {
+                    "stack": "node-angular",
+                    "status": "AVAILABLE",
+                    "package_manager": "yarn",
+                    "node_executable": node_bin,
+                    "npm_executable": npm_bin,
+                    "yarn_executable": yarn_bin,
+                    "node_version": node_ver,
+                    "guidance": f"Node.js ({node_ver}) and yarn ({yarn_ver}) detected on PATH (yarn.lock matched).",
+                }
+            return {
+                "stack": "node-angular",
+                "status": "MISSING",
+                "package_manager": "yarn",
+                "node_executable": node_bin,
+                "npm_executable": npm_bin,
+                "yarn_executable": None,
+                "node_version": node_ver,
+                "guidance": (
+                    f"Node.js ({node_ver}) detected, but project requires yarn (`yarn.lock`) which was not found on PATH.\n"
+                    "  Enable/install manually: corepack enable yarn   (or: npm install -g yarn)"
+                ),
+            }
+
+        if npm_bin:
+            return {
+                "stack": "node-angular",
+                "status": "AVAILABLE",
+                "package_manager": "pnpm" if pnpm_bin else "npm",
+                "node_executable": node_bin,
+                "npm_executable": npm_bin,
+                "pnpm_executable": pnpm_bin,
+                "node_version": node_ver,
+                "guidance": f"Node.js ({node_ver}) and npm detected on PATH.",
+            }
 
     return {
         "stack": "node-angular",
         "status": "MISSING",
+        "package_manager": expected_pm,
         "node_executable": node_bin,
         "npm_executable": npm_bin,
+        "pnpm_executable": pnpm_bin,
         "node_version": None,
         "guidance": (
-            "Node.js or npm not found on PATH. Install manually:\n"
+            "Node.js or package manager not found on PATH. Install manually:\n"
             "  Windows (WinGet): winget install OpenJS.NodeJS.LTS\n"
             "  Angular CLI:      npm install -g @angular/cli"
         ),
@@ -188,9 +280,9 @@ def detect_node_angular(env: Dict[str, str] | None = None) -> Dict[str, object]:
 
 
 def detect_python() -> Dict[str, object]:
-    """Detect Python 3.10+ runtime."""
+    """Detect Python 3.11+ runtime."""
     ver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    ok = (sys.version_info.major, sys.version_info.minor) >= (3, 10)
+    ok = (sys.version_info.major, sys.version_info.minor) >= (3, 11)
     return {
         "stack": "python",
         "status": "AVAILABLE" if ok else "MISSING",
@@ -199,7 +291,7 @@ def detect_python() -> Dict[str, object]:
         "guidance": (
             f"Python {ver} detected ({sys.executable}). Create virtual environments via `python -m venv .venv`."
             if ok
-            else f"Python 3.10+ required (found {ver}). Install Python 3.10+ from python.org or WinGet."
+            else f"Python 3.11+ required (found {ver}). Install Python 3.11+ from python.org or WinGet."
         ),
     }
 
@@ -208,6 +300,7 @@ def run_preflight_checks(
     stacks: List[str],
     env: Dict[str, str] | None = None,
     home_dir: Path | None = None,
+    project_root: Path | None = None,
 ) -> Dict[str, object]:
     """Execute preflight checks for the requested stacks."""
     normalized = normalize_stacks(stacks)
@@ -216,7 +309,7 @@ def run_preflight_checks(
         if st == "dotnet":
             results[st] = detect_dotnet_sdk(env=env, home_dir=home_dir)
         elif st == "node-angular":
-            results[st] = detect_node_angular(env=env)
+            results[st] = detect_node_angular(env=env, project_root=project_root)
         elif st == "python":
             results[st] = detect_python()
     all_ready = all(r["status"] in ("AVAILABLE", "AVAILABLE_USER_SPACE") for r in results.values())
@@ -271,6 +364,12 @@ def render_preflight_markdown(report: Dict[str, object]) -> str:
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Check stack SDK prerequisites without modifying the system.")
     parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path.cwd(),
+        help="Consumer repository root used to detect workspace lockfiles such as pnpm-lock.yaml (default: cwd)",
+    )
+    parser.add_argument(
         "--stacks",
         type=str,
         default="dotnet,node-angular,python",
@@ -281,7 +380,7 @@ def main(argv: List[str] | None = None) -> int:
 
     raw_list = [s.strip() for s in args.stacks.split(",") if s.strip()]
     try:
-        report = run_preflight_checks(raw_list)
+        report = run_preflight_checks(raw_list, project_root=args.root.resolve())
     except ValueError as exc:
         print(f"PREFLIGHT_ERROR: {exc}", file=sys.stderr)
         return 2

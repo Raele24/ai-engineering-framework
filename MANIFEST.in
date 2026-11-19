@@ -1,0 +1,12 @@
+include LICENSE README.md CHANGELOG.md pyproject.toml setup.py
+graft core
+graft agents
+graft skills
+graft workflows
+graft templates
+graft adapters
+graft quality
+graft security
+graft integrations
+graft scripts
+global-exclude __pycache__ *.py[cod] .DS_Store

@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
       - name: Checkout repository
@@ -33,7 +33,24 @@ jobs:
         run: python scripts/sync_adapters.py --check
 
       - name: Run framework integrity and secret validator
-        run: python scripts/validate.py
+        run: python scripts/validate.py --mode framework
 
-      - name: Run automated unit and integration tests
-        run: python -m unittest discover -s tests -v
+      - name: Run full 6-tier regression suite (fail on skip)
+        run: python scripts/run_tests.py --fail-on-skip
+
+      - name: Smoke-test PEP 517 package & aief CLI install
+        shell: pwsh
+        run: |
+          $tmp = New-Item -ItemType Directory -Path (Join-Path ([System.IO.Path]::GetTempPath()) ("ci-aief-" + [guid]::NewGuid().ToString("N").Substring(0,8)))
+          try {
+            python -m venv "$($tmp.FullName)/venv"
+            $py = if ($IsWindows) { "$($tmp.FullName)/venv/Scripts/python.exe" } else { "$($tmp.FullName)/venv/bin/python" }
+            $aief = if ($IsWindows) { "$($tmp.FullName)/venv/Scripts/aief.exe" } else { "$($tmp.FullName)/venv/bin/aief" }
+            & $py -m pip install --quiet .
+            & $aief --version
+            & $aief init "$($tmp.FullName)/app" --platforms antigravity,copilot
+            & $aief compose "$($tmp.FullName)/app"
+            & $aief validate "$($tmp.FullName)/app" --mode consumer
+          } finally {
+            Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
+          }

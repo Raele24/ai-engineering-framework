@@ -1,5 +1,4 @@
 {
-  "description": "Claude Code workspace settings template for AI Engineering Framework",
   "permissions": {
     "allow": [
       "Bash(python scripts/validate.py*)",

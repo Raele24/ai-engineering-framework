@@ -12,7 +12,7 @@
 
 ## Step 2: Phase 4 — Technical Research Spike
 1. Evaluate candidate technical approaches, including a **Minimal / Standard Library Baseline** (Architectural Reduction principle).
-2. Check license compatibility (must be compatible with project license), maintenance status, and host OS support (`docs/ENVIRONMENT_AUDIT.md`).
+2. Check license compatibility (must be compatible with project license), maintenance status, and host OS support (`docs/ENVIRONMENT_PREFLIGHT.md` / `scripts/preflight.py`).
 3. Document findings in `docs/architecture/04-research-spike.md`.
 
 ## Step 3: Phase 5 — Architecture & ADR Creation

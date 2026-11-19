@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-engineering-framework"
+version = "0.4.0"
+description = "Platform-independent 15-phase SDLC, agent roles, skills, and multi-platform adapter composition engine (Antigravity, Copilot, Claude Code, Codex, Gemini CLI)"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+authors = [
+  { name = "AI Engineering Framework Contributors" }
+]
+keywords = [
+  "ai-agents",
+  "sdlc",
+  "copilot",
+  "claude-code",
+  "codex",
+  "gemini-cli",
+  "antigravity",
+  "agent-skills",
+  "mcp",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Build Tools",
+  "Topic :: Software Development :: Code Generators",
+]
+dependencies = []
+
+[project.scripts]
+aief = "aief_cli.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["aief_cli*"]

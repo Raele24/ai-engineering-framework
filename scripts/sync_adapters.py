@@ -23,11 +23,17 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import posixpath
 import re
 import sys
 from typing import Dict, List, Tuple
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+import platform_capabilities  # noqa: E402
 
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 
@@ -131,9 +137,27 @@ def build_core_skills_table(registry: Dict[str, object]) -> str:
     return "\n".join(lines)
 
 
+def build_antigravity_skills_entries(registry: Dict[str, object]) -> List[Dict[str, str]]:
+    """Derive deterministic Antigravity skills.json directory entries from skills/registry.json."""
+    entries: List[Dict[str, str]] = []
+    seen: set[str] = set()
+    for skill in registry.get("skills", []):
+        skill_rel = str(skill.get("path", "")).replace("\\", "/").strip("/")
+        if not skill_rel:
+            continue
+        pack_dir = posixpath.dirname(posixpath.dirname(skill_rel))
+        if pack_dir and pack_dir not in seen:
+            seen.add(pack_dir)
+            entries.append({"path": pack_dir})
+    return entries
+
+
 def generate_expected_files(root: Path) -> Dict[str, str]:
     """Generate all adapter files in memory mapped by repo-relative POSIX path."""
     agents, registry = load_canonical_metadata(root)
+    cap_path = root / "core" / "platform-capabilities.json"
+    if cap_path.exists():
+        platform_capabilities.load_platform_capabilities(cap_path)
     digest = compute_canonical_digest(root)
     agents_table = build_agents_table(agents)
     skills_table = build_core_skills_table(registry)
@@ -244,11 +268,11 @@ Create `docs/specs/01-discovery-brief.md` and ask 3-5 batched clarifying questio
 
     files["adapters/copilot/code-reviewer.agent.md"] = """---
 description: "Independent Phase 10 Code & Architecture Reviewer"
-tools: ["read_file", "run_command"]
+tools: ["read", "search"]
 ---
 Act as `code-reviewer` defined in `agents/code-reviewer.md`.
-Inspect `git diff` against `docs/specs/03-specification.md`, `docs/adr/`, and `quality/code-review-rubric.md`.
-Write findings to `.framework-state/10-review-report.md`. Do not modify production source files.
+Review changes read-only against `docs/specs/03-specification.md`, `docs/adr/`, and `quality/code-review-rubric.md`.
+Return findings in `.framework-state/10-review-report.md` format without modifying production source files.
 """
 
     # 5. Google Antigravity Adapter (adapters/antigravity/* and root .agents/*)
@@ -267,15 +291,7 @@ Follow [`AGENTS.md`](../../../AGENTS.md) and [`core/rules/engineering-principles
     files[".agents/rules/framework-core.md"] = agy_rule_content.replace("../../../", "../../")
 
     agy_skills_json = json.dumps(
-        {
-            "entries": [
-                {"path": "skills/core"},
-                {"path": "skills/optional/communication"},
-                {"path": "skills/optional/context-engineering"},
-                {"path": "skills/optional/agent-architecture"},
-                {"path": "skills/optional/frontend-design"},
-            ]
-        },
+        {"entries": build_antigravity_skills_entries(registry)},
         indent=2,
     ) + "\n"
     files["adapters/antigravity/skills.json"] = agy_skills_json
@@ -283,13 +299,16 @@ Follow [`AGENTS.md`](../../../AGENTS.md) and [`core/rules/engineering-principles
 
     files["adapters/antigravity/hooks.json"] = json.dumps(
         {
-            "description": "Google Antigravity lifecycle hooks template for AI Engineering Framework",
-            "hooks": {
-                "preCommit": {
-                    "command": "python scripts/validate.py",
-                    "description": "Validate schemas, adapters, links, and secret patterns before commit",
-                }
-            },
+            "framework-validation-reminder": {
+                "enabled": False,
+                "Stop": [
+                    {
+                        "type": "command",
+                        "command": "python scripts/validate.py --json",
+                        "timeout": 30,
+                    }
+                ],
+            }
         },
         indent=2,
     ) + "\n"
@@ -297,7 +316,6 @@ Follow [`AGENTS.md`](../../../AGENTS.md) and [`core/rules/engineering-principles
     # 6. Claude Code Adapter (adapters/claude-code/*)
     files["adapters/claude-code/settings.json"] = json.dumps(
         {
-            "description": "Claude Code workspace settings template for AI Engineering Framework",
             "permissions": {
                 "allow": [
                     "Bash(python scripts/validate.py*)",
@@ -330,12 +348,11 @@ Execute `python scripts/sync_adapters.py --check`, `python scripts/validate.py`,
     files["adapters/claude-code/agents/code-reviewer.md"] = """---
 name: framework-code-reviewer
 description: "Independent Phase 10 Code Reviewer enforcing spec traceability, ADRs, and anti-slop rules"
-subagent: true
-mainAgent: false
-tools: [read_file, write_file, run_command]
+tools: Read, Glob, Grep
+disallowedTools: Write, Edit, Bash
 ---
 Follow the canonical role specification in `agents/code-reviewer.md` and rubric in `quality/code-review-rubric.md`.
-Inspect the current diff and write `.framework-state/10-review-report.md`. Never edit production source files.
+Inspect changes read-only and report findings without modifying production source files.
 """
 
     # 7. OpenAI Codex Adapter (adapters/codex/*)
@@ -354,7 +371,6 @@ sandbox_mode = "workspace-write"
     # 8. Gemini CLI Adapter (adapters/gemini-cli/*)
     files["adapters/gemini-cli/settings.json"] = json.dumps(
         {
-            "description": "Gemini CLI workspace settings template for AI Engineering Framework",
             "contextFileName": ["GEMINI.md", "AGENTS.md"],
         },
         indent=2,
@@ -364,6 +380,123 @@ sandbox_mode = "workspace-write"
 description = "Execute the canonical AI Engineering Framework workflow stage"
 prompt = \"\"\"
 Read AGENTS.md and docs/WORKFLOW.md.
+Check .framework-state/manifest.json (if present) to identify the current phase, execute the corresponding runbook in workflows/, and pause at any required Human Approval Gate (Gate-01a through Gate-05).
+\"\"\"
+"""
+
+    return files
+
+
+def generate_consumer_adapter_files(root: Path, digest: str | None = None) -> Dict[str, str]:
+    """Generate consumer-safe adapter overrides without upstream-only paths or commands (GAP-01)."""
+    resolved_digest = digest or compute_canonical_digest(root)
+    files: Dict[str, str] = {}
+
+    files["CLAUDE.md"] = f"""<!-- AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest} -->
+# Claude Code Instructions (`CLAUDE.md`)
+
+This project uses the **AI Engineering Framework**.
+Read and follow [`AGENTS.md`](./AGENTS.md) and [`core/rules/engineering-principles.md`](./core/rules/engineering-principles.md) as the single canonical source of truth.
+
+## Quick Routing for Claude Code
+- **Core Rules:** [`core/rules/engineering-principles.md`](./core/rules/engineering-principles.md), [`core/rules/human-approval-gates.md`](./core/rules/human-approval-gates.md), [`core/rules/security-guardrails.md`](./core/rules/security-guardrails.md)
+- **Claude Skills:** Projected into `.claude/skills/`
+- **Claude Subagents:** Configured in `.claude/agents/`
+- **Claude Slash Commands:** Configured in `.claude/commands/`
+- **Validation Command:** `python scripts/validate.py --mode consumer`
+"""
+
+    files["GEMINI.md"] = f"""<!-- AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest} -->
+# Google Antigravity & Gemini CLI Instructions (`GEMINI.md`)
+
+This repository is governed by the **AI Engineering Framework**.
+Follow [`AGENTS.md`](./AGENTS.md) and [`core/rules/engineering-principles.md`](./core/rules/engineering-principles.md) as the canonical source of truth.
+
+## Platform Integration Notes
+- **Google Antigravity:**
+  - Use `graphify` (`graphify query`, `graphify update .`) when exploring architecture or reviewing diffs.
+  - Delegate isolated research to the `research` subagent and UI verification to the `browser` subagent (`Model="flash"`).
+  - Respect all human approval gates (`Gate-01a` through `Gate-05`) defined in [`core/rules/human-approval-gates.md`](./core/rules/human-approval-gates.md).
+- **Gemini CLI:**
+  - Stage workflow commands are configured in `.gemini/commands/workflow.toml` and skills in `.agents/skills/`.
+- **Validation Command:** `python scripts/validate.py --mode consumer`
+"""
+
+    files[".github/copilot-instructions.md"] = f"""<!-- AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest} -->
+# GitHub Copilot Workspace Instructions
+
+Follow [`AGENTS.md`](../AGENTS.md) and [`core/rules/engineering-principles.md`](../core/rules/engineering-principles.md) as the canonical engineering workflow for this repository.
+
+## Mandatory Guardrails
+1. **Spec & ADR First:** Do not generate feature implementation code until `docs/specs/03-specification.md` and required ADRs (`docs/adr/`) exist and are approved.
+2. **TDD Cycle:** Write failing unit tests first (`Phase 9`), then minimal passing code, then refactor.
+3. **Human Gates:** Pause for user approval before adding dependencies (`Gate-02`), running active security scans (`Gate-Sec`), or publishing releases (`Gate-04`).
+4. **Zero Secrets:** Never emit hardcoded credentials, tokens, or private keys.
+5. **Validation:** Run `python scripts/validate.py --mode consumer` before completing changes.
+"""
+
+    files[".github/instructions/framework.instructions.md"] = f"""---
+applyTo: "**/*"
+description: "AI Engineering Framework canonical rules for GitHub Copilot"
+---
+<!-- AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest} -->
+Follow all rules in [`AGENTS.md`](../../AGENTS.md), [`core/rules/engineering-principles.md`](../../core/rules/engineering-principles.md), and [`core/rules/security-guardrails.md`](../../core/rules/security-guardrails.md).
+"""
+
+    files[".agents/rules/framework-core.md"] = f"""---
+trigger: always_on
+---
+<!-- AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest} -->
+# Antigravity Workspace Rule — AI Engineering Framework
+
+Follow [`AGENTS.md`](../../AGENTS.md) and [`core/rules/engineering-principles.md`](../../core/rules/engineering-principles.md).
+- Enforce `Gate-01a`, `Gate-01b`, `Gate-02`, `Gate-03`, `Gate-Sec`, `Gate-04`, and `Gate-05` from [`core/rules/human-approval-gates.md`](../../core/rules/human-approval-gates.md).
+- Write phase handoff packets to `.framework-state/handoffs/` per [`core/rules/context-handoff-protocol.md`](../../core/rules/context-handoff-protocol.md).
+- Validate changes with `python scripts/validate.py --mode consumer`.
+"""
+
+    files[".claude/settings.json"] = json.dumps(
+        {
+            "permissions": {
+                "allow": [
+                    "Bash(python scripts/validate.py*)",
+                    "Bash(graphify *)",
+                ],
+                "deny": [
+                    "Bash(git push --force*)",
+                    "Bash(rm -rf /*)",
+                ],
+            },
+        },
+        indent=2,
+    ) + "\n"
+
+    files["adapters/antigravity/hooks.json"] = json.dumps(
+        {
+            "framework-validation-reminder": {
+                "enabled": False,
+                "Stop": [
+                    {
+                        "type": "command",
+                        "command": "python scripts/validate.py --mode consumer --json",
+                        "timeout": 30,
+                    }
+                ],
+            }
+        },
+        indent=2,
+    ) + "\n"
+
+    files[".claude/commands/validate-framework.md"] = """---
+description: "Run AI Engineering Framework consumer workspace validation"
+---
+Execute `python scripts/validate.py --mode consumer`. Report the exact exit code and validation results.
+"""
+
+    files[".gemini/commands/workflow.toml"] = f"""# AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest}
+description = "Execute the canonical AI Engineering Framework workflow stage"
+prompt = \"\"\"
+Read AGENTS.md and core/rules/engineering-principles.md.
 Check .framework-state/manifest.json (if present) to identify the current phase, execute the corresponding runbook in workflows/, and pause at any required Human Approval Gate (Gate-01a through Gate-05).
 \"\"\"
 """
