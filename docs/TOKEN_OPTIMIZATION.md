@@ -92,7 +92,7 @@ All baseline measurements below were captured on the `v0.2.0` (`30`-skill) repos
 | Optimization Primitive | Target Bottleneck | Measured Token / Size Reduction | Quality / Safety Impact |
 | :--- | :--- | :--- | :--- |
 | **Progressive Skill Disclosure** | System prompt / startup bloat | **98.4% – 99.8%** | Improves attention by excluding irrelevant domain rules |
-| **`ui-ux-pro-max` (`search.py`)** | Design system CSV context bloat | **99.95%** (`203` vs `405,295` tokens) | Returns exact BM25-ranked style, palette, and stack rules |
+| **`ui-ux-pro-max` (`search.py`)** | Design system CSV context bloat | **99.94%** (`281` vs `455,828` tokens) | Returns exact BM25-ranked style, palette, and stack rules |
 | **`graphify query`** | Blind codebase `grep`/file scanning | **75% – 90%** on repos $\ge 15$ files | Traverses deterministic AST/concept edges in `graphify-out/` |
 | **`rtk-cli` + Native Fallbacks** | Verbose shell/test stdout noise | **60% – 93%** | Preserves exit codes, failing assertions, and stack traces |
 | **`filesystem-context` + Masking** | Multi-turn trajectory accumulation | **65% – 80%** | Full raw logs remain retrievable on disk in `.framework-state/scratch/` |

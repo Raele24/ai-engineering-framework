@@ -109,7 +109,7 @@ The **AI Engineering Framework** separates configuration into three scopes:
 
 ## 3. Consumer Isolation, Validation Severities & Windows Operations
 
-### 3.1 Enforceable Consumer Workspace Boundaries (`GAP-07`)
+### 3.1 Consumer Workspace Boundaries & Ownership
 `scripts/validate.py --mode consumer` enforces strict boundaries between ownership scopes inside a consumer repository (`v2.0.0` lockfile):
 1. **`framework_managed` / `platform_projected_skill`:** Core rules, workflows, skills, consumer adapters, and native projections (`.agents/skills/`, `.claude/skills/`) tracked with SHA-256 hashes and active platform owners in `.framework-lock.json`.
 2. **`consumer_owned`:** Tier 3 project assets (`project.framework.json`, `.framework-custom/`, `.framework-state/`, `docs/`, `.gitignore`, `README.md`, app source) — never overwritten or pruned.
@@ -125,7 +125,7 @@ After changing `project.framework.json` (`disabled.*` / `customizations.*`) or `
 - **`WARNING` (Exits `0`):** Unexpected untracked files inside `.agents/skills/` or `.claude/skills/` preserved by `--update`, locally modified managed/projected files differing from locked hashes, or legacy `v0.3.0` lockfile migration advisories.
 - **`INFO` (Exits `0`):** Observed host-global skill directory visibility outside consumer workspace isolation boundaries.
 
-### 3.3 Windows PowerShell 5.1 Operational Conventions (`GAP-08`)
+### 3.3 Windows PowerShell 5.1 Operational Conventions
 - Target Windows PowerShell `5.1+` without requiring PowerShell 7: use `; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }` instead of `&&`.
 - Double-quote paths containing spaces (`"$workspace\scripts\validate.py"`), specify explicit working directories (`Set-Location` / `-WorkingDirectory`), pass closed stdin (`-`) when piping to headless `codex exec`, and use `python scripts/readiness.py` + PID-scoped `Stop-Process -Id $proc.Id` inside `try/finally` instead of fixed startup sleeps or process-name wildcards.
 
@@ -134,4 +134,4 @@ After changing `project.framework.json` (`disabled.*` / `customizations.*`) or `
 ## 4. Environment Variables & Secrets Policy
 
 1. **Zero Secrets in Git:** Never place API keys, OAuth tokens, JWT signing keys, database passwords, or private URLs in `project.framework.json`, `appsettings.json`, or any tracked file.
-2. **Variable Placeholders:** Always reference secrets via environment variables (`PILOT_JWT_KEY`, `${GITHUB_PERSONAL_ACCESS_TOKEN}`, `${STRIX_LLM_API_KEY}`).
+2. **Variable Placeholders:** Always reference secrets via environment variables (`APP_JWT_SIGNING_KEY`, `${GITHUB_PERSONAL_ACCESS_TOKEN}`, `${STRIX_LLM_API_KEY}`).

@@ -1093,7 +1093,7 @@
         14,
         15
       ],
-      "sha256": "f2345b9b6baa3d1edfcfa324c82a8f6877896d3e20429df70d8685a6f063ba52"
+      "sha256": "fb840e895eed2f5984f59e885af0ed423bb66ad5c6aafbbc93de0a483dd187ea"
     },
     {
       "name": "humanizer",
@@ -1126,7 +1126,7 @@
         10,
         14
       ],
-      "sha256": "82d06d0b381787173d47522ecec81130884cabfba63b1ba25e5a5418dea5db18"
+      "sha256": "6a20074c374910c7af28d2b35238752bead34ec7e4f8b34000ac0eacba830186"
     },
     {
       "name": "session-handoff",
@@ -1172,7 +1172,7 @@
         14,
         15
       ],
-      "sha256": "93614b7f45bc5ad741782cf411b83f5d66bc7efde08c06f63bc8272d2dd7ae4f"
+      "sha256": "bdbf71baee082a3e03527a9559386ef4fbcae9cd77e3d85fa1723994ff2e5b51"
     }
   ]
 }

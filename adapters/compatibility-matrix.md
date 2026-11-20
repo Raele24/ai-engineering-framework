@@ -32,8 +32,8 @@
 3. **Hook Syntax Differences:**
    - *Limitation:* Claude Code `settings.json` hooks (`PreToolUse`/`PostToolUse` matching `Bash`/`Edit`), Antigravity `hooks.json` (`<hook-name>.{SessionStart,PreToolUse,PostToolUse,PreInvocation,PostInvocation,Stop}`), and GitHub Copilot have incompatible hook schemas.
    - *Fallback:* `adapters/antigravity/hooks.json` ships a schema-valid `"enabled": false` opt-in reminder template, while **universal Git/CLI validation (`python scripts/validate.py`)** provides a 100% platform-independent enforcement layer.
-4. **Consumer Skill Isolation & Host-Global Discovery (`GAP-07`):**
-   - *Verified Evidence:* In `M8-02B`, Antigravity CLI (`agy.exe`) executed `25/25` workspace calls inside the consumer root with `0` upstream repo leaks (`RUNTIME_VERIFIED`). In `M8-03A`/`M8-03B`, Codex CLI and Gemini CLI were observed scanning host-global `$HOME/.agents/skills/` alongside workspace paths, and Antigravity IDE exposes `$HOME/.gemini/config/skills/`.
+4. **Consumer Skill Isolation & Host-Global Discovery:**
+   - *Design Note:* Some CLI runtimes scan host-global directories (`$HOME/.agents/skills/`, `$HOME/.gemini/config/skills/`, `$HOME/.claude/skills/`, `$HOME/.codex/skills/`) alongside workspace skill directories.
    - *Boundary:* `scripts/validate.py --mode consumer` enforces lockfile-backed workspace boundaries inside `.agents/skills/` and `.claude/skills/` (`ERROR`/`WARNING`) and reports host-global skill folders as `INFO` only without touching user-global files.
 5. **Current Compatibility Summary (`v0.4.0`):**
    - **All 5 Platforms (Adapter & Schema Level):** Full inline entry composition (`scripts/compose.py`), native skill projection (`.agents/skills/` and `.claude/skills/`), read-only reviewer enforcement, and schema contracts are **`SUPPORTED & CONTRACT_VALIDATED`** (`84/84` automated offline tests).

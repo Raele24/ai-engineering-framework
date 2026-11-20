@@ -1,7 +1,7 @@
 # Changelog
 
 All notable changes to the **AI Engineering Framework** are documented in this file.
-The format follows [Semantic Versioning 2.0.0](https://semver.org/) ([`docs/VERSIONING.md`](./docs/VERSIONING.md)).
+The format follows [Semantic Versioning 2.0.0](https://semver.org/) ([`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md#3-semantic-versioning-semver-200--stability)).
 
 ---
 
@@ -15,7 +15,7 @@ The format follows [Semantic Versioning 2.0.0](https://semver.org/) ([`docs/VERS
 - **Granular Feature Toggles (`disabled.*`):** Backward-compatible `project.framework.json` schema (`core/schemas/framework-config.schema.json`) supporting `disabled.skills`, `disabled.agents`, `disabled.phases`, `disabled.gates`, and `disabled.mechanisms` (`tdd`, `handoffs`, `graphify`, `code-review`). Disabled skills/agents remain intact on disk under `skills/` and `agents/` for offline re-enabling while being pruned from native projections/subagents.
 - **Standard PEP 517 Packaging (`pyproject.toml`, `aief` CLI) & Auto-Deploy Workflow ([`.github/workflows/release-on-version-bump.yml`](./.github/workflows/release-on-version-bump.yml)):** Installs directly via `uvx` / `pipx` / `pip` exposing `aief` (`init`, `update`, `compose`, `validate`, `preflight`, `check-sync`). On every push to `main` where `pyproject.toml` introduces a new version, CI verifies version parity + full suite, builds & smoke-tests the wheel, creates the GitHub tag + Release + SHA-256 checksums, and optionally publishes to PyPI via OIDC (`PYPI_PUBLISH_ENABLED=true`).
 - **Tier E Automated Test Suite (`tests/test_m10_custom_composition.py`):** Added `16` deterministic tests covering inline composition, custom skills/agents/prompts/MCP, secret rejection, feature toggles, zero-flag CLI bootstrap, brownfield auto-import, JSONC validation, `pnpm` preflight detection, `session-handoff`/`i-have-adhd`/`humanizer`, packaging version parity + `aief` CLI, Graphify CLI detection/reporting, and safety guards (raising total suite coverage to `84/84` across Baseline + Tiers A–E).
-- **Documentation Consolidation (`docs/README.md`, `docs/CUSTOMIZATION_GUIDE.md`, `docs/GETTING_STARTED.md`, `docs/CONSUMER_USAGE_GUIDE.md`, `docs/CONFIGURATION.md`, `docs/INSTALLATION.md`, `adapters/compatibility-matrix.md`):** Updated active docs to `v0.4.0`, separated active guides from historical `M0`–`M9` reports, and clarified `CONTRACT_VALIDATED` vs host live-CLI probe boundaries.
+- **Documentation Consolidation (`docs/README.md`, `docs/GETTING_STARTED.md`, `docs/CUSTOMIZATION_GUIDE.md`, `docs/CONFIGURATION.md`, `docs/INSTALLATION.md`, `docs/CONTRIBUTING.md`, `docs/SKILL_COMPATIBILITY_MATRIX.md`, `adapters/compatibility-matrix.md`):** Consolidated overlapping guides cleanly to `12` active docs for `v0.4.0`.
 
 ### Changed
 - Integrated `scripts/compose.py` into `scripts/bootstrap.py`, preserving backward compatibility with Lockfile `v2.0.0`, legacy `v0.3.0` lockfiles, and `v0.3.x` `project.framework.json` configs lacking `disabled`/`customizations` keys.
@@ -33,10 +33,10 @@ The format follows [Semantic Versioning 2.0.0](https://semver.org/) ([`docs/VERS
 - Read-only host-global skill directory visibility (`INFO`) alongside three-tier validation severity reporting (`ERROR` / `WARNING` / `INFO`) in `scripts/validate.py`.
 
 ### Changed
-- Parameterized `scripts/sync_adapters.py` and `scripts/bootstrap.py` to generate consumer-safe adapter references (`python scripts/validate.py --mode consumer`, `workflows/`, `core/rules/`) without upstream-only paths (`GAP-01`) while keeping upstream framework CI intact.
+- Parameterized `scripts/sync_adapters.py` and `scripts/bootstrap.py` to generate consumer-safe adapter references (`python scripts/validate.py --mode consumer`, `workflows/`, `core/rules/`) without upstream-only paths while keeping upstream framework CI intact.
 - Dynamically derived upstream `.agents/skills.json` and `adapters/antigravity/skills.json` from `skills/registry.json` (`30/30` skills across `6` directories incl. `skills/optional/growth-media`).
 - Aligned `adapters/claude-code/agents/code-reviewer.md` and `adapters/copilot/code-reviewer.agent.md` with platform-native read-only tool IDs, removed unsupported `subagent`/`mainAgent` frontmatter keys and top-level settings `"description"` keys, and refactored `adapters/antigravity/hooks.json` to schema-valid `"enabled": false` opt-in format.
-- Hardened `workflows/05-review-qa-and-security.md`, `docs/CONFIGURATION.md`, `docs/INSTALLATION.md`, `adapters/compatibility-matrix.md`, `docs/M9_TEST_STRATEGY.md`, and `docs/M9_RELEASE_READINESS.md` with Windows PowerShell `5.1` conventions and evidence-based platform support tiers.
+- Updated `workflows/05-review-qa-and-security.md`, `docs/CONFIGURATION.md`, `docs/INSTALLATION.md`, and `adapters/compatibility-matrix.md` with Windows PowerShell `5.1` conventions and platform contract schemas.
 - Preserved full backward compatibility and safe backup migration (`.framework-state/lock-backups/framework-lock-v0.3.0.json`) for legacy `v0.3.0` consumers.
 
 ---
@@ -46,7 +46,7 @@ The format follows [Semantic Versioning 2.0.0](https://semver.org/) ([`docs/VERS
 ### Added
 - Consumer vs. framework validation modes (`--mode auto|framework|consumer`) in `scripts/validate.py`.
 - Optional skill pack filtering (`--optional-packs`) in `scripts/bootstrap.py`.
-- Stack `.gitignore` templates (`--stacks dotnet,node/angular,python`) and Windows SDK preflight (`scripts/preflight.py`), validated end-to-end on the M6 Pilot (`.NET 10 + Angular 21 + SQL Server LocalDB`) and `M7` consumer bootstrap.
+- Stack `.gitignore` templates (`--stacks dotnet,node/angular,python`) and Windows SDK preflight (`scripts/preflight.py`).
 
 ---
 

@@ -348,7 +348,7 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 ### Phase 13 — CI/CD and Release
 
 - **Purpose:** Package, validate in continuous integration pipelines, tag with Semantic Versioning (`SemVer`), and publish/deploy the release safely.
-- **Required Inputs:** Passing Phase 10, 11, and 12 reports; `.github/workflows/`; `docs/VERSIONING.md`.
+- **Required Inputs:** Passing Phase 10, 11, and 12 reports; `.github/workflows/`; `docs/CONTRIBUTING.md` (Section 3–4: SemVer & Release Checklist).
 - **Expected Outputs:**
   - Updated `CHANGELOG.md` and version metadata.
   - Local Git commit and SemVer tag (`vX.Y.Z`).

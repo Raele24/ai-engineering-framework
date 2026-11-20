@@ -23,7 +23,7 @@ approval_gates: [Gate-04]
 
 ## 3. Expected Inputs
 - Passing Phase 10, 11, and 12 verification reports.
-- `docs/VERSIONING.md` and `PROJECT_CHARTER.md`.
+- `docs/CONTRIBUTING.md` (SemVer & Release Checklist) and `PROJECT_CHARTER.md`.
 
 ## 4. Expected Outputs
 - Clean local Git repository state and validated CI workflows.

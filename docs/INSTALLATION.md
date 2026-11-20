@@ -6,15 +6,15 @@
 
 ## 1. System Requirements
 
-| Requirement | Minimum Version | Verified Host Version | Purpose |
-| :--- | :--- | :--- | :--- |
-| **Operating System** | Windows 10/11, macOS 12+, Linux | Windows 11 (`10.0.26300`) | Cross-platform path & line-ending support |
-| **Git** | `2.30+` | `2.50.1.windows.1` | Version control & diff inspection |
-| **Python** | `3.11+` | `3.13.14` | Executes `aief` CLI, `bootstrap.py`, `compose.py`, `validate.py`, `sync_adapters.py`, `preflight.py` |
-| **Node.js** *(Optional)* | `20.0+` | `v24.12.0` | Optional Angular/Node projects, Playwright E2E, and MCP bridges |
-| **.NET SDK** *(Optional)* | `8.0+ / 10.0 LTS` | `10.0.404` | Optional .NET consumer projects (supports Windows user-space `DOTNET_ROOT`) |
-| **Graphify** *(Recommended)* | `0.9+` | `0.9.48` | Codebase knowledge graph (`graphify .`) |
-| **GitHub CLI** *(Optional)* | `2.40+` | `2.104.0` | Remote repository & PR automation |
+| Requirement | Minimum Version | Purpose |
+| :--- | :--- | :--- |
+| **Operating System** | Windows 10/11, macOS 12+, Linux | Cross-platform path & line-ending support |
+| **Git** | `2.30+` | Version control & diff inspection |
+| **Python** | `3.11+` | Executes `aief` CLI, `bootstrap.py`, `compose.py`, `validate.py`, `sync_adapters.py`, `preflight.py` |
+| **Node.js** *(Optional)* | `20.0+` | Optional Angular/Node projects, Playwright E2E, and MCP bridges |
+| **.NET SDK** *(Optional)* | `8.0+ / 10.0 LTS` | Optional .NET consumer projects (supports Windows user-space `DOTNET_ROOT`) |
+| **Graphify** *(Recommended)* | `0.9+` | Codebase knowledge graph (`graphify .`) |
+| **GitHub CLI** *(Optional)* | `2.40+` | Remote repository & PR automation |
 
 ---
 
@@ -75,24 +75,24 @@ python scripts/bootstrap.py \
   [--dry-run]
 ```
 
-### 4.2 Optional Skill Pack Filtering (`REC-02`)
+### 4.2 Optional Skill Pack Filtering
 
 `bootstrap.py` always installs the 8 mandatory core skills (`grill-me`, `tdd-cycle`, `ponytail`, `adr-writer`, `graphify`, `agent-browser`, `find-skills`, `anti-slop`) and filters all generated consumer files to match the `--optional-packs` selection:
 1. **Consumer `skills/registry.json`:** Contains only the 8 core skills plus the skills belonging to the selected optional packs (preserving 100% of upstream attribution, license, source URL, and SHA-256 metadata).
 2. **Consumer `AGENTS.md`:** Generates Section 4 (`Registered Skills`) with only the installed skills — zero dangling references to uninstalled packs.
 3. **Consumer `agents/*.md`:** Filters `required_skills` in YAML frontmatter so agents only reference installed skills.
 4. **Consumer `.agents/skills.json`:** Registers only `skills/core` and the installed `skills/optional/<pack>` directories.
-5. **Native Platform Skill Projections (`M9-02`):** Derived dynamically from `core/platform-capabilities.json`, `bootstrap.py` projects physical copies of installed skills into `.agents/skills/<skill-name>/` (when any `.agents/skills`-consuming platform is enabled) and `.claude/skills/<skill-name>/` (when `claude-code` is enabled), excluding `UPSTREAM_SKILL.md` and `__pycache__/` while keeping attribution in `skills/`.
+5. **Native Platform Skill Projections:** Derived dynamically from `core/platform-capabilities.json`, `bootstrap.py` projects physical copies of installed skills into `.agents/skills/<skill-name>/` (when any `.agents/skills`-consuming platform is enabled) and `.claude/skills/<skill-name>/` (when `claude-code` is enabled), excluding `UPSTREAM_SKILL.md` and `__pycache__/` while keeping attribution in `skills/`.
 
 *Supported pack names:* `all` *(default — all `33` skills)*, `communication`, `context-engineering`, `agent-architecture`, `frontend-design` (alias `design-ui`), `growth-media`, or `none` (core-only `8` skills).  
 *CLI Defaults (when flags are omitted):* positional target or `--target`, all `5` platforms (`antigravity,copilot,claude-code,codex,gemini-cli`), `--profile standard`, `--optional-packs all` (`33` skills; disable unwanted items via `disabled.*` in `project.framework.json`), `--stacks auto` (auto-detects `dotnet`, `node-angular`, `python`).  
 *Stack Naming Note:* `bootstrap.py --stacks` accepts `node/angular` (normalizing it automatically to `node-angular`), whereas `scripts/preflight.py --stacks` and `project.framework.json` use `node-angular`.
 
-### 3.3 Adapter & Projected Skill Link Rewriting (`REC-03` & `M9-02`)
+### 4.3 Adapter & Projected Skill Link Rewriting
 
 When `bootstrap.py` relocates adapter Markdown files (e.g. `adapters/antigravity/rules/framework-core.md` $\rightarrow$ `.agents/rules/framework-core.md`) or projects skill files (e.g. `skills/core/find-skills/SKILL.md` $\rightarrow$ `.agents/skills/find-skills/SKILL.md`), `bootstrap.rewrite_markdown_relative_links()` rewrites relative Markdown links (`../../registry.json` $\rightarrow$ `../../../skills/registry.json`, `../../../AGENTS.md` $\rightarrow$ `../../AGENTS.md`) while preserving external URLs, anchors, fenced code blocks, and inline code spans. Relocated targets are verified to resolve inside the consumer workspace root. Consumer adapter overrides also suppress upstream-only references (`docs/WORKFLOW.md`, `scripts/sync_adapters.py`, `scripts/bootstrap.py`, `python -m unittest`).
 
-### 3.4 Stack-Specific Templates & Windows SDK Preflight (`REC-04`)
+### 4.4 Stack-Specific Templates & Windows SDK Preflight
 
 Passing `--stacks dotnet,node/angular,python` performs two non-destructive actions:
 1. **Stack `.gitignore` Generation:**
@@ -108,7 +108,7 @@ Passing `--stacks dotnet,node/angular,python` performs two non-destructive actio
 
 ---
 
-## 4. Non-Destructive Updates (`--update`)
+## 5. Non-Destructive Updates (`--update`)
 
 ```bash
 python /path/to/ai-engineering-framework/scripts/bootstrap.py \
@@ -125,7 +125,7 @@ python /path/to/ai-engineering-framework/scripts/bootstrap.py \
 
 ---
 
-## 5. Framework vs. Consumer Validation Modes (`REC-01` — `scripts/validate.py`)
+## 6. Framework vs. Consumer Validation Modes (`scripts/validate.py`)
 
 `scripts/validate.py` supports three modes via `--mode {auto,framework,consumer}`:
 

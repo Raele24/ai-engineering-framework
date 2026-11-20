@@ -1,26 +1,23 @@
 # AI Engineering Framework
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.0-success.svg)](./docs/VERSIONING.md)
+[![Version](https://img.shields.io/badge/version-0.4.0-success.svg)](./docs/CONTRIBUTING.md#3-semantic-versioning-semver-200--stability)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./docs/CONTRIBUTING.md)
 
-**A modular, open-source, platform-independent engineering framework that standardizes the complete Software Development Lifecycle (SDLC) for AI coding agents.**
+**A vendor-neutral engineering workflow, role system, and skill library for AI coding agents.**
 
-The **AI Engineering Framework** provides a single canonical source of truth for requirements discovery, specification-driven development, architectural decision records (ADRs), test-driven development (TDD), code review, security validation, and release automation across **GitHub Copilot**, **Google Antigravity**, **Claude Code**, **OpenAI Codex**, and **Gemini CLI**.
+It keeps engineering rules, specs, ADRs, TDD checks, and platform configurations in one source of truth synced across **GitHub Copilot**, **Google Antigravity**, **Claude Code**, **OpenAI Codex**, and **Gemini CLI**.
 
 ---
 
-## Why This Framework Exists
+## Core Design
 
-Most AI-assisted development setups suffer from three structural failure modes:
-1. **Prompt Sprawl & Vendor Lock-In:** Teams maintain conflicting instructions in `.github/copilot-instructions.md`, `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md`.
-2. **Vibe-Coding Drift:** Agents jump straight from a vague user prompt to writing implementation code without clarifying edge cases, documenting architecture, or writing failing tests first.
-3. **Multi-Agent "Telephone Game" Degradation:** Passing project context purely through chat summaries causes ~50% information loss across agent handoffs.
+Most multi-tool AI setups drift quickly: rules get copied across `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, and `.github/copilot-instructions.md`, and long agent chats drop edge cases between tasks.
 
-**AI Engineering Framework solves this with three core primitives:**
-- **Canonical 15-Phase Workflow ([docs/WORKFLOW.md](./docs/WORKFLOW.md)):** Every phase defines explicit inputs, outputs, responsible roles, entry/exit criteria, quality gates, and mandatory human approval checkpoints.
-- **Filesystem Handoff Protocol ([core/rules/context-handoff-protocol.md](./core/rules/context-handoff-protocol.md)):** Agents exchange validated artifacts (`docs/specs/`, `docs/adr/`, `.framework-state/handoffs/`) on disk so every specialist agent starts with a clean, unpolluted context window.
-- **Thin Platform Adapters ([adapters/](./adapters/)):** Maintain rules, roles, and skills (`SKILL.md`) once; synchronize native configurations for all 5 platforms with `python scripts/sync_adapters.py`.
+The framework keeps three parts separate:
+- **15-Phase Workflow ([docs/WORKFLOW.md](./docs/WORKFLOW.md)):** Explicit inputs, outputs, role ownership, and human approval gates (`Gate-01a`..`Gate-05`) before code, security scans, or releases.
+- **Filesystem Handoffs ([core/rules/context-handoff-protocol.md](./core/rules/context-handoff-protocol.md)):** Phase outputs live in `docs/` and `.framework-state/handoffs/` on disk rather than long chat summaries.
+- **Platform Adapters ([adapters/](./adapters/)):** Maintain canonical rules, roles, and skills once; generate platform configs with `scripts/sync_adapters.py` (upstream) or `scripts/compose.py` (consumer repos).
 
 ---
 
@@ -141,20 +138,17 @@ Start from **[`docs/README.md`](./docs/README.md)** for the full structured docu
 - **[Project Charter](./PROJECT_CHARTER.md)** — Vision, scope, non-goals, principles, and milestones.
 - **[Canonical Workflow (`docs/WORKFLOW.md`)](./docs/WORKFLOW.md)** — Complete 15-phase operational SDLC specification.
 - **[Architecture Guide (`docs/ARCHITECTURE.md`)](./docs/ARCHITECTURE.md)** — 4-tier architecture, state handoffs, and Graphify integration.
-- **[Getting Started (`docs/GETTING_STARTED.md`)](./docs/GETTING_STARTED.md)** — End-to-end walkthrough of your first feature using the framework (`v0.4.0`).
-- **[Consumer Usage Guide (`docs/CONSUMER_USAGE_GUIDE.md`)](./docs/CONSUMER_USAGE_GUIDE.md)** — Practical playbook for adopting and operating the framework day-to-day in real brownfield repositories.
-- **[Customization & Auto-Loading Guide (`docs/CUSTOMIZATION_GUIDE.md`)](./docs/CUSTOMIZATION_GUIDE.md)** — Recipe guide for `.framework-custom/` (inline rules, custom skills, custom/appended agents), `disabled.*` toggles, and `scripts/compose.py`.
-- **[Platform Compatibility Matrix (`adapters/compatibility-matrix.md`)](./adapters/compatibility-matrix.md)** — Configuration mapping, fallbacks, and platform verification status across all 5 platforms.
-- **[Installation Guide (`docs/INSTALLATION.md`)](./docs/INSTALLATION.md)** — Prerequisites, bootstrap modes, and non-destructive updates.
-- **[Configuration Reference (`docs/CONFIGURATION.md`)](./docs/CONFIGURATION.md)** — Configuring `project.framework.json`, platform adapters, and optional domain packs.
+- **[Getting Started & Consumer Usage (`docs/GETTING_STARTED.md`)](./docs/GETTING_STARTED.md)** — Install, first feature walkthrough, session handoffs, and bounded readiness (`v0.4.0`).
+- **[Customization & Auto-Loading Guide (`docs/CUSTOMIZATION_GUIDE.md`)](./docs/CUSTOMIZATION_GUIDE.md)** — Recipe guide for `.framework-custom/` (rules, skills, agents, prompts, MCP), `disabled.*` toggles, and `scripts/compose.py`.
+- **[Platform Compatibility Matrix (`adapters/compatibility-matrix.md`)](./adapters/compatibility-matrix.md)** — Configuration mapping and platform support across all 5 platforms.
+- **[Installation Guide (`docs/INSTALLATION.md`)](./docs/INSTALLATION.md)** — Prerequisites, `aief` CLI / `bootstrap.py` modes, and non-destructive updates.
+- **[Configuration Reference (`docs/CONFIGURATION.md`)](./docs/CONFIGURATION.md)** — Configuring `project.framework.json`, lockfile `v2.0.0`, ownership classes, and validation severities.
 - **[Security Policy (`docs/SECURITY.md`)](./docs/SECURITY.md)** — Vulnerability reporting, secret prevention, and authorized security testing (Strix).
-- **[Skill Compatibility Matrix (`docs/SKILL_COMPATIBILITY_MATRIX.md`)](./docs/SKILL_COMPATIBILITY_MATRIX.md)** — Per-platform discovery, activation, and script support for all 33 registered skills.
+- **[Skills Catalog & Matrix (`docs/SKILL_COMPATIBILITY_MATRIX.md`)](./docs/SKILL_COMPATIBILITY_MATRIX.md)** — Packs, Policy A/B/C, external CLIs (`rtk`, `graphify`), and compatibility matrix for all 33 skills.
 - **[Token Optimization Guide (`docs/TOKEN_OPTIMIZATION.md`)](./docs/TOKEN_OPTIMIZATION.md)** — Progressive disclosure principles, Ponytail, Caveman, RTK, and filesystem context offloading.
-- **[Skill Installation Guide (`docs/SKILL_INSTALLATION_GUIDE.md`)](./docs/SKILL_INSTALLATION_GUIDE.md)** — Policy A/B/C classification and Windows CLI setup.
 - **[Changelog (`CHANGELOG.md`)](./CHANGELOG.md)** — Release history from `v0.1.0` through `v0.4.0`.
-- **[Versioning Policy (`docs/VERSIONING.md`)](./docs/VERSIONING.md)** — Semantic Versioning (`SemVer 2.0.0`) and schema migration guarantees.
-- **[Contributing Guide (`docs/CONTRIBUTING.md`)](./docs/CONTRIBUTING.md)** — How to propose new skills, adapters, and workflow improvements.
-- **[Roadmap (`docs/ROADMAP.md`)](./docs/ROADMAP.md)** — Milestone progression from `v0.1.0` through `v1.0.0`.
+- **[Contributing, Versioning & Release (`docs/CONTRIBUTING.md`)](./docs/CONTRIBUTING.md)** — Authoring rules, SemVer `2.0.0`, release checklist, and commit conventions.
+- **[Roadmap (`docs/ROADMAP.md`)](./docs/ROADMAP.md)** — Release progression from `v0.1.0` through `v0.5.0+`.
 
 ---
 

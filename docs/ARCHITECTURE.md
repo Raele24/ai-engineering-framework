@@ -5,9 +5,9 @@
 
 ---
 
-## 1. Architectural Vision
+## 1. Architectural Overview
 
-The **AI Engineering Framework** is designed as a **layered, vendor-neutral engineering operating system** for AI coding agents. Its primary architectural goal is to decouple **what software engineering discipline requires** (the Canonical Core) from **how individual AI coding platforms load instructions, tools, and subagents** (the Platform Adapter Layer).
+The **AI Engineering Framework** separates **engineering rules and workflow logic** (Canonical Core) from **platform-specific config files** (Platform Adapter Layer), keeping a single source of truth across all 5 supported AI coding tools.
 
 ---
 
@@ -69,7 +69,7 @@ flowchart TD
 | **Canonical Roles** | `agents/` | Defines the 8 specialized engineering roles, tool permissions, and boundaries | `core/schemas/agent-role.schema.json` | `workflows/`, `adapters/` |
 | **Skill Library & Projections** | `skills/`, `.agents/skills/`, `.claude/skills/` | Stores canonical `core/` and `optional/` runbooks (`SKILL.md`, `registry.json`); `bootstrap.py` projects active skills into native runtime directories (excluding `UPSTREAM_SKILL.md`/`__pycache__`) and rewrites relocated links | `core/schemas/skill-frontmatter.schema.json`, `core/platform-capabilities.json` | `agents/`, host skill loaders |
 | **Workflow Runbooks** | `workflows/` | Operational stage playbooks implementing the 15 phases of `docs/WORKFLOW.md` (incl. PowerShell 5.1 & readiness protocols) | `core/rules/`, `agents/`, `skills/` | Host agents, slash commands, orchestrators |
-| **Platform Adapters** | `adapters/` | Maps canonical roles, rules, tools, and workflows to native platform files; evidence status tracked in `core/platform-capabilities.json` | `core/`, `agents/`, `skills/`, `workflows/` | Antigravity (`RUNTIME_VERIFIED`), Codex (`PARTIAL_RUNTIME_VERIFIED`), Copilot / Claude Code / Gemini CLI (`CONTRACT_VALIDATED`) |
+| **Platform Adapters** | `adapters/` | Maps canonical roles, rules, tools, and workflows to native platform files | `core/`, `agents/`, `skills/`, `workflows/` | All 5 supported platforms (`antigravity`, `copilot`, `claude-code`, `codex`, `gemini-cli`) |
 | **Quality & Security** | `quality/`, `security/` | Enforces TDD contracts, review rubrics, secret scanning, and Strix authorization (`Gate-Sec`) | `core/rules/security-guardrails.md` | Phases 9–12 (`implementation-engineer`, `code-reviewer`, `qa-engineer`, `security-engineer`) |
 | **Integrations** | `integrations/` | Bridges optional MCP servers, Graphify knowledge graphs, RTK, and external orchestrators | `core/` | Optional project workflows |
 | **CLI Scripts** | `scripts/`, `aief_cli/` | Pure-stdlib utilities: `bootstrap.py`, `compose.py`, `validate.py`, `sync_adapters.py`, `preflight.py`, `platform_capabilities.py`, `readiness.py`, `run_tests.py` + `aief` CLI | Python 3.11+ stdlib, `core/schemas/` | Developers, agents, consumer repos, CI runners |

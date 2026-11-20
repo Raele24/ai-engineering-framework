@@ -243,13 +243,6 @@ def main(argv: List[str] | None = None) -> int:
             f"failed={b['failed']}, errored={b['errored']}, skipped={b['skipped']}, blocked={b['blocked']}"
         )
 
-    print("\n--- Platform Contracts vs. Host CLI Live Verification (Offline Suite Checks Contracts Only) ---")
-    for row in runtime_boundaries:
-        print(
-            f"  {row['platform']:12s}: contracts={row['contracts']} | "
-            f"host_cli_probe={row['offline_suite_execution']}"
-        )
-
     print(
         f"\nOVERALL: {payload['status']} | total={totals['total']}, passed={totals['passed']}, "
         f"failed={totals['failed']}, errored={totals['errored']}, skipped={totals['skipped']} "
