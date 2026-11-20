@@ -1612,11 +1612,13 @@ def compose_consumer_artifacts(
                     raw_src_md = src.read_text(encoding="utf-8")
                     if using_existing_projection:
                         src_cur_rel = src.relative_to(target_dir).as_posix()
+                        src_skill_root_rel = skill_src_dir.relative_to(target_dir).as_posix()
                         rewritten = rewrite_markdown_relative_links(
                             raw_src_md,
                             src_cur_rel,
                             dst_rel,
                             fw_prefix="",
+                            skill_dir_map={src_skill_root_rel: f"{proj_root}/{skill_name}"},
                             strip_upstream_snapshot_links=is_isolated,
                         )
                     else:
