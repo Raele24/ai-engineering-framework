@@ -35,10 +35,10 @@ import preflight  # noqa: E402
 import sync_adapters  # noqa: E402
 
 FRAMEWORK_ROOT = SCRIPT_DIR.parent
-FRAMEWORK_VERSION = "0.4.0"
-LOCKFILE_NAME = ".framework-lock.json"
+FRAMEWORK_VERSION = "0.5.0"
+LOCKFILE_NAME = ".aief/lock.json"
 LOCKFILE_SCHEMA_VERSION = "2.0.0"
-LOCKFILE_BACKUP_REL = ".framework-state/lock-backups/framework-lock-v0.3.0.json"
+LOCKFILE_BACKUP_REL = ".aief/state/lock-backups/framework-lock-v0.3.0.json"
 
 ALL_PLATFORMS: List[str] = list(
     platform_capabilities.load_platform_capabilities()["platform_ids"]
@@ -119,6 +119,10 @@ SUPPORTED_PROJECTION_ROOTS: Set[str] = {".agents/skills", ".claude/skills"}
 TEXT_SUFFIXES: Set[str] = {".md", ".json", ".py", ".csv", ".cjs", ".js", ".ts", ".txt", ".yaml", ".yml", ".toml", ".gitignore"}
 
 CONSUMER_OWNED_EXACT: Set[str] = {
+    ".aief/config.json",
+    ".aief/.gitignore",
+    ".aief/gitignore.recommended",
+    ".aief/ENVIRONMENT_PREFLIGHT.md",
     "project.framework.json",
     ".gitignore",
     ".gitignore.framework-recommended",
@@ -126,17 +130,24 @@ CONSUMER_OWNED_EXACT: Set[str] = {
 }
 CONSUMER_OWNED_PREFIXES: Tuple[str, ...] = (
     "docs/",
+    ".aief/state/",
+    ".aief/custom/",
     ".framework-state/",
     ".framework-custom/",
 )
 ALLOWED_SKILL_PRUNE_ROOTS: Tuple[str, ...] = (
     ".agents/skills/",
     ".claude/skills/",
+    ".aief/skills/core/",
+    ".aief/skills/optional/",
     "skills/optional/",
 )
 ALLOWED_MANAGED_ADAPTER_PRUNE_EXACT: Set[str] = {
     "CLAUDE.md",
     "GEMINI.md",
+    ".aief/adapters/antigravity/hooks.json",
+    ".aief/adapters/antigravity/mcp_config.json",
+    ".aief/adapters/antigravity/skills.json",
     "adapters/antigravity/hooks.json",
     "adapters/antigravity/mcp_config.json",
     ".agents/skills.json",
@@ -584,11 +595,19 @@ def collect_managed_plan_details(
     config_data: Dict[str, object] | None = None,
     profile: str = "standard",
     extra_imported: List[Tuple[str, str]] | None = None,
+    layout: Dict[str, str] | None = None,
 ) -> Tuple[Dict[str, Dict[str, object]], Dict[str, Dict[str, object]]]:
     """Build deterministic detailed plan and projected_skills summary from canonical metadata."""
     entries: Dict[str, Dict[str, object]] = {}
     cfg = dict(config_data or {})
-    controls = compose.normalize_project_controls(cfg)
+    active_layout = layout or (
+        compose.resolve_consumer_layout(target_dir)
+        if target_dir is not None
+        else compose.resolve_consumer_layout(framework_root, force_layout="isolated")
+    )
+    fw_prefix = active_layout["fw_prefix"]
+    hooks_rel = active_layout["hooks_rel"]
+    controls = compose.normalize_project_controls(cfg, default_overlay_dir=active_layout["overlay_default"])
     overlay_rel = str(controls["customizations"]["overlayDir"])
     if target_dir is not None:
         _assert_overlay_safe(target_dir, overlay_rel)
@@ -620,6 +639,7 @@ def collect_managed_plan_details(
         config_data=cfg,
         overlay=overlay,
         digest=digest,
+        layout=active_layout,
     )
     consumer_reg = comp["consumer_registry"]
 
@@ -648,43 +668,60 @@ def collect_managed_plan_details(
         }
 
     # 1. Core framework managed globs (excluding dynamically composed agents/*.md)
+    skill_dir_map = comp.get("skill_dir_map")  # type: ignore[assignment]
     for pattern in CORE_MANAGED_GLOBS:
         for src in sorted(framework_root.glob(pattern)):
             if src.is_file():
                 rel = src.relative_to(framework_root).as_posix()
                 if rel.startswith("agents/") and rel.endswith(".md"):
                     continue
-                _add_managed(rel, _read_normalized_skill_file(src), rel, ["core"])
+                dst_rel = f"{fw_prefix}{rel}"
+                if fw_prefix and src.suffix.lower() == ".md":
+                    raw_md = src.read_text(encoding="utf-8")
+                    data_bytes = compose.rewrite_markdown_relative_links(
+                        raw_md,
+                        rel,
+                        dst_rel,
+                        fw_prefix=fw_prefix,
+                        skill_dir_map=skill_dir_map,  # type: ignore[arg-type]
+                        strip_upstream_snapshot_links=True,
+                    ).encode("utf-8")
+                else:
+                    data_bytes = _read_normalized_skill_file(src)
+                _add_managed(dst_rel, data_bytes, rel, ["core"])
 
     for agent_rel, agent_bytes in comp["composed_agent_files"].items():  # type: ignore[attr-defined]
         _add_managed(agent_rel, agent_bytes, agent_rel, ["core"])
 
-    # 2. Canonical core skills subtree (preserving UPSTREAM_SKILL.md under skills/)
-    core_skills_root = framework_root / "skills" / "core"
-    if core_skills_root.exists():
-        for src in sorted(core_skills_root.rglob("*")):
-            if src.is_file() and "__pycache__" not in src.parts and src.suffix != ".pyc":
-                rel = src.relative_to(framework_root).as_posix()
-                _add_managed(rel, _read_normalized_skill_file(src), rel, ["core"])
+    # 2. Canonical skills subtree: only copied on disk for legacy root installs;
+    # isolated (.aief/) consumers read directly from projected .agents/skills/ & .claude/skills/ + bundle cache.
+    if not fw_prefix:
+        core_skills_root = framework_root / "skills" / "core"
+        if core_skills_root.exists():
+            for src in sorted(core_skills_root.rglob("*")):
+                if src.is_file() and "__pycache__" not in src.parts and src.suffix != ".pyc":
+                    rel = src.relative_to(framework_root).as_posix()
+                    _add_managed(rel, _read_normalized_skill_file(src), rel, ["core"])
 
     # 3. Filtered consumer skills/registry.json
     _add_managed(
-        "skills/registry.json",
+        f"{fw_prefix}skills/registry.json",
         (json.dumps(consumer_reg, indent=2) + "\n").encode("utf-8"),
         "skills/registry.json",
         ["core"],
     )
 
-    # 4. Selected optional skill pack subtrees under skills/optional/
-    for pack in optional_packs:
-        pack_rel_dir = OPTIONAL_PACK_DIRS.get(pack)
-        if pack_rel_dir:
-            pack_dir = framework_root / Path(pack_rel_dir)
-            if pack_dir.exists():
-                for src in sorted(pack_dir.rglob("*")):
-                    if src.is_file() and "__pycache__" not in src.parts and src.suffix != ".pyc":
-                        rel = src.relative_to(framework_root).as_posix()
-                        _add_managed(rel, _read_normalized_skill_file(src), rel, ["core"])
+    # 4. Selected optional skill pack subtrees (legacy layout only)
+    if not fw_prefix:
+        for pack in optional_packs:
+            pack_rel_dir = OPTIONAL_PACK_DIRS.get(pack)
+            if pack_rel_dir:
+                pack_dir = framework_root / Path(pack_rel_dir)
+                if pack_dir.exists():
+                    for src in sorted(pack_dir.rglob("*")):
+                        if src.is_file() and "__pycache__" not in src.parts and src.suffix != ".pyc":
+                            rel = src.relative_to(framework_root).as_posix()
+                            _add_managed(rel, _read_normalized_skill_file(src), rel, ["core"])
 
     # 5. Platform adapters (inline rules + overlay + active custom agents + static fallback)
     consumer_overrides = sync_adapters.generate_consumer_adapter_files(framework_root, digest=digest)
@@ -694,11 +731,12 @@ def collect_managed_plan_details(
         for src_rel, dst_rel in PLATFORM_ADAPTER_MAPPINGS.get(plat, []):
             if dst_rel in {".claude/agents/framework-code-reviewer.md", ".github/agents/code-reviewer.agent.md"}:
                 continue
-            if dst_rel in composed_platform_files:
-                _add_managed(dst_rel, composed_platform_files[dst_rel].encode("utf-8"), src_rel, [plat])
+            effective_dst = hooks_rel if dst_rel == "adapters/antigravity/hooks.json" else dst_rel
+            if effective_dst in composed_platform_files:
+                _add_managed(effective_dst, composed_platform_files[effective_dst].encode("utf-8"), src_rel, [plat])
                 continue
-            if dst_rel in consumer_overrides:
-                _add_managed(dst_rel, consumer_overrides[dst_rel].encode("utf-8"), src_rel, [plat])
+            if effective_dst in consumer_overrides:
+                _add_managed(effective_dst, consumer_overrides[effective_dst].encode("utf-8"), src_rel, [plat])
                 continue
 
             src = framework_root / Path(src_rel)
@@ -706,11 +744,11 @@ def collect_managed_plan_details(
                 continue
 
             raw_text = src.read_text(encoding="utf-8").replace("\r\n", "\n")
-            if dst_rel.endswith(".md") and src_rel != dst_rel:
-                rewritten_text = rewrite_markdown_relative_links(raw_text, src_rel, dst_rel)
-                _add_managed(dst_rel, rewritten_text.encode("utf-8"), src_rel, [plat])
+            if effective_dst.endswith(".md") and src_rel != effective_dst:
+                rewritten_text = compose.rewrite_markdown_relative_links(raw_text, src_rel, effective_dst, fw_prefix=fw_prefix)
+                _add_managed(effective_dst, rewritten_text.encode("utf-8"), src_rel, [plat])
             else:
-                _add_managed(dst_rel, raw_text.encode("utf-8"), src_rel, [plat])
+                _add_managed(effective_dst, raw_text.encode("utf-8"), src_rel, [plat])
 
     if "claude-code" in platforms:
         for rel, (data, own) in comp["claude_agent_entries"].items():  # type: ignore[attr-defined]
@@ -767,10 +805,11 @@ def collect_managed_plan(
     return {rel: (framework_root / Path(rel)) for rel in plan_bytes}
 
 
-def _compose_stack_gitignore(framework_root: Path, stacks: List[str]) -> str:
+def _compose_stack_gitignore(framework_root: Path, stacks: List[str], *, isolated: bool = True) -> str:
+    state_ignore = ".aief/state/" if isolated else ".framework-state/scratch/"
     sections: List[str] = [
-        "# Generated by AI Engineering Framework (scripts/bootstrap.py)",
-        ".framework-state/scratch/",
+        "# Generated by AI Engineering Framework",
+        state_ignore,
         "graphify-out/",
         "",
     ]
@@ -966,7 +1005,7 @@ def _build_v2_lock_payload(
 def _cleanup_empty_dirs(target_dir: Path, pruned_paths: List[str] | None = None) -> None:
     """Prune empty subdirectories bottom-up strictly inside managed skill/adapter roots."""
     target_resolved = target_dir.resolve()
-    for base_rel in (".agents/skills", ".claude/skills", "skills/optional"):
+    for base_rel in (".agents/skills", ".claude/skills", ".aief/skills/core", ".aief/skills/optional", "skills/optional"):
         base = target_dir / Path(base_rel)
         if not base.exists() or _is_reparse_or_symlink(base):
             continue
@@ -1012,8 +1051,15 @@ def bootstrap_project(
     canonical_packs = normalize_optional_packs(raw_packs)
     normalized_stacks = preflight.normalize_stacks(stacks or [])
     target_dir = target_dir.resolve()
+    layout = compose.resolve_consumer_layout(target_dir)
+    is_isolated = layout["mode"] == "isolated"
+    fw_prefix = str(layout["fw_prefix"])
+    lock_rel = str(layout["lock_rel"])
+    config_rel = str(layout["config_rel"])
+    state_rel = str(layout["state_rel"])
+    lock_backup_rel = f"{state_rel}/lock-backups/framework-lock-v0.3.0.json"
 
-    lock_path = target_dir / LOCKFILE_NAME
+    lock_path = target_dir / Path(lock_rel)
     existing_lock = _load_existing_lockfile(lock_path)
     prev_managed: Dict[str, Dict[str, object]] = dict(existing_lock["managed_files"])
     proj_state = dict(existing_lock["projection_state"])
@@ -1031,10 +1077,10 @@ def bootstrap_project(
     unknown_preserved: List[str] = []
     recovered: List[str] = []
     imported_files: List[str] = []
+    preserved_external: List[str] = []
     tier3_writes: List[Tuple[str, bytes]] = []
 
-    config_rel = "project.framework.json"
-    config_path = target_dir / config_rel
+    config_path = target_dir / Path(config_rel)
     existing_cfg_for_plan: Dict[str, object] = {}
     if config_path.exists() and not _is_reparse_or_symlink(config_path):
         try:
@@ -1044,11 +1090,14 @@ def bootstrap_project(
         except Exception:
             existing_cfg_for_plan = {}
 
-    controls_pre = compose.normalize_project_controls(existing_cfg_for_plan)
+    controls_pre = compose.normalize_project_controls(
+        existing_cfg_for_plan,
+        default_overlay_dir=str(layout["overlay_default"]),
+    )
     overlay_rel = str(controls_pre["customizations"]["overlayDir"])
     _assert_overlay_safe(target_dir, overlay_rel)
 
-    # Brownfield auto-import on first bootstrap (no lockfile): preserve existing root instructions into .framework-custom/imported/
+    # Brownfield auto-import on first bootstrap (no lockfile): preserve existing root instructions into overlay/imported/
     imported_entries: Dict[str, str] = {}
     in_memory_imported: List[Tuple[str, str]] = []
     if not existing_lock["exists"] and not update_mode:
@@ -1084,7 +1133,19 @@ def bootstrap_project(
         config_data=existing_cfg_for_plan,
         profile=effective_profile,
         extra_imported=in_memory_imported,
+        layout=layout,
     )
+    if is_isolated:
+        root_skills_dir = target_dir / "skills"
+        if root_skills_dir.exists() and not _is_reparse_or_symlink(root_skills_dir):
+            for ext_skill in sorted(root_skills_dir.glob("*/SKILL.md")):
+                preserved_external.append(ext_skill.relative_to(target_dir).as_posix())
+    agents_rules_dir = target_dir / ".agents" / "rules"
+    if agents_rules_dir.exists() and not _is_reparse_or_symlink(agents_rules_dir):
+        for ext_rule in sorted(agents_rules_dir.glob("*.md")):
+            ext_rel = ext_rule.relative_to(target_dir).as_posix()
+            if ext_rel not in desired_entries:
+                preserved_external.append(ext_rel)
     canonical_digest = sync_adapters.compute_canonical_digest(framework_root)
 
     # Pre-validate safety on all desired paths and any existing lockfile paths
@@ -1244,7 +1305,7 @@ def bootstrap_project(
                 "mechanisms": [],
             },
             "customizations": {
-                "overlayDir": ".framework-custom",
+                "overlayDir": str(layout["overlay_default"]),
                 "promptInjectionMode": "inline",
                 "inlineMaxBytes": 16384,
             },
@@ -1257,14 +1318,14 @@ def bootstrap_project(
             "security": {
                 "enforcePreCommitSecretScan": True,
                 "allowActiveSecurityTesting": False,
-                "strixProfilePath": "security/strix-profile.yaml",
+                "strixProfilePath": f"{fw_prefix}security/strix-profile.yaml",
             },
             "paths": {
                 "specsDir": "docs/specs",
                 "adrDir": "docs/adr",
                 "plansDir": "docs/plans",
                 "retrospectivesDir": "docs/retrospectives",
-                "stateDir": ".framework-state",
+                "stateDir": state_rel,
             },
         }
         tier3_writes.append((config_rel, (json.dumps(config_payload, indent=2) + "\n").encode("utf-8")))
@@ -1294,7 +1355,7 @@ def bootstrap_project(
     else:
         unchanged.append(config_rel)
 
-    manifest_rel = ".framework-state/manifest.json"
+    manifest_rel = f"{state_rel}/manifest.json"
     manifest_path = target_dir / Path(manifest_rel)
     if not manifest_path.exists():
         created.append(manifest_rel)
@@ -1314,11 +1375,20 @@ def bootstrap_project(
     else:
         unchanged.append(manifest_rel)
 
+    if is_isolated:
+        aief_gi_rel = ".aief/.gitignore"
+        aief_gi_path = target_dir / Path(aief_gi_rel)
+        if not aief_gi_path.exists():
+            created.append(aief_gi_rel)
+            tier3_writes.append((aief_gi_rel, b"# Ephemeral framework runtime state\nstate/\nlock.json.tmp\n"))
+        else:
+            unchanged.append(aief_gi_rel)
+
     if normalized_stacks:
-        gitignore_content = _compose_stack_gitignore(framework_root, normalized_stacks)
+        gitignore_content = _compose_stack_gitignore(framework_root, normalized_stacks, isolated=is_isolated)
         gitignore_path = target_dir / ".gitignore"
-        rec_gitignore_rel = ".gitignore.framework-recommended"
-        rec_gitignore_path = target_dir / rec_gitignore_rel
+        rec_gitignore_rel = ".aief/gitignore.recommended" if is_isolated else ".gitignore.framework-recommended"
+        rec_gitignore_path = target_dir / Path(rec_gitignore_rel)
 
         if not gitignore_path.exists():
             created.append(".gitignore")
@@ -1333,7 +1403,7 @@ def bootstrap_project(
                 else:
                     unchanged.append(rec_gitignore_rel)
 
-        preflight_rel = "docs/ENVIRONMENT_PREFLIGHT.md"
+        preflight_rel = ".aief/ENVIRONMENT_PREFLIGHT.md" if is_isolated else "docs/ENVIRONMENT_PREFLIGHT.md"
         preflight_path = target_dir / Path(preflight_rel)
         if not preflight_path.exists():
             created.append(preflight_rel)
@@ -1367,19 +1437,31 @@ def bootstrap_project(
 
     if not dry_run:
         target_dir.mkdir(parents=True, exist_ok=True)
-        for sub in [
-            "docs/specs",
-            "docs/adr",
-            "docs/plans",
-            "docs/retrospectives",
-            ".framework-state/handoffs",
-            ".framework-state/scratch",
-        ]:
+        init_dirs = (
+            [
+                f"{state_rel}/handoffs",
+                f"{state_rel}/session-handoffs",
+                f"{state_rel}/scratch",
+                f"{overlay_rel}/rules",
+                f"{overlay_rel}/skills",
+                f"{overlay_rel}/prompts",
+            ]
+            if is_isolated
+            else [
+                "docs/specs",
+                "docs/adr",
+                "docs/plans",
+                "docs/retrospectives",
+                f"{state_rel}/handoffs",
+                f"{state_rel}/scratch",
+            ]
+        )
+        for sub in init_dirs:
             (target_dir / Path(sub)).mkdir(parents=True, exist_ok=True)
 
         # Back up v0.3.0 lockfile cleanly before upgrading to v2.0.0
         if migrated_from == "0.3.0" and existing_lock["raw_bytes"]:
-            backup_path = assert_safe_target_path(target_dir, LOCKFILE_BACKUP_REL, label="lockfile backup")
+            backup_path = assert_safe_target_path(target_dir, lock_backup_rel, label="lockfile backup")
             if not backup_path.exists():
                 _atomic_write_bytes(backup_path, bytes(existing_lock["raw_bytes"]))
 
@@ -1429,7 +1511,9 @@ def bootstrap_project(
         "unknown_preserved": unknown_preserved,
         "recovered": recovered,
         "imported": imported_files,
+        "preserved_external": preserved_external,
         "migrated_from": migrated_from,
+        "layout": layout["mode"],
     }
 
 
@@ -1530,11 +1614,12 @@ def main(argv: List[str] | None = None) -> int:
         parser.error("Target path required (e.g. `python scripts/bootstrap.py D:\\path\\to\\project`).")
 
     # Resolve existing consumer preferences automatically during --update when flags are omitted
+    layout = compose.resolve_consumer_layout(target_arg)
     existing_cfg: Dict[str, object] = {}
     existing_lock_raw: Dict[str, object] = {}
     if args.update:
-        cfg_file = target_arg / "project.framework.json"
-        lock_file = target_arg / LOCKFILE_NAME
+        cfg_file = target_arg / Path(str(layout["config_rel"]))
+        lock_file = target_arg / Path(str(layout["lock_rel"]))
         if cfg_file.exists():
             try:
                 loaded = json.loads(cfg_file.read_text(encoding="utf-8"))
@@ -1604,15 +1689,22 @@ def main(argv: List[str] | None = None) -> int:
 
     mode_label = "DRY-RUN" if args.dry_run else ("UPDATE" if args.update else "BOOTSTRAP")
     print(f"=== AI Engineering Framework {mode_label} ({target_arg.resolve()}) ===")
+    print(f"  Layout:             {summary['layout']} ({'.aief/' if summary['layout'] == 'isolated' else 'legacy root'})")
     print(f"  Platforms:          {', '.join(platforms)}")
     print(f"  Optional Packs:     {', '.join(optional_packs) if optional_packs else 'none (core-only)'}")
     if stacks:
         print(f"  Stacks (detected):  {', '.join(stacks)}")
     print(f"  Created:            {len(summary['created'])}")
     print(f"  Updated:            {len(summary['updated'])}")
+    if summary.get("updated") and len(summary["updated"]) <= 15:
+        print(f"  Updated Paths:      {', '.join(summary['updated'])}")
     print(f"  Unchanged:          {len(summary['unchanged'])}")
     print(f"  Pruned:             {len(summary['pruned'])}")
     print(f"  Skipped/Modified:   {len(summary['skipped_modified'])} (preserved)")
+    if summary.get("imported"):
+        print(f"  Imported Custom:    {', '.join(summary['imported'])}")
+    if summary.get("preserved_external"):
+        print(f"  Preserved External: {', '.join(summary['preserved_external'])}")
     if summary.get("unknown_preserved"):
         print(f"  Unknown Preserved:  {len(summary['unknown_preserved'])}")
     if summary.get("recovered"):

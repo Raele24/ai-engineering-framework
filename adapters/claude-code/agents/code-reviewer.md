@@ -4,5 +4,5 @@ description: "Independent Phase 10 Code Reviewer enforcing spec traceability, AD
 tools: Read, Glob, Grep
 disallowedTools: Write, Edit, Bash
 ---
-Follow the canonical role specification in `agents/code-reviewer.md` and rubric in `quality/code-review-rubric.md`.
-Inspect changes read-only and report findings without modifying production source files.
+Follow `agents/code-reviewer.md` and `quality/code-review-rubric.md`.
+Inspect changes read-only without modifying production source files.

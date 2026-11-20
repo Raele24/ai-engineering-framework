@@ -80,10 +80,11 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
             self.assertFalse((target / ".agents" / "skills" / "seo-audit").exists())
             self.assertFalse((target / ".agents" / "skills" / "graphify" / "UPSTREAM_SKILL.md").exists())
             self.assertFalse((target / ".claude" / "skills" / "caveman" / "UPSTREAM_SKILL.md").exists())
-            # Canonical attribution snapshot still preserved under skills/
-            self.assertTrue((target / "skills" / "core" / "graphify" / "UPSTREAM_SKILL.md").exists())
+            # No duplicate UPSTREAM_SKILL.md or skills/core copies duplicated inside .aief/skills/
+            self.assertFalse((target / ".aief" / "skills" / "core").exists())
+            self.assertTrue((target / ".aief" / "skills" / "registry.json").exists())
 
-            lock = json.loads((target / ".framework-lock.json").read_text(encoding="utf-8"))
+            lock = json.loads((target / ".aief" / "lock.json").read_text(encoding="utf-8"))
             self.assertEqual(lock["schema_version"], "2.0.0")
             self.assertEqual(lock["projection_state"]["status"], "completed")
             self.assertEqual(lock["projection_state"]["pending_entries"], {})
@@ -101,7 +102,7 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
                 optional_packs=["communication"],
             )
 
-            lock_path = target / ".framework-lock.json"
+            lock_path = target / ".aief" / "lock.json"
             sample_proj = target / ".agents" / "skills" / "grill-me" / "SKILL.md"
             before_lock_bytes = lock_path.read_bytes()
             before_lock_mtime = lock_path.stat().st_mtime_ns
@@ -144,7 +145,6 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
                 update_mode=True,
                 framework_root=mock_fw,
             )
-            self.assertIn("skills/core/grill-me/SKILL.md", res["updated"])
             self.assertIn(".agents/skills/grill-me/SKILL.md", res["updated"])
             self.assertIn(".claude/skills/grill-me/SKILL.md", res["updated"])
             self.assertIn("<!-- M9 UPSTREAM UPDATE -->", (target / ".agents" / "skills" / "grill-me" / "SKILL.md").read_text(encoding="utf-8"))
@@ -299,14 +299,14 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
             claude_skill.write_bytes(expected_bytes)
             expected_hash = bootstrap.sha256_bytes(expected_bytes)
 
-            lock_path = target / ".framework-lock.json"
+            lock_path = target / ".aief" / "lock.json"
             lock_data = json.loads(lock_path.read_text(encoding="utf-8"))
             lock_data["projection_state"]["status"] = "in_progress"
             lock_data["projection_state"]["pending_entries"] = {
                 ".claude/skills/grill-me/SKILL.md": {
                     "ownership": "platform_projected_skill",
                     "skill": "grill-me",
-                    "source": "skills/core/grill-me/SKILL.md",
+                    "source": ".aief/skills/core/grill-me/SKILL.md",
                     "sha256": expected_hash,
                     "platforms": ["claude-code"],
                 }
@@ -342,7 +342,7 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
             )
             sentinel = target / ".agents" / "skills" / "grill-me" / "SKILL.md"
             before_bytes = sentinel.read_bytes()
-            lock_path = target / ".framework-lock.json"
+            lock_path = target / ".aief" / "lock.json"
             lock_path.write_text("{truncated-json", encoding="utf-8")
 
             with self.assertRaises(bootstrap.LockfileError):
@@ -427,7 +427,7 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
             )
             self.assertTrue(shared_skill.exists())
             self.assertNotIn(".agents/skills/grill-me/SKILL.md", res1["pruned"])
-            lock1 = json.loads((target / ".framework-lock.json").read_text(encoding="utf-8"))
+            lock1 = json.loads((target / ".aief" / "lock.json").read_text(encoding="utf-8"))
             self.assertEqual(lock1["managed_files"][".agents/skills/grill-me/SKILL.md"]["platforms"], ["antigravity", "copilot"])
 
             # Remove copilot -> antigravity keeps .agents/skills intact
@@ -456,6 +456,15 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
     def test_m9_lockfile_v030_migration_backup_and_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / "legacy-v030"
+            target.mkdir(parents=True, exist_ok=True)
+            # Pre-seed valid legacy project.framework.json so layout auto-detects as legacy v0.3.x root install
+            legacy_cfg = json.loads((REPO_ROOT / "templates" / "project.framework.json").read_text(encoding="utf-8"))
+            legacy_cfg["frameworkVersion"] = "0.3.0"
+            legacy_cfg["projectName"] = "legacy-v030"
+            legacy_cfg["enabledPlatforms"] = ["antigravity", "claude-code"]
+            legacy_cfg["paths"]["stateDir"] = ".framework-state"
+            legacy_cfg["customizations"]["overlayDir"] = ".framework-custom"
+            (target / "project.framework.json").write_text(json.dumps(legacy_cfg, indent=2), encoding="utf-8")
             bootstrap.bootstrap_project(
                 target_dir=target,
                 platforms=["antigravity", "claude-code"],
@@ -485,7 +494,7 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
             # Legacy validation exits pass with deprecation warning
             passed_old, report_old, warnings_old = validate.run_validation_with_warnings(target, mode="consumer")
             self.assertTrue(passed_old, report_old)
-            self.assertTrue(any("Legacy v0.3.0 .framework-lock.json" in w for w in warnings_old))
+            self.assertTrue(any("Legacy v0.3.0" in w for w in warnings_old))
 
             # Migrate via --update
             res = bootstrap.bootstrap_project(
@@ -495,7 +504,9 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
                 update_mode=True,
             )
             self.assertEqual(res["migrated_from"], "0.3.0")
-            self.assertTrue((target / bootstrap.LOCKFILE_BACKUP_REL).exists())
+            self.assertTrue(
+                (target / ".framework-state" / "lock-backups" / "framework-lock-v0.3.0.json").exists()
+            )
             self.assertEqual((target / "AGENTS.md").read_text(encoding="utf-8"), "# Legacy Custom AGENTS.md\n")
             self.assertTrue((target / ".agents" / "skills" / "grill-me" / "SKILL.md").exists())
             self.assertTrue((target / ".claude" / "skills" / "grill-me" / "SKILL.md").exists())
@@ -527,12 +538,12 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
                 optional_packs=["frontend-design"],
             )
 
-            # find-skills relative ../../registry.json must become ../../../skills/registry.json
+            # find-skills relative ../../registry.json must become ../../../.aief/skills/registry.json
             fs_agents = (target / ".agents" / "skills" / "find-skills" / "SKILL.md").read_text(encoding="utf-8")
             fs_claude = (target / ".claude" / "skills" / "find-skills" / "SKILL.md").read_text(encoding="utf-8")
             self.assertNotIn("(../../registry.json)", fs_agents)
-            self.assertIn("(../../../skills/registry.json)", fs_agents)
-            self.assertIn("(../../../skills/registry.json)", fs_claude)
+            self.assertIn("(../../../.aief/skills/registry.json)", fs_agents)
+            self.assertIn("(../../../.aief/skills/registry.json)", fs_claude)
             # Canonical source untouched
             self.assertIn("(../../registry.json)", (REPO_ROOT / "skills" / "core" / "find-skills" / "SKILL.md").read_text(encoding="utf-8"))
 
@@ -612,7 +623,7 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
                         platforms=["antigravity", "claude-code"],
                         optional_packs=packs,
                     )
-                    reg = json.loads((target / "skills" / "registry.json").read_text(encoding="utf-8"))
+                    reg = json.loads((target / ".aief" / "skills" / "registry.json").read_text(encoding="utf-8"))
                     self.assertEqual(reg["total_skills"], expected_count)
                     agents_proj = {p.name for p in (target / ".agents" / "skills").iterdir() if p.is_dir()}
                     claude_proj = {p.name for p in (target / ".claude" / "skills").iterdir() if p.is_dir()}
@@ -654,6 +665,7 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
                 optional_packs=[],
             )
             spec_note = target / "docs" / "specs" / "01-spec.md"
+            spec_note.parent.mkdir(parents=True, exist_ok=True)
             spec_note.write_text("# Consumer Owned Spec\n", encoding="utf-8")
 
             res = bootstrap.bootstrap_project(
@@ -666,7 +678,7 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
             self.assertIn(".agents/skills/caveman/SKILL.md", res["created"])
             self.assertEqual(spec_note.read_text(encoding="utf-8"), "# Consumer Owned Spec\n")
 
-            lock = json.loads((target / ".framework-lock.json").read_text(encoding="utf-8"))
+            lock = json.loads((target / ".aief" / "lock.json").read_text(encoding="utf-8"))
             self.assertEqual(lock["schema_version"], "2.0.0")
             self.assertEqual(lock["enabled_platforms"], ["claude-code", "codex"])
             self.assertEqual(lock["projection_state"]["last_successful_projection"]["projected_skill_count"], 12)

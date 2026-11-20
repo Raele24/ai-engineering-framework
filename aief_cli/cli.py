@@ -3,20 +3,27 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 import subprocess
 import sys
-from typing import List
+from typing import Dict, List
 
 from . import __version__, resolve_framework_root
 
 
-def _run_script(script_path: Path, script_args: List[str]) -> int:
-    proc = subprocess.run([sys.executable, str(script_path), *script_args], check=False)
+def _run_script(script_path: Path, script_args: List[str], extra_env: Dict[str, str] | None = None) -> int:
+    env = os.environ.copy()
+    if extra_env:
+        env.update(extra_env)
+    proc = subprocess.run([sys.executable, str(script_path), *script_args], check=False, env=env)
     return int(proc.returncode)
 
 
 def _resolve_consumer_or_bundled(target_dir: Path, script_name: str, framework_root: Path) -> Path:
+    isolated_script = target_dir / ".aief" / "scripts" / script_name
+    if isolated_script.is_file():
+        return isolated_script
     local_script = target_dir / "scripts" / script_name
     if local_script.is_file():
         return local_script
@@ -92,7 +99,7 @@ def main(argv: List[str] | None = None) -> int:
         if args.no_validate:
             cmd_args.append("--no-validate")
         script = _resolve_consumer_or_bundled(target, "compose.py", framework_root)
-        return _run_script(script, cmd_args)
+        return _run_script(script, cmd_args, extra_env={"AIEF_FRAMEWORK_ROOT": str(framework_root)})
 
     if args.command == "validate":
         target = Path(args.target).resolve()

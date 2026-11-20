@@ -40,14 +40,14 @@ class TestM10CustomComposition(unittest.TestCase):
                 platforms=ALL_PLATFORMS,
                 optional_packs=["communication"],
             )
-            self.assertTrue((target / "scripts" / "compose.py").exists())
-            self.assertTrue((target / ".framework-custom" / "instructions.md").exists())
+            self.assertTrue((target / ".aief" / "scripts" / "compose.py").exists())
+            self.assertTrue((target / ".aief" / "custom" / "instructions.md").exists())
 
-            (target / ".framework-custom" / "instructions.md").write_text(
+            (target / ".aief" / "custom" / "instructions.md").write_text(
                 "# Project Custom Rules\n- USE STRICT POSTGRESQL MIGRATIONS.\n",
                 encoding="utf-8",
             )
-            rules_dir = target / ".framework-custom" / "rules"
+            rules_dir = target / ".aief" / "custom" / "rules"
             rules_dir.mkdir(parents=True, exist_ok=True)
             (rules_dir / "api-style.md").write_text(
                 "- ALL ENDPOINTS MUST VALIDATE JWT CLAIMS.\n",
@@ -55,25 +55,27 @@ class TestM10CustomComposition(unittest.TestCase):
             )
 
             proc = subprocess.run(
-                [sys.executable, str(target / "scripts" / "compose.py"), "--root", str(target)],
+                [sys.executable, str(target / ".aief" / "scripts" / "compose.py")],
                 capture_output=True,
                 text=True,
                 check=False,
             )
             self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
 
-            inline_entry_files = (
-                "AGENTS.md",
-                "CLAUDE.md",
+            # Full inline rules live in AGENTS.md and CLAUDE.md (Antigravity/Gemini/Copilot point to AGENTS.md without 3x duplication)
+            for rel in ("AGENTS.md", "CLAUDE.md"):
+                content = (target / Path(rel)).read_text(encoding="utf-8")
+                self.assertIn("USE STRICT POSTGRESQL MIGRATIONS", content, f"Missing inline custom in {rel}")
+                self.assertIn("ALL ENDPOINTS MUST VALIDATE JWT CLAIMS", content, f"Missing inline rule in {rel}")
+            for thin_rel in (
                 "GEMINI.md",
                 ".agents/rules/framework-core.md",
                 ".github/copilot-instructions.md",
                 ".github/instructions/framework.instructions.md",
-            )
-            for rel in inline_entry_files:
-                content = (target / Path(rel)).read_text(encoding="utf-8")
-                self.assertIn("USE STRICT POSTGRESQL MIGRATIONS", content, f"Missing inline custom in {rel}")
-                self.assertIn("ALL ENDPOINTS MUST VALIDATE JWT CLAIMS", content, f"Missing inline rule in {rel}")
+            ):
+                thin_txt = (target / Path(thin_rel)).read_text(encoding="utf-8")
+                self.assertIn("AGENTS.md", thin_txt, f"Missing AGENTS.md pointer in {thin_rel}")
+                self.assertNotIn("USE STRICT POSTGRESQL MIGRATIONS", thin_txt, f"Unexpected duplication in {thin_rel}")
 
             passed, report, warnings, _ = validate.run_validation_full(
                 target, mode="consumer", home_dir=fake_home
@@ -93,7 +95,7 @@ class TestM10CustomComposition(unittest.TestCase):
                 platforms=["antigravity", "claude-code"],
                 optional_packs=[],
             )
-            cskill_dir = target / ".framework-custom" / "skills" / "billing-invariants"
+            cskill_dir = target / ".aief" / "custom" / "skills" / "billing-invariants"
             cskill_dir.mkdir(parents=True, exist_ok=True)
             (cskill_dir / "SKILL.md").write_text(
                 "---\nname: billing-invariants\ndescription: Domain ledger invariants\n---\n\n# Billing Invariants\nNever store floats for money.\n",
@@ -107,7 +109,7 @@ class TestM10CustomComposition(unittest.TestCase):
             self.assertTrue((target / ".agents" / "skills" / "billing-invariants" / "checklist.md").exists())
             self.assertTrue((target / ".claude" / "skills" / "billing-invariants" / "SKILL.md").exists())
 
-            lock = json.loads((target / ".framework-lock.json").read_text(encoding="utf-8"))
+            lock = json.loads((target / ".aief" / "lock.json").read_text(encoding="utf-8"))
             self.assertIn("billing-invariants", lock["projected_skills"]["antigravity"]["skills"])
             self.assertEqual(
                 lock["managed_files"][".agents/skills/billing-invariants/SKILL.md"]["ownership"],
@@ -133,7 +135,7 @@ class TestM10CustomComposition(unittest.TestCase):
                 platforms=["claude-code", "copilot"],
                 optional_packs=[],
             )
-            cagents = target / ".framework-custom" / "agents"
+            cagents = target / ".aief" / "custom" / "agents"
             cagents.mkdir(parents=True, exist_ok=True)
             (cagents / "implementation-engineer.append.md").write_text(
                 "- Always verify database migrations roll back cleanly.",
@@ -159,7 +161,7 @@ class TestM10CustomComposition(unittest.TestCase):
             second_summary = compose.compose_consumer(target)
             self.assertEqual(second_summary["updated"], [], second_summary)
 
-            impl_md = (target / "agents" / "implementation-engineer.md").read_text(encoding="utf-8")
+            impl_md = (target / ".aief" / "agents" / "implementation-engineer.md").read_text(encoding="utf-8")
             self.assertIn("Always verify database migrations roll back cleanly", impl_md)
             self.assertEqual(impl_md.count("## Project-Specific Rules (implementation-engineer)"), 1)
 
@@ -197,7 +199,7 @@ class TestM10CustomComposition(unittest.TestCase):
             self.assertTrue((target / ".agents" / "skills" / "caveman" / "SKILL.md").exists())
             self.assertTrue((target / ".claude" / "agents" / "framework-code-reviewer.md").exists())
 
-            cfg_path = target / "project.framework.json"
+            cfg_path = target / ".aief" / "config.json"
             cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
             cfg["disabled"] = {
                 "skills": ["caveman"],
@@ -210,14 +212,17 @@ class TestM10CustomComposition(unittest.TestCase):
 
             compose.compose_consumer(target)
 
-            # Disabled skill pruned from projections while source remains under skills/ for offline re-enable
+            # Disabled skill pruned from projections while entry remains disabled in .aief/skills/registry.json for re-enable
             self.assertFalse((target / ".agents" / "skills" / "caveman").exists())
             self.assertFalse((target / ".claude" / "skills" / "caveman").exists())
-            self.assertTrue((target / "skills" / "optional" / "communication" / "caveman" / "SKILL.md").exists())
+            reg_disabled = json.loads((target / ".aief" / "skills" / "registry.json").read_text(encoding="utf-8"))
+            cav_entries = [s for s in reg_disabled["skills"] if s["name"] == "caveman"]
+            self.assertEqual(len(cav_entries), 1)
+            self.assertIs(cav_entries[0].get("enabled"), False)
 
             # Disabled reviewer agent omitted from AGENTS.md and pruned from .claude/agents/, .github/agents/
-            # while canonical source remains in agents/ for offline re-enabling and intact workflow links
-            self.assertTrue((target / "agents" / "code-reviewer.md").exists())
+            # while canonical source remains in .aief/agents/ for offline re-enabling and intact workflow links
+            self.assertTrue((target / ".aief" / "agents" / "code-reviewer.md").exists())
             self.assertFalse((target / ".claude" / "agents" / "framework-code-reviewer.md").exists())
             self.assertFalse((target / ".github" / "agents" / "code-reviewer.agent.md").exists())
 
@@ -277,10 +282,10 @@ class TestM10CustomComposition(unittest.TestCase):
             )
 
             # Customize overlay + disable caveman
-            (target / ".framework-custom" / "instructions.md").write_text(
+            (target / ".aief" / "custom" / "instructions.md").write_text(
                 "# My Rules\nCUSTOM KEEP ME ACROSS UPDATES\n", encoding="utf-8"
             )
-            cfg_path = target / "project.framework.json"
+            cfg_path = target / ".aief" / "config.json"
             cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
             cfg["disabled"]["skills"] = ["caveman"]
             cfg_path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
@@ -297,13 +302,13 @@ class TestM10CustomComposition(unittest.TestCase):
                 update_mode=True,
                 framework_root=mock_fw,
             )
-            self.assertIn("core/rules/engineering-principles.md", res["updated"])
+            self.assertIn(".aief/core/rules/engineering-principles.md", res["updated"])
             self.assertIn("AGENTS.md", res["updated"])
             self.assertIn("CLAUDE.md", res["updated"])
-            self.assertIn(".agents/rules/framework-core.md", res["updated"])
-            self.assertIn("M10 RULE UPDATE", (target / "core" / "rules" / "engineering-principles.md").read_text(encoding="utf-8"))
+            self.assertIn("M10 RULE UPDATE", (target / ".aief" / "core" / "rules" / "engineering-principles.md").read_text(encoding="utf-8"))
+            self.assertIn("CUSTOM KEEP ME ACROSS UPDATES", (target / "AGENTS.md").read_text(encoding="utf-8"))
             self.assertIn("CUSTOM KEEP ME ACROSS UPDATES", (target / "CLAUDE.md").read_text(encoding="utf-8"))
-            self.assertIn("CUSTOM KEEP ME ACROSS UPDATES", (target / ".agents" / "rules" / "framework-core.md").read_text(encoding="utf-8"))
+            self.assertNotIn("CUSTOM KEEP ME ACROSS UPDATES", (target / ".agents" / "rules" / "framework-core.md").read_text(encoding="utf-8"))
             self.assertFalse((target / ".agents" / "skills" / "caveman").exists())
 
     def test_06_brownfield_auto_import_preserves_existing_instruction_files(self) -> None:
@@ -329,12 +334,12 @@ class TestM10CustomComposition(unittest.TestCase):
                 platforms=["antigravity", "copilot", "claude-code"],
                 optional_packs=[],
             )
-            self.assertIn(".framework-custom/imported/CLAUDE.md", res["imported"])
-            self.assertIn(".framework-custom/imported/copilot-instructions.md", res["imported"])
-            self.assertTrue((target / ".framework-custom" / "imported" / "CLAUDE.md").exists())
-            self.assertTrue((target / ".framework-custom" / "imported" / "copilot-instructions.md").exists())
+            self.assertIn(".aief/custom/imported/CLAUDE.md", res["imported"])
+            self.assertIn(".aief/custom/imported/copilot-instructions.md", res["imported"])
+            self.assertTrue((target / ".aief" / "custom" / "imported" / "CLAUDE.md").exists())
+            self.assertTrue((target / ".aief" / "custom" / "imported" / "copilot-instructions.md").exists())
 
-            for rel in ("CLAUDE.md", "AGENTS.md", ".agents/rules/framework-core.md", ".github/copilot-instructions.md"):
+            for rel in ("CLAUDE.md", "AGENTS.md"):
                 txt = (target / Path(rel)).read_text(encoding="utf-8")
                 self.assertIn("always run cargo test", txt, rel)
                 self.assertIn("prefer snake_case functions", txt, rel)
@@ -349,10 +354,10 @@ class TestM10CustomComposition(unittest.TestCase):
             target = Path(tmp) / "budget-app"
             bootstrap.bootstrap_project(target_dir=target, platforms=["claude-code"], optional_packs=[])
 
-            (target / ".framework-custom" / "instructions.md").write_text(
+            (target / ".aief" / "custom" / "instructions.md").write_text(
                 "LINE\n" * 600, encoding="utf-8"
             )
-            cfg_path = target / "project.framework.json"
+            cfg_path = target / ".aief" / "config.json"
             cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
             cfg["customizations"]["inlineMaxBytes"] = 1024
             cfg_path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
@@ -365,7 +370,7 @@ class TestM10CustomComposition(unittest.TestCase):
             cfg_path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
             compose.compose_consumer(target)
             claude_ref = (target / "CLAUDE.md").read_text(encoding="utf-8")
-            self.assertIn("Read `.framework-custom/instructions.md` before executing project changes", claude_ref)
+            self.assertIn("Read `.aief/custom/instructions.md` before executing project changes", claude_ref)
             self.assertNotIn("Inline budget", claude_ref)
 
     def test_08_security_guards_reject_overlay_traversal_and_symlinks(self) -> None:
@@ -374,7 +379,7 @@ class TestM10CustomComposition(unittest.TestCase):
             target = root / "sec-app"
             bootstrap.bootstrap_project(target_dir=target, platforms=["antigravity"], optional_packs=[])
 
-            cfg_path = target / "project.framework.json"
+            cfg_path = target / ".aief" / "config.json"
             cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
             cfg["customizations"]["overlayDir"] = "../escape"
             cfg_path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
@@ -386,10 +391,10 @@ class TestM10CustomComposition(unittest.TestCase):
             self.assertFalse(passed)
             self.assertTrue(report["consumer_state"])
 
-            # Restore valid overlayDir and simulate symlink/reparse point inside .framework-custom/
-            cfg["customizations"]["overlayDir"] = ".framework-custom"
+            # Restore valid overlayDir and simulate symlink/reparse point inside .aief/custom/
+            cfg["customizations"]["overlayDir"] = ".aief/custom"
             cfg_path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
-            bad_rule_dir = target / ".framework-custom" / "rules"
+            bad_rule_dir = target / ".aief" / "custom" / "rules"
             bad_rule_dir.mkdir(parents=True, exist_ok=True)
             bad_rule = bad_rule_dir / "linked.md"
             bad_rule.write_text("bad", encoding="utf-8")
@@ -416,14 +421,14 @@ class TestM10CustomComposition(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
-            reg = json.loads((target / "skills" / "registry.json").read_text(encoding="utf-8"))
+            reg = json.loads((target / ".aief" / "skills" / "registry.json").read_text(encoding="utf-8"))
             self.assertEqual(reg["total_skills"], 33)
-            cfg = json.loads((target / "project.framework.json").read_text(encoding="utf-8"))
+            cfg = json.loads((target / ".aief" / "config.json").read_text(encoding="utf-8"))
             self.assertEqual(sorted(cfg["stacks"]), ["dotnet", "python"])
             self.assertEqual(len(cfg["enabledPlatforms"]), 5)
 
             comp_proc = subprocess.run(
-                [sys.executable, str(target / "scripts" / "compose.py"), "--root", str(target)],
+                [sys.executable, str(target / ".aief" / "scripts" / "compose.py")],
                 capture_output=True,
                 text=True,
                 check=False,
@@ -509,7 +514,7 @@ class TestM10CustomComposition(unittest.TestCase):
                 optional_packs=[],
             )
 
-            prompts_dir = target / ".framework-custom" / "prompts"
+            prompts_dir = target / ".aief" / "custom" / "prompts"
             prompts_dir.mkdir(parents=True, exist_ok=True)
             prompt_file = prompts_dir / "api-audit.md"
             prompt_file.write_text(
@@ -533,7 +538,7 @@ class TestM10CustomComposition(unittest.TestCase):
             self.assertIn('auth "guards"', parsed_toml["prompt"])
             self.assertIn("/api-audit", (target / "AGENTS.md").read_text(encoding="utf-8"))
 
-            lock = json.loads((target / ".framework-lock.json").read_text(encoding="utf-8"))
+            lock = json.loads((target / ".aief" / "lock.json").read_text(encoding="utf-8"))
             self.assertEqual(lock["managed_files"][".claude/commands/api-audit.md"]["ownership"], "consumer_custom_prompt")
 
             passed, report, _, _ = validate.run_validation_full(target, mode="consumer", home_dir=fake_home)
@@ -566,7 +571,7 @@ class TestM10CustomComposition(unittest.TestCase):
                 optional_packs=[],
             )
 
-            mcp_path = target / ".framework-custom" / "mcp.json"
+            mcp_path = target / ".aief" / "custom" / "mcp.json"
             # Literal secret must fail closed
             mcp_path.write_text(
                 json.dumps(
@@ -630,7 +635,7 @@ class TestM10CustomComposition(unittest.TestCase):
 
             gemini_cfg = json.loads((target / ".gemini" / "settings.json").read_text(encoding="utf-8"))
             self.assertIn("playwright", gemini_cfg["mcpServers"])
-            self.assertTrue((target / "adapters" / "antigravity" / "mcp_config.json").exists())
+            self.assertTrue((target / ".aief" / "adapters" / "antigravity" / "mcp_config.json").exists())
 
             passed, report, _, _ = validate.run_validation_full(target, mode="consumer", home_dir=fake_home)
             self.assertTrue(passed, report)
@@ -640,7 +645,7 @@ class TestM10CustomComposition(unittest.TestCase):
             res2 = compose.compose_consumer(target)
             self.assertIn(".mcp.json", res2["pruned"])
             self.assertIn(".vscode/mcp.json", res2["pruned"])
-            self.assertIn("adapters/antigravity/mcp_config.json", res2["pruned"])
+            self.assertIn(".aief/adapters/antigravity/mcp_config.json", res2["pruned"])
             self.assertFalse((target / ".mcp.json").exists())
             self.assertFalse((target / ".vscode" / "mcp.json").exists())
             codex_after = tomllib.loads((target / ".codex" / "config.toml").read_text(encoding="utf-8"))
@@ -668,7 +673,7 @@ class TestM10CustomComposition(unittest.TestCase):
                 self.assertTrue((target / ".claude" / "skills" / sk / "SKILL.md").exists(), f"Missing .claude skill {sk}")
 
             # Toggle off humanizer cleanly
-            cfg_path = target / "project.framework.json"
+            cfg_path = target / ".aief" / "config.json"
             cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
             cfg["disabled"]["skills"] = ["humanizer"]
             cfg_path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
@@ -678,7 +683,7 @@ class TestM10CustomComposition(unittest.TestCase):
             self.assertFalse((target / ".claude" / "skills" / "humanizer").exists())
             self.assertTrue((target / ".agents" / "skills" / "session-handoff" / "SKILL.md").exists())
 
-            # Run session-handoff scaffold inside consumer project -> creates .framework-state/session-handoffs/ file
+            # Run session-handoff scaffold inside consumer project -> creates .aief/state/session-handoffs/ file
             script_path = target / ".agents" / "skills" / "session-handoff" / "scripts" / "create_handoff.py"
             proc = subprocess.run(
                 [sys.executable, str(script_path), "test-resume"],
@@ -688,7 +693,7 @@ class TestM10CustomComposition(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
-            handoffs_dir = target / ".framework-state" / "session-handoffs"
+            handoffs_dir = target / ".aief" / "state" / "session-handoffs"
             created_files = list(handoffs_dir.glob("*-test-resume.md"))
             self.assertEqual(len(created_files), 1, f"Expected handoff md file, stdout={proc.stdout}")
 
@@ -732,6 +737,20 @@ class TestM10CustomComposition(unittest.TestCase):
                 finally:
                     os.chdir(old_cwd)
 
+            # Verify bundle.zip short-path extraction & zip-slip guard (avoids Windows MAX_PATH)
+            import zipfile
+            bundle_zip = Path(tmp) / "bundle.zip"
+            with zipfile.ZipFile(bundle_zip, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+                for p in (REPO_ROOT / "core" / "rules").glob("*.md"):
+                    zf.write(p, arcname=p.relative_to(REPO_ROOT).as_posix())
+            extracted = aief_cli._extract_bundle_zip(bundle_zip, cache_base=Path(tmp) / "cache")
+            self.assertTrue((extracted / "core" / "rules" / "engineering-principles.md").is_file())
+            evil_zip = Path(tmp) / "evil.zip"
+            with zipfile.ZipFile(evil_zip, "w") as zf:
+                zf.writestr("../escape.txt", "bad")
+            with self.assertRaises(ValueError):
+                aief_cli._extract_bundle_zip(evil_zip, cache_base=Path(tmp) / "cache2")
+
     def test_16_graphify_missing_cli_reported_to_user(self) -> None:
         import io
         from contextlib import redirect_stdout
@@ -758,6 +777,64 @@ class TestM10CustomComposition(unittest.TestCase):
                     any("Graphify CLI not installed" in msg for msg in info_msgs),
                     f"Expected Graphify CLI missing notice in info: {info_msgs}",
                 )
+
+    def test_17_vintgen_brownfield_isolation_no_skills_collision(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "vintgen-like"
+            fake_home = root / "isolated-home"
+            fake_home.mkdir()
+            target.mkdir()
+
+            (target / "package.json").write_text('{"name": "vintgen-like"}\n', encoding="utf-8")
+            (target / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+            (target / "AGENTS.md").write_text("# VintGen Custom Agent Guide\nAlways preserve domain prompts.\n", encoding="utf-8")
+
+            ext_skill_dir = target / "skills" / "vintgen" / "prompts"
+            ext_skill_dir.mkdir(parents=True)
+            vintgen_skill = target / "skills" / "vintgen" / "SKILL.md"
+            vintgen_skill_text = "---\nname: vintgen\ndescription: VintGen listing skill\n---\n\n# VintGen\n"
+            vintgen_skill.write_text(vintgen_skill_text, encoding="utf-8")
+            (ext_skill_dir / "web-instructions.md").write_text("# Web Prompt\n", encoding="utf-8")
+
+            ext_rules = target / ".agents" / "rules"
+            ext_rules.mkdir(parents=True)
+            strict_rule = ext_rules / "strict-rules.md"
+            strict_rule_text = "# Strict Host Rule\nNever break user layout.\n"
+            strict_rule.write_text(strict_rule_text, encoding="utf-8")
+
+            stacks = bootstrap.detect_project_stacks(target)
+            res = bootstrap.bootstrap_project(
+                target_dir=target,
+                platforms=ALL_PLATFORMS,
+                optional_packs=["all"],
+                stacks=stacks,
+            )
+
+            self.assertEqual(res["layout"], "isolated")
+            self.assertIn(".aief/custom/imported/AGENTS.md", res["imported"])
+            self.assertIn("skills/vintgen/SKILL.md", res["preserved_external"])
+            self.assertIn(".agents/rules/strict-rules.md", res["preserved_external"])
+
+            # Framework assets live solely inside .aief/ (never colliding at root)
+            self.assertTrue((target / ".aief" / "config.json").exists())
+            self.assertTrue((target / ".aief" / "lock.json").exists())
+            self.assertTrue((target / ".aief" / ".gitignore").exists())
+            self.assertTrue((target / ".aief" / "state" / "manifest.json").exists())
+            self.assertTrue((target / ".aief" / "skills" / "registry.json").exists())
+            for legacy_root in ("project.framework.json", ".framework-lock.json", ".framework-state", ".framework-custom", "core", "agents", "workflows", "scripts"):
+                self.assertFalse((target / legacy_root).exists(), f"Unexpected root framework artifact: {legacy_root}")
+
+            # Pre-existing skills/ and .agents/rules/ remain untouched
+            self.assertEqual(vintgen_skill.read_text(encoding="utf-8"), vintgen_skill_text)
+            self.assertEqual(strict_rule.read_text(encoding="utf-8"), strict_rule_text)
+            self.assertIn("Always preserve domain prompts", (target / "AGENTS.md").read_text(encoding="utf-8"))
+
+            passed, report, warnings, _ = validate.run_validation_full(
+                target, mode="consumer", home_dir=fake_home
+            )
+            self.assertTrue(passed, f"Brownfield isolated validation failed: {report}")
+            self.assertEqual(warnings, [], f"Expected zero warnings, got: {warnings}")
 
 
 if __name__ == "__main__":

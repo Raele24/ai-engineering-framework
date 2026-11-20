@@ -6,7 +6,7 @@ version: "1.0.0"
 phases: [10]
 allowed_tools: [read_file, write_file, run_command]
 required_skills: [ponytail, graphify, evaluation, anti-slop]
-delegation_targets: [qa-engineer, implementation-engineer]
+delegation_targets: [qa-engineer, backend-engineer, frontend-engineer, data-engineer, ai-engineer, implementation-engineer, devops-release-engineer]
 approval_gates: []
 ---
 

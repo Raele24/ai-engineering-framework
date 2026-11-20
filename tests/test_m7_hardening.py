@@ -39,8 +39,9 @@ class TestM7FrameworkHardening(unittest.TestCase):
 
             # Ensure framework-authoring files are NOT in consumer_dir
             self.assertFalse((consumer_dir / "PROJECT_CHARTER.md").exists())
+            self.assertFalse((consumer_dir / ".aief" / "scripts" / "bootstrap.py").exists())
+            self.assertFalse((consumer_dir / ".aief" / "scripts" / "sync_adapters.py").exists())
             self.assertFalse((consumer_dir / "scripts" / "bootstrap.py").exists())
-            self.assertFalse((consumer_dir / "scripts" / "sync_adapters.py").exists())
 
             self.assertEqual(validate.detect_validation_mode(consumer_dir), "consumer")
             passed_auto, report_auto = validate.run_validation(consumer_dir, mode="auto")
@@ -59,8 +60,8 @@ class TestM7FrameworkHardening(unittest.TestCase):
                 optional_packs=[],
             )
 
-            # 1. Remove .framework-state/manifest.json -> must fail
-            manifest_path = consumer_dir / ".framework-state" / "manifest.json"
+            # 1. Remove .aief/state/manifest.json -> must fail
+            manifest_path = consumer_dir / ".aief" / "state" / "manifest.json"
             manifest_backup = manifest_path.read_text(encoding="utf-8")
             manifest_path.unlink()
 
@@ -73,7 +74,7 @@ class TestM7FrameworkHardening(unittest.TestCase):
 
             # Restore manifest, inject invalid handoff packet & fake secret
             manifest_path.write_text(manifest_backup, encoding="utf-8")
-            bad_handoff = consumer_dir / ".framework-state" / "handoffs" / "phase-01-handoff.json"
+            bad_handoff = consumer_dir / ".aief" / "state" / "handoffs" / "phase-01-handoff.json"
             bad_handoff.write_text(json.dumps({"schema_version": "1.0.0"}), encoding="utf-8")
 
             secret_file = consumer_dir / "leaked.txt"
@@ -115,7 +116,7 @@ class TestM7FrameworkHardening(unittest.TestCase):
                         optional_packs=packs,
                     )
 
-                    reg = json.loads((target / "skills" / "registry.json").read_text(encoding="utf-8"))
+                    reg = json.loads((target / ".aief" / "skills" / "registry.json").read_text(encoding="utf-8"))
                     self.assertEqual(reg["total_skills"], expected_count)
                     self.assertEqual(len(reg["skills"]), expected_count)
 
@@ -197,9 +198,9 @@ class TestM7FrameworkHardening(unittest.TestCase):
             self.assertIn("bin/", content_a)
             self.assertIn("node_modules/", content_a)
             self.assertIn("__pycache__/", content_a)
-            self.assertTrue((target_a / "docs" / "ENVIRONMENT_PREFLIGHT.md").exists())
+            self.assertTrue((target_a / ".aief" / "ENVIRONMENT_PREFLIGHT.md").exists())
 
-            # Case B: Existing consumer .gitignore -> NEVER overwrite, write .gitignore.framework-recommended
+            # Case B: Existing consumer .gitignore -> NEVER overwrite, write .aief/gitignore.recommended
             target_b = Path(tmp) / "stack-existing"
             target_b.mkdir(parents=True, exist_ok=True)
             custom_gi = "# Custom Consumer Gitignore\nmy-secret-folder/\n"
@@ -212,7 +213,7 @@ class TestM7FrameworkHardening(unittest.TestCase):
                 stacks=["dotnet"],
             )
             self.assertEqual((target_b / ".gitignore").read_text(encoding="utf-8"), custom_gi)
-            rec_gi = target_b / ".gitignore.framework-recommended"
+            rec_gi = target_b / ".aief" / "gitignore.recommended"
             self.assertTrue(rec_gi.exists())
             self.assertIn("bin/", rec_gi.read_text(encoding="utf-8"))
 

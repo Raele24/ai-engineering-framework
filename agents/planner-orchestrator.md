@@ -6,7 +6,7 @@ version: "1.0.0"
 phases: [6, 7, 8, 15]
 allowed_tools: [read_file, write_file, edit_file, invoke_subagent, run_workflow, swarm, ask_question]
 required_skills: [multi-agent-patterns, filesystem-context, memory-systems, self-improvement-loops, find-skills, anti-slop]
-delegation_targets: [implementation-engineer, code-reviewer, qa-engineer, security-engineer, devops-release-engineer]
+delegation_targets: [ui-ux-designer, data-engineer, backend-engineer, frontend-engineer, ai-engineer, implementation-engineer, devops-release-engineer, code-reviewer, qa-engineer, security-engineer]
 approval_gates: [Gate-03, Gate-05]
 ---
 
@@ -33,9 +33,9 @@ approval_gates: [Gate-03, Gate-05]
 - `docs/retrospectives/RETRO-xxxx.md`
 
 ## 5. Delegation Rules
-- Default to **single-agent sequential execution** unless tasks operate on disjoint file sets and genuinely benefit from parallel context isolation.
-- Enforce a hard cap of **3 to 5 concurrent subagents** per supervisor turn.
-- Always pass file paths (`input_artifacts`) rather than paraphrased chat summaries.
+- **Subagent-First Execution (`Category B/C`):** Route each phase/task to an isolated specialist subagent (`ui-ux-designer`, `data-engineer`, `backend-engineer`, `frontend-engineer`, `ai-engineer`, `implementation-engineer`, `devops-release-engineer`) instead of implementing inside the coordinator context.
+- **Independent Verification Isolation:** Always spawn fresh subagents for `code-reviewer` (`Phase 10`), `qa-engineer` (`Phase 11`), and `security-engineer` (`Phase 12`), separate from implementation workers.
+- **Parallel Concurrency Cap:** Run up to **3 to 5 concurrent subagents** (`share`/`branch` workspace or strictly disjoint `target_files`), passing exact `input_artifacts` paths rather than paraphrased chat summaries.
 
 ## 6. Restrictions
 - Never bypass mandatory human approval gates (`Gate-01` through `Gate-05`).

@@ -1,7 +1,7 @@
 # AI Engineering Framework
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.0-success.svg)](./docs/CONTRIBUTING.md#3-semantic-versioning-semver-200--stability)
+[![Version](https://img.shields.io/badge/version-0.5.0-success.svg)](./docs/CONTRIBUTING.md#3-semantic-versioning-semver-200--stability)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./docs/CONTRIBUTING.md)
 
 **A vendor-neutral engineering workflow, role system, and skill library for AI coding agents.**
@@ -16,8 +16,8 @@ Most multi-tool AI setups drift quickly: rules get copied across `CLAUDE.md`, `A
 
 The framework keeps three parts separate:
 - **15-Phase Workflow ([docs/WORKFLOW.md](./docs/WORKFLOW.md)):** Explicit inputs, outputs, role ownership, and human approval gates (`Gate-01a`..`Gate-05`) before code, security scans, or releases.
-- **Filesystem Handoffs ([core/rules/context-handoff-protocol.md](./core/rules/context-handoff-protocol.md)):** Phase outputs live in `docs/` and `.framework-state/handoffs/` on disk rather than long chat summaries.
-- **Platform Adapters ([adapters/](./adapters/)):** Maintain canonical rules, roles, and skills once; generate platform configs with `scripts/sync_adapters.py` (upstream) or `scripts/compose.py` (consumer repos).
+- **Filesystem Handoffs ([core/rules/context-handoff-protocol.md](./core/rules/context-handoff-protocol.md)):** Phase outputs live in `docs/` and `.aief/state/handoffs/` on disk rather than long chat summaries.
+- **Platform Adapters ([adapters/](./adapters/)):** Maintain canonical rules, roles, and skills once; generate platform configs with `scripts/sync_adapters.py` (upstream) or `.aief/scripts/compose.py` (consumer repos).
 
 ---
 
@@ -28,7 +28,7 @@ flowchart TB
     subgraph Tier1["Tier 1: Canonical Framework Core (Single Source of Truth)"]
         Rules["core/rules/ & core/schemas/"]
         Workflow["docs/WORKFLOW.md & workflows/"]
-        Roles["agents/ (8 Canonical Roles)"]
+        Roles["agents/ (13 Canonical Roles)"]
         Skills["skills/core/ & skills/optional/ (SKILL.md)"]
     end
 
@@ -41,13 +41,13 @@ flowchart TB
     end
 
     subgraph Tier3["Tier 3: Consumer Project Artifacts (Never Overwritten on Update)"]
-        ProjectCfg["project.framework.json"]
+        ProjectCfg[".aief/config.json & .aief/custom/"]
         Specs["docs/specs/ & docs/adr/ & docs/plans/"]
     end
 
-    subgraph Tier4["Tier 4: Runtime State (.framework-state/)"]
-        Manifest[".framework-state/manifest.json"]
-        Handoffs[".framework-state/handoffs/"]
+    subgraph Tier4["Tier 4: Runtime State (.aief/state/)"]
+        Manifest[".aief/state/manifest.json"]
+        Handoffs[".aief/state/handoffs/"]
         Graph["graphify-out/ (Knowledge Graph)"]
     end
 
@@ -60,7 +60,7 @@ flowchart TB
 
 ## Supported Platforms
 
-All **5 platforms** ship complete inline entry files, adapters, native skill projections, custom prompts/MCP support, and schema contracts (`84/84` automated checks green):
+All **5 platforms** ship complete inline entry files, adapters, native skill projections, custom prompts/MCP support, and schema contracts (`86/86` automated checks green):
 
 | Platform | Entry Point | Adapter & Projection Layout | Status |
 | :--- | :--- | :--- | :---: |
@@ -100,8 +100,8 @@ aief compose /path/to/your-project
 # Option B: Direct invocation from local framework clone
 python scripts/bootstrap.py /path/to/your-project
 python scripts/bootstrap.py /path/to/your-project --dry-run
-python /path/to/your-project/scripts/compose.py --root /path/to/your-project
-python /path/to/your-project/scripts/preflight.py --stacks dotnet,node/angular
+python /path/to/your-project/.aief/scripts/compose.py
+python /path/to/your-project/.aief/scripts/preflight.py --stacks dotnet,node/angular
 ```
 
 ### 3. Synchronize Platform Adapters After Editing Canonical Rules
@@ -127,7 +127,7 @@ python scripts/sync_adapters.py --check
 | [`integrations/`](./integrations/) | Tier 1 | MCP server templates, Graphify knowledge graph runner, and optional orchestrator specs |
 | [`scripts/`](./scripts/) | Tier 1 | Pure-stdlib Python CLIs (`bootstrap.py`, `compose.py`, `validate.py`, `sync_adapters.py`, `preflight.py`, `platform_capabilities.py`, `readiness.py`, `run_tests.py`) |
 | [`docs/`](./docs/) | Tier 1 | Complete documentation suite (Architecture, Workflow, Getting Started, Consumer Usage Guide, Installation, Security, Roadmap) |
-| [`tests/`](./tests/) | Tier 1 | Automated 6-tier offline regression suite (`84` stdlib tests via `scripts/run_tests.py`) |
+| [`tests/`](./tests/) | Tier 1 | Automated 6-tier offline regression suite (`86` stdlib tests via `scripts/run_tests.py`) |
 
 ---
 
@@ -138,15 +138,15 @@ Start from **[`docs/README.md`](./docs/README.md)** for the full structured docu
 - **[Project Charter](./PROJECT_CHARTER.md)** — Vision, scope, non-goals, principles, and milestones.
 - **[Canonical Workflow (`docs/WORKFLOW.md`)](./docs/WORKFLOW.md)** — Complete 15-phase operational SDLC specification.
 - **[Architecture Guide (`docs/ARCHITECTURE.md`)](./docs/ARCHITECTURE.md)** — 4-tier architecture, state handoffs, and Graphify integration.
-- **[Getting Started & Consumer Usage (`docs/GETTING_STARTED.md`)](./docs/GETTING_STARTED.md)** — Install, first feature walkthrough, session handoffs, and bounded readiness (`v0.4.0`).
-- **[Customization & Auto-Loading Guide (`docs/CUSTOMIZATION_GUIDE.md`)](./docs/CUSTOMIZATION_GUIDE.md)** — Recipe guide for `.framework-custom/` (rules, skills, agents, prompts, MCP), `disabled.*` toggles, and `scripts/compose.py`.
+- **[Getting Started & Consumer Usage (`docs/GETTING_STARTED.md`)](./docs/GETTING_STARTED.md)** — Install, first feature walkthrough, session handoffs, and bounded readiness (`v0.5.0`).
+- **[Customization & Auto-Loading Guide (`docs/CUSTOMIZATION_GUIDE.md`)](./docs/CUSTOMIZATION_GUIDE.md)** — Recipe guide for `.aief/custom/` (rules, skills, agents, prompts, MCP), `disabled.*` toggles, and `.aief/scripts/compose.py`.
 - **[Platform Compatibility Matrix (`adapters/compatibility-matrix.md`)](./adapters/compatibility-matrix.md)** — Configuration mapping and platform support across all 5 platforms.
 - **[Installation Guide (`docs/INSTALLATION.md`)](./docs/INSTALLATION.md)** — Prerequisites, `aief` CLI / `bootstrap.py` modes, and non-destructive updates.
-- **[Configuration Reference (`docs/CONFIGURATION.md`)](./docs/CONFIGURATION.md)** — Configuring `project.framework.json`, lockfile `v2.0.0`, ownership classes, and validation severities.
+- **[Configuration Reference (`docs/CONFIGURATION.md`)](./docs/CONFIGURATION.md)** — Configuring `.aief/config.json`, lockfile `v2.0.0`, ownership classes, and validation severities.
 - **[Security Policy (`docs/SECURITY.md`)](./docs/SECURITY.md)** — Vulnerability reporting, secret prevention, and authorized security testing (Strix).
 - **[Skills Catalog & Matrix (`docs/SKILL_COMPATIBILITY_MATRIX.md`)](./docs/SKILL_COMPATIBILITY_MATRIX.md)** — Packs, Policy A/B/C, external CLIs (`rtk`, `graphify`), and compatibility matrix for all 33 skills.
 - **[Token Optimization Guide (`docs/TOKEN_OPTIMIZATION.md`)](./docs/TOKEN_OPTIMIZATION.md)** — Progressive disclosure principles, Ponytail, Caveman, RTK, and filesystem context offloading.
-- **[Changelog (`CHANGELOG.md`)](./CHANGELOG.md)** — Release history from `v0.1.0` through `v0.4.0`.
+- **[Changelog (`CHANGELOG.md`)](./CHANGELOG.md)** — Release history from `v0.1.0` through `v0.5.0`.
 - **[Contributing, Versioning & Release (`docs/CONTRIBUTING.md`)](./docs/CONTRIBUTING.md)** — Authoring rules, SemVer `2.0.0`, release checklist, and commit conventions.
 - **[Roadmap (`docs/ROADMAP.md`)](./docs/ROADMAP.md)** — Release progression from `v0.1.0` through `v0.5.0+`.
 

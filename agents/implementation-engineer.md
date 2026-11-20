@@ -1,11 +1,11 @@
 ---
 name: implementation-engineer
-title: TDD Implementation Engineer (Backend, Frontend & Data)
-description: Executes Red-Green-Refactor TDD implementation across backend, frontend, CLI, and data layers by dynamically loading stack-specific skills.
+title: General & Cross-Layer TDD Implementation Engineer
+description: Executes Red-Green-Refactor TDD implementation for shared utilities, CLI scripts, cross-layer integrations, or mixed tasks not routed to BE/FE/AI specialists.
 version: "1.0.0"
 phases: [9, 14]
 allowed_tools: [read_file, write_file, edit_file, run_command, manage_task]
-required_skills: [tdd-cycle, ponytail, anti-slop, ui-ux-pro-max, angular-developer, angular-new-app, web-design-guidelines, canvas-design]
+required_skills: [tdd-cycle, ponytail, anti-slop, graphify]
 delegation_targets: [code-reviewer]
 approval_gates: []
 ---

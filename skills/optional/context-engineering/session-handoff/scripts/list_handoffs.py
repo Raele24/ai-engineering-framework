@@ -64,9 +64,22 @@ def parse_date_from_filename(filename: str) -> datetime | None:
     return None
 
 
+def _resolve_session_handoffs_dir(project_path: str) -> Path:
+    base = Path(project_path)
+    if (base / ".aief").is_dir():
+        return base / ".aief" / "state" / "session-handoffs"
+    if (
+        (base / ".framework-state").is_dir()
+        or (base / ".framework-lock.json").is_file()
+        or (base / "project.framework.json").is_file()
+    ):
+        return base / ".framework-state" / "session-handoffs"
+    return base / ".aief" / "state" / "session-handoffs"
+
+
 def list_handoffs(project_path: str) -> list[dict]:
     """List all handoff documents in a project."""
-    handoffs_dir = Path(project_path) / ".framework-state" / "session-handoffs"
+    handoffs_dir = _resolve_session_handoffs_dir(project_path)
 
     if not handoffs_dir.exists():
         return []

@@ -17,7 +17,7 @@
 2. Every task must specify: `task_id`, `title`, `spec_ac_refs`, `target_files`, `test_files`, `verification_command`, and `dependencies`.
 3. Ensure parallel tasks have strictly disjoint `target_files`.
 
-## Step 3: Phase 8 — Agent Assignment & Context Isolation
-1. Write `.framework-state/08-assignments.json` assigning each task to `implementation-engineer` (or specialist roles) and listing the exact `SKILL.md` files to load.
-2. Default to sequential execution; use parallel subagents/swarm workers (max 3–5 concurrent workers) only when tasks operate on disjoint file subtrees.
+## Step 3: Phase 8 — Agent Assignment & Subagent-First Delegation
+1. Write `.framework-state/08-assignments.json` assigning each task to its specialist role (`backend-engineer`, `frontend-engineer`, `data-engineer`, `ai-engineer`, `devops-release-engineer`, or `implementation-engineer` for shared/CLI tasks) and listing the exact `SKILL.md` files to load.
+2. For `Category B/C` tasks, spawn isolated role subagents (`invoke_subagent` / `swarm` / `.claude/agents/<role>.md` / `.github/agents/<role>.agent.md`); run up to 3–5 workers in parallel only when `target_files` are strictly disjoint.
 3. Write `.framework-state/handoffs/phase-08-handoff.json`.

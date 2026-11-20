@@ -1,6 +1,6 @@
 # Contributing, Versioning & Release Guide (`CONTRIBUTING.md`)
 
-**Version:** `0.4.0`
+**Version:** `0.5.0`
 
 ---
 
@@ -36,7 +36,7 @@ Contributions to **AI Engineering Framework** follow the same rules enforced by 
 - **`MAJOR` (`X.0.0`):** Breaking schema changes (`core/schemas/*.json`), removed/renamed workflow phases, or breaking CLI flag changes.
 - **`MINOR` (`0.Y.0`):** Backward-compatible new optional packs, adapters, templates, or optional schema fields.
 - **`PATCH` (`0.0.Z`):** Bug fixes, doc cleanups, or non-breaking adapter adjustments.
-- **Pre-1.0 (`0.x.y`) Guarantee:** `aief update` / `bootstrap.py --update` preserves consumer-owned files (`project.framework.json`, `.framework-custom/`, `docs/specs/`, `docs/adr/`) and locally customized files.
+- **Pre-1.0 (`0.x.y`) Guarantee:** `aief update` / `bootstrap.py --update` preserves consumer-owned files (`.aief/config.json`, `.aief/custom/`, `docs/specs/`, `docs/adr/`) and legacy `0.3.x`/`0.4.x` consumer layouts.
 - **Per-Skill Versions:** Each skill tracks its own `version` in `SKILL.md` frontmatter and `skills/registry.json`.
 
 ---

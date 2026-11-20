@@ -1,6 +1,6 @@
 # Security Policy & Guardrails (`SECURITY.md`)
 
-**Version:** `0.4.0`  
+**Version:** `0.5.0`  
 
 ---
 
@@ -8,7 +8,8 @@
 
 | Version | Supported | Notes |
 | :--- | :--- | :--- |
-| `0.4.x` | Yes | Current series (`v0.4.0`: inline composition, `.framework-custom/` traversal/reparse guards, Lockfile `v2.0.0`, JSONC validation) |
+| `0.5.x` | Yes | Current series (`v0.5.0`: `.aief/` isolated consumer layout, scoped zero-collision validation, `bundle.zip` safe extraction) |
+| `0.4.x` | Yes | Maintained series (`v0.4.0`: inline composition, traversal/reparse guards, Lockfile `v2.0.0`, JSONC validation) |
 | `0.3.x` | Yes | Maintained RC series (`v0.3.1`, Lockfile `v2.0.0`) |
 | `0.1.x` – `0.2.x` | Legacy | Superseded; upgrade consumer repositories via `bootstrap.py --update` |
 

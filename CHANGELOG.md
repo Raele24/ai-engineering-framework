@@ -5,7 +5,21 @@ The format follows [Semantic Versioning 2.0.0](https://semver.org/) ([`docs/CONT
 
 ---
 
-## [0.4.0] - 2026-11-19 (Local Working Tree — Pending `Gate-04`)
+## [0.5.0] - 2026-11-20 (Local Working Tree — Pending `Gate-04`)
+
+### Added
+- **Isolated Consumer Layout (`.aief/`):** New consumer installations isolate all framework-managed runtime assets inside `.aief/` (`config.json`, `lock.json`, `state/`, `custom/`, `core/`, `agents/`, `skills/registry.json`, `workflows/`, `templates/`, `quality/`, `security/`, `scripts/`, `adapters/antigravity/`, `.aief/.gitignore`, `.aief/ENVIRONMENT_PREFLIGHT.md`, `.aief/gitignore.recommended`). Skill directories live solely in native platform paths (`.agents/skills/` and `.claude/skills/`) without duplicating skill files under `.aief/skills/`.
+- **Single-Copy Rule & Overlay Injection (Zero `3x` Duplication):** Full inline rules, active gates, and `.aief/custom/` overlays live once in `AGENTS.md` (plus `CLAUDE.md` for Claude Code), while `GEMINI.md`, `.agents/rules/framework-core.md`, `.github/copilot-instructions.md`, and `.github/instructions/framework.instructions.md` emit slim platform-specific pointers to `AGENTS.md`.
+- **Zero-Collision Brownfield Discovery (`scripts/validate.py` & `scripts/bootstrap.py`):** Consumer validation scans strictly `<skills_root>/core/` and `<skills_root>/optional/`, ensuring pre-existing host-app skills (`skills/<project>/SKILL.md`), custom rules (`.agents/rules/*.md`), and project `docs/` remain untouched and never trigger registry errors. Added brownfield regression test `test_17_vintgen_brownfield_isolation_no_skills_collision` (`86/86` automated checks green).
+- **Short-Path Bundle Extraction (`aief_cli`, `setup.py`):** Packages framework assets into `aief_cli/bundle.zip` extracted to `~/.cache/aief/<version>-<hash>/` with zip-slip protection, eliminating Windows `WinError 206` (`MAX_PATH`) failures during `pipx`/`uvx` installation.
+- **13 Canonical Specialist Roles & Subagent-First Orchestration (`agents/`, `compose.py`, `sync_adapters.py`):** Added `ui-ux-designer`, `data-engineer` (DB & Big Data), `backend-engineer`, `frontend-engineer`, and `ai-engineer`, expanded `devops-release-engineer` to `[9, 13]` (CI/CD pipelines, containers, deploy & rollback), added `Subagent-First Delegation` rules across `AGENTS.md` and stage runbooks (`workflows/02..06`), and expanded native `.claude/agents/*.md` and `.github/agents/*.agent.md` projection to cover every active role (preserving read-only reviewer guards and selective `disabled.agents` pruning).
+
+### Changed
+- Preserved full automatic **legacy layout detection (`"legacy"`)** in `compose.py`, `bootstrap.py`, `validate.py`, `preflight.py`, `aief_cli`, and `session-handoff` scripts for existing `v0.3.x` / `v0.4.x` consumer workspaces using root `project.framework.json` / `.framework-lock.json` / `.framework-state/`.
+
+---
+
+## [0.4.0] - 2026-11-19
 
 ### Added
 - **Standalone Consumer Composition Engine (`scripts/compose.py`):** Shipped into every bootstrapped consumer repository so teams can edit `.framework-custom/` or `project.framework.json` and run `python scripts/compose.py` locally without upstream dependencies or custom changes being clobbered on framework updates.

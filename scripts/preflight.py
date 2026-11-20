@@ -20,6 +20,16 @@ import subprocess
 import sys
 from typing import Dict, List, Set
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+
+
+def _default_repo_root() -> Path:
+    parent = SCRIPT_DIR.parent
+    if parent.name == ".aief":
+        return parent.parent
+    return Path.cwd()
+
+
 STACK_ALIASES: Dict[str, str] = {
     "dotnet": "dotnet",
     ".net": "dotnet",
@@ -366,8 +376,8 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument(
         "--root",
         type=Path,
-        default=Path.cwd(),
-        help="Consumer repository root used to detect workspace lockfiles such as pnpm-lock.yaml (default: cwd)",
+        default=_default_repo_root(),
+        help="Consumer repository root used to detect workspace lockfiles such as pnpm-lock.yaml",
     )
     parser.add_argument(
         "--stacks",

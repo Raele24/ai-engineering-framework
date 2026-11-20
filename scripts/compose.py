@@ -28,12 +28,72 @@ if str(SCRIPT_DIR) not in sys.path:
 
 import platform_capabilities  # noqa: E402
 
-DEFAULT_OVERLAY_DIR = ".framework-custom"
+def _default_repo_root() -> Path:
+    parent = SCRIPT_DIR.parent
+    return parent.parent if parent.name == ".aief" else parent
+
+
+AIEF_DIR = ".aief"
+DEFAULT_OVERLAY_DIR = ".aief/custom"
+ISOLATED_CONFIG_REL = ".aief/config.json"
+ISOLATED_LOCK_REL = ".aief/lock.json"
+ISOLATED_STATE_REL = ".aief/state"
+LEGACY_OVERLAY_DIR = ".framework-custom"
+LEGACY_CONFIG_REL = "project.framework.json"
+LEGACY_LOCK_REL = ".framework-lock.json"
+LEGACY_STATE_REL = ".framework-state"
+FRAMEWORK_ASSET_SUBDIRS: Tuple[str, ...] = (
+    "core/",
+    "agents/",
+    "skills/",
+    "workflows/",
+    "templates/",
+    "quality/",
+    "security/",
+    "integrations/",
+    "scripts/",
+)
 DEFAULT_INJECTION_MODE = "inline"
 DEFAULT_INLINE_MAX_BYTES = 16384
 MAX_INLINE_BYTES_CAP = 65536
-LOCKFILE_NAME = ".framework-lock.json"
+LOCKFILE_NAME = ISOLATED_LOCK_REL
 LOCKFILE_SCHEMA_VERSION = "2.0.0"
+
+
+def resolve_consumer_layout(root: Path, force_layout: str | None = None) -> Dict[str, str]:
+    """Resolve isolated (.aief/) vs legacy root consumer paths."""
+    is_legacy = force_layout == "legacy" or (
+        force_layout != "isolated"
+        and not (root / AIEF_DIR).is_dir()
+        and ((root / LEGACY_LOCK_REL).exists() or (root / LEGACY_CONFIG_REL).exists())
+    )
+    if is_legacy:
+        return {
+            "mode": "legacy",
+            "fw_prefix": "",
+            "config_rel": LEGACY_CONFIG_REL,
+            "lock_rel": LEGACY_LOCK_REL,
+            "state_rel": LEGACY_STATE_REL,
+            "overlay_default": LEGACY_OVERLAY_DIR,
+            "hooks_rel": "adapters/antigravity/hooks.json",
+            "agy_skills_rel": "adapters/antigravity/skills.json",
+            "agy_mcp_rel": "adapters/antigravity/mcp_config.json",
+            "compose_cmd": "python scripts/compose.py",
+            "validate_cmd": "python scripts/validate.py --mode consumer",
+        }
+    return {
+        "mode": "isolated",
+        "fw_prefix": f"{AIEF_DIR}/",
+        "config_rel": ISOLATED_CONFIG_REL,
+        "lock_rel": ISOLATED_LOCK_REL,
+        "state_rel": ISOLATED_STATE_REL,
+        "overlay_default": DEFAULT_OVERLAY_DIR,
+        "hooks_rel": f"{AIEF_DIR}/adapters/antigravity/hooks.json",
+        "agy_skills_rel": f"{AIEF_DIR}/adapters/antigravity/skills.json",
+        "agy_mcp_rel": f"{AIEF_DIR}/adapters/antigravity/mcp_config.json",
+        "compose_cmd": f"python {AIEF_DIR}/scripts/compose.py",
+        "validate_cmd": f"python {AIEF_DIR}/scripts/validate.py --mode consumer",
+    }
 
 SUPPORTED_PROJECTION_ROOTS: Set[str] = {".agents/skills", ".claude/skills"}
 TEXT_SUFFIXES: Set[str] = {
@@ -99,8 +159,8 @@ DEFAULT_CUSTOM_INSTRUCTIONS_TEMPLATE = """# Project-Specific AI Instructions (Co
 <!--
   Add architecture notes, build/test commands, database rules, naming conventions,
   and domain constraints specific to this repository below.
-  Run `python scripts/compose.py` after editing to refresh platform entry files.
-  This folder (.framework-custom/) is NEVER overwritten by `bootstrap.py --update`.
+  Run `python .aief/scripts/compose.py` after editing to refresh platform entry files.
+  This custom folder is NEVER overwritten by `bootstrap.py --update` or `aief update`.
 -->
 """
 
@@ -253,12 +313,19 @@ def parse_simple_frontmatter(markdown_text: str) -> Tuple[Dict[str, object], str
     return result, body
 
 
-def rewrite_markdown_relative_links(markdown_text: str, src_rel_path: str, dst_rel_path: str) -> str:
+def rewrite_markdown_relative_links(
+    markdown_text: str,
+    src_rel_path: str,
+    dst_rel_path: str,
+    fw_prefix: str = "",
+    skill_dir_map: Dict[str, str] | None = None,
+    strip_upstream_snapshot_links: bool = False,
+) -> str:
     """Rewrite Markdown relative link targets when moving a file across directory depths."""
     normalized = markdown_text.replace("\r\n", "\n")
     src_dir = posixpath.dirname(src_rel_path.replace("\\", "/"))
     dst_dir = posixpath.dirname(dst_rel_path.replace("\\", "/"))
-    if src_dir == dst_dir:
+    if src_dir == dst_dir and not strip_upstream_snapshot_links:
         return normalized
 
     fenced_blocks: List[str] = []
@@ -279,6 +346,10 @@ def rewrite_markdown_relative_links(markdown_text: str, src_rel_path: str, dst_r
 
     masked = INLINE_CODE_RE.sub(_mask_inline, masked)
 
+    sorted_skill_prefixes = (
+        sorted(skill_dir_map.keys(), key=len, reverse=True) if skill_dir_map else []
+    )
+
     def _repl(match: re.Match[str]) -> str:
         label = match.group(1)
         raw_target = match.group(2).strip()
@@ -295,6 +366,24 @@ def rewrite_markdown_relative_links(markdown_text: str, src_rel_path: str, dst_r
         repo_rel_target = posixpath.normpath(
             posixpath.join(src_dir, path_part) if src_dir else path_part
         )
+        if strip_upstream_snapshot_links and posixpath.basename(repo_rel_target) == "UPSTREAM_SKILL.md":
+            return label
+
+        mapped_skill_target: str | None = None
+        for canon_sdir in sorted_skill_prefixes:
+            if repo_rel_target == canon_sdir or repo_rel_target.startswith(f"{canon_sdir}/"):
+                suffix = repo_rel_target[len(canon_sdir) :]
+                mapped_skill_target = f"{skill_dir_map[canon_sdir]}{suffix}"  # type: ignore[index]
+                break
+
+        if mapped_skill_target is not None:
+            repo_rel_target = mapped_skill_target
+        elif (
+            fw_prefix
+            and not repo_rel_target.startswith(fw_prefix)
+            and any(repo_rel_target.startswith(pref) or repo_rel_target == pref.rstrip("/") for pref in FRAMEWORK_ASSET_SUBDIRS)
+        ):
+            repo_rel_target = f"{fw_prefix}{repo_rel_target}"
         new_rel = posixpath.relpath(repo_rel_target, dst_dir if dst_dir else ".")
         if dst_dir == "" and path_part.startswith("./") and not new_rel.startswith("."):
             new_rel = f"./{new_rel}"
@@ -356,8 +445,11 @@ def resolve_platform_projection_roots(
     return root_to_platforms, platform_to_root
 
 
-def normalize_project_controls(config_data: Dict[str, object] | None) -> Dict[str, object]:
-    """Normalize optional disabled.* and customizations.* settings with safe v0.3/v0.4 defaults."""
+def normalize_project_controls(
+    config_data: Dict[str, object] | None,
+    default_overlay_dir: str = DEFAULT_OVERLAY_DIR,
+) -> Dict[str, object]:
+    """Normalize optional disabled.* and customizations.* settings with safe v0.3/v0.4/v0.5 defaults."""
     cfg = config_data if isinstance(config_data, dict) else {}
     raw_disabled = cfg.get("disabled")
     disabled_obj = raw_disabled if isinstance(raw_disabled, dict) else {}
@@ -384,7 +476,7 @@ def normalize_project_controls(config_data: Dict[str, object] | None) -> Dict[st
 
     raw_custom = cfg.get("customizations")
     custom_obj = raw_custom if isinstance(raw_custom, dict) else {}
-    raw_overlay = str(custom_obj.get("overlayDir") or DEFAULT_OVERLAY_DIR).strip() or DEFAULT_OVERLAY_DIR
+    raw_overlay = str(custom_obj.get("overlayDir") or default_overlay_dir).strip() or default_overlay_dir
     overlay_dir = validate_safe_rel_path(raw_overlay, label="customizations.overlayDir")
     mode = str(custom_obj.get("promptInjectionMode") or DEFAULT_INJECTION_MODE).strip().lower()
     if mode not in {"inline", "reference"}:
@@ -739,16 +831,23 @@ def _compute_local_digest(root: Path) -> str:
 
 
 def _translate_tools_for_claude(raw_tools: object) -> str:
+    """Translate canonical tool IDs into Claude Code subagent frontmatter tools."""
     mapping = {
         "read_file": "Read, Glob, Grep",
         "write_file": "Write",
         "edit_file": "Edit",
         "run_command": "Bash",
+        "search_web": "WebSearch",
+        "invoke_subagent": "Agent",
     }
+    ignored_meta = {"ask_question", "manage_task", "run_workflow", "swarm"}
     tools = raw_tools if isinstance(raw_tools, list) else []
     ordered: List[str] = []
     for t in tools:
-        mapped = mapping.get(str(t).strip(), str(t).strip())
+        key = str(t).strip()
+        if not key or key in ignored_meta:
+            continue
+        mapped = mapping.get(key, key)
         for part in [p.strip() for p in mapped.split(",") if p.strip()]:
             if part not in ordered:
                 ordered.append(part)
@@ -756,33 +855,101 @@ def _translate_tools_for_claude(raw_tools: object) -> str:
 
 
 def _translate_tools_for_copilot(raw_tools: object) -> List[str]:
+    """Translate canonical tool IDs into GitHub Copilot .agent.md frontmatter tools."""
     mapping = {
         "read_file": ["read", "search"],
         "write_file": ["edit"],
         "edit_file": ["edit"],
         "run_command": ["terminal"],
+        "search_web": ["fetch"],
     }
+    ignored_meta = {"ask_question", "manage_task", "invoke_subagent", "run_workflow", "swarm"}
     tools = raw_tools if isinstance(raw_tools, list) else []
     ordered: List[str] = []
     for t in tools:
-        for item in mapping.get(str(t).strip(), [str(t).strip()]):
+        key = str(t).strip()
+        if not key or key in ignored_meta:
+            continue
+        for item in mapping.get(key, [key]):
             if item not in ordered:
                 ordered.append(item)
     return ordered or ["read", "search"]
+
+
+def render_platform_agent_files(
+    role_name: str,
+    title: str,
+    description: str,
+    allowed_tools: object,
+    phases: object = None,
+    fw_prefix: str = "",
+    append_rules: str = "",
+) -> Tuple[str, str, str, str]:
+    """Render (claude_subpath, claude_md, copilot_subpath, copilot_md) for a canonical agent role."""
+    safe_desc = str(description or title or role_name).replace('"', "'").strip()
+    append_block = f"\n\nProject-Specific Role Rules ({role_name}):\n{append_rules.strip()}" if append_rules.strip() else ""
+    if role_name == "code-reviewer":
+        claude_md = (
+            "---\n"
+            "name: framework-code-reviewer\n"
+            'description: "Independent Phase 10 Code Reviewer enforcing spec traceability, ADRs, and anti-slop rules"\n'
+            "tools: Read, Glob, Grep\n"
+            "disallowedTools: Write, Edit, Bash\n"
+            "---\n"
+            f"Follow `{fw_prefix}agents/code-reviewer.md` and `{fw_prefix}quality/code-review-rubric.md`.\n"
+            "Inspect changes read-only without modifying production source files."
+            f"{append_block}\n"
+        )
+        copilot_md = (
+            "---\n"
+            'description: "Independent Phase 10 Code & Architecture Reviewer"\n'
+            'tools: ["read", "search"]\n'
+            "---\n"
+            f"Act as `code-reviewer` defined in `{fw_prefix}agents/code-reviewer.md`.\n"
+            f"Review changes read-only against `docs/specs/03-specification.md`, `docs/adr/`, and `{fw_prefix}quality/code-review-rubric.md`.\n"
+            "Return findings without modifying production source files."
+            f"{append_block}\n"
+        )
+        return "code-reviewer.md", claude_md, "code-reviewer.agent.md", copilot_md
+
+    phases_list = [str(p) for p in phases] if isinstance(phases, list) else []
+    phase_note = f" (Phases {', '.join(phases_list)})" if phases_list else ""
+    claude_tools = _translate_tools_for_claude(allowed_tools)
+    copilot_tools = json.dumps(_translate_tools_for_copilot(allowed_tools))
+    claude_md = (
+        "---\n"
+        f"name: {role_name}\n"
+        f'description: "{safe_desc}"\n'
+        f"tools: {claude_tools}\n"
+        "---\n"
+        f"Act as `{role_name}`{phase_note} per `{fw_prefix}agents/{role_name}.md` and `{fw_prefix}core/rules/engineering-principles.md`.\n"
+        "Execute strictly within assigned task scope, spec acceptance criteria, and disjoint file ownership."
+        f"{append_block}\n"
+    )
+    copilot_md = (
+        "---\n"
+        f'description: "{safe_desc}"\n'
+        f"tools: {copilot_tools}\n"
+        "---\n"
+        f"Act as `{role_name}`{phase_note} defined in `{fw_prefix}agents/{role_name}.md`.\n"
+        f"Follow `{fw_prefix}core/rules/engineering-principles.md` within assigned task scope and disjoint file ownership."
+        f"{append_block}\n"
+    )
+    return f"{role_name}.md", claude_md, f"{role_name}.agent.md", copilot_md
 
 
 def _active_gates(disabled_gates: Set[str]) -> List[str]:
     return [g for g in VALID_GATES if g not in disabled_gates]
 
 
-def _active_stage_lines(disabled_phases: Set[int]) -> List[Tuple[str, str]]:
+def _active_stage_lines(disabled_phases: Set[int], fw_prefix: str = "") -> List[Tuple[str, str]]:
     stages = [
-        ((1, 2, 3), "Stage 1 (Phases 1-3)", "workflows/01-discovery-and-grill-me.md"),
-        ((4, 5), "Stage 2 (Phases 4-5)", "workflows/02-specification-and-adr.md"),
-        ((6, 7, 8), "Stage 3 (Phases 6-8)", "workflows/03-planning-and-decomposition.md"),
-        ((9,), "Stage 4 (Phase 9)", "workflows/04-tdd-and-implementation.md"),
-        ((10, 11, 12), "Stage 5 (Phases 10-12)", "workflows/05-review-qa-and-security.md"),
-        ((13, 14, 15), "Stage 6 (Phases 13-15)", "workflows/06-release-and-retrospective.md"),
+        ((1, 2, 3), "Stage 1 (Phases 1-3)", f"{fw_prefix}workflows/01-discovery-and-grill-me.md"),
+        ((4, 5), "Stage 2 (Phases 4-5)", f"{fw_prefix}workflows/02-specification-and-adr.md"),
+        ((6, 7, 8), "Stage 3 (Phases 6-8)", f"{fw_prefix}workflows/03-planning-and-decomposition.md"),
+        ((9,), "Stage 4 (Phase 9)", f"{fw_prefix}workflows/04-tdd-and-implementation.md"),
+        ((10, 11, 12), "Stage 5 (Phases 10-12)", f"{fw_prefix}workflows/05-review-qa-and-security.md"),
+        ((13, 14, 15), "Stage 6 (Phases 13-15)", f"{fw_prefix}workflows/06-release-and-retrospective.md"),
     ]
     out: List[Tuple[str, str]] = []
     for phase_nums, label, rel_path in stages:
@@ -796,21 +963,26 @@ def _render_inline_rules_bullets(
     profile: str,
     disabled: Dict[str, object],
     prefix_rel: str = ".",
+    fw_prefix: str = "",
+    config_rel: str = ISOLATED_CONFIG_REL,
+    state_rel: str = ISOLATED_STATE_REL,
+    validate_cmd: str = "python .aief/scripts/validate.py --mode consumer",
 ) -> List[str]:
     disabled_mechs: Set[str] = disabled["mechanisms"]  # type: ignore[assignment]
     disabled_phases: Set[int] = disabled["phases"]  # type: ignore[assignment]
     disabled_gates: Set[str] = disabled["gates"]  # type: ignore[assignment]
+    fw_link_base = f"{prefix_rel}/{fw_prefix.rstrip('/')}" if fw_prefix else prefix_rel
 
     bullets = [f"- **Workflow Profile:** `{profile}`"]
     if 2 not in disabled_phases and 3 not in disabled_phases:
         bullets.append(
-            f"- **Spec First ([`core/rules/engineering-principles.md`]({prefix_rel}/core/rules/engineering-principles.md)):** "
+            f"- **Spec First ([`{fw_prefix}core/rules/engineering-principles.md`]({fw_link_base}/core/rules/engineering-principles.md)):** "
             "Clarify edge cases and lock testable acceptance criteria before production code."
         )
     if "tdd" not in disabled_mechs and 9 not in disabled_phases:
         bullets.append("- **TDD Discipline:** Write failing tests first (Red -> Green -> Refactor) before implementation.")
     else:
-        bullets.append("- **TDD Requirement:** Disabled by `project.framework.json` (`disabled.mechanisms: tdd`).")
+        bullets.append(f"- **TDD Requirement:** Disabled by `{config_rel}` (`disabled.mechanisms: tdd`).")
 
     if "graphify" not in disabled_mechs:
         bullets.append(
@@ -820,25 +992,84 @@ def _render_inline_rules_bullets(
 
     if "handoffs" not in disabled_mechs:
         bullets.append(
-            f"- **Filesystem Handoffs ([`core/rules/context-handoff-protocol.md`]({prefix_rel}/core/rules/context-handoff-protocol.md)):** "
-            "Persist phase artifacts under `docs/` and handoff JSON under `.framework-state/handoffs/`."
+            f"- **Filesystem Handoffs ([`{fw_prefix}core/rules/context-handoff-protocol.md`]({fw_link_base}/core/rules/context-handoff-protocol.md)):** "
+            f"Persist phase artifacts under `docs/` and handoff JSON under `{state_rel}/handoffs/`."
         )
     else:
-        bullets.append("- **Filesystem Handoffs:** Disabled by `project.framework.json` (`disabled.mechanisms: handoffs`).")
+        bullets.append(f"- **Filesystem Handoffs:** Disabled by `{config_rel}` (`disabled.mechanisms: handoffs`).")
 
     if "code-review" not in disabled_mechs and 10 not in disabled_phases:
         bullets.append("- **Independent Code Review:** Evaluate git diff against specs and quality rubrics before release.")
 
-    active_gates = _active_gates(disabled_gates)
-    gates_str = ", ".join(f"`{g}`" for g in active_gates) if active_gates else "None (explicitly disabled in `project.framework.json`)"
     bullets.append(
-        f"- **Active Approval Gates ([`core/rules/human-approval-gates.md`]({prefix_rel}/core/rules/human-approval-gates.md)):** {gates_str}."
+        "- **Subagent-First Delegation (`Category B/C`):** Spawn fresh specialist subagents from Section 3 "
+        "(design/DB-BigData/BE/FE/AI/DevOps/QA/review/security) with disjoint `target_files` rather than executing every phase in one bloated context."
+    )
+
+    active_gates = _active_gates(disabled_gates)
+    gates_str = ", ".join(f"`{g}`" for g in active_gates) if active_gates else f"None (explicitly disabled in `{config_rel}`)"
+    bullets.append(
+        f"- **Active Approval Gates ([`{fw_prefix}core/rules/human-approval-gates.md`]({fw_link_base}/core/rules/human-approval-gates.md)):** {gates_str}."
     )
     bullets.append(
-        f"- **Security Guardrails ([`core/rules/security-guardrails.md`]({prefix_rel}/core/rules/security-guardrails.md)):** "
-        "Never commit or echo secrets/tokens/keys; run `python scripts/validate.py --mode consumer` before finishing."
+        f"- **Security Guardrails ([`{fw_prefix}core/rules/security-guardrails.md`]({fw_link_base}/core/rules/security-guardrails.md)):** "
+        f"Never commit or echo secrets/tokens/keys; run `{validate_cmd}` before finishing."
     )
     return bullets
+
+
+def _resolve_skill_source_dir(
+    skill_entry: Dict[str, object],
+    assets_root: Path,
+    target_dir: Path,
+    canon_source_rel: str,
+    proj_roots: List[str],
+    external_source_root: Path | None = None,
+) -> Path:
+    """Resolve canonical or projected skill directory without duplicating skills inside .aief/skills/."""
+    candidate = assets_root / Path(canon_source_rel)
+    if candidate.is_file():
+        return candidate.parent
+
+    if external_source_root is not None:
+        ext_cand = external_source_root / Path(canon_source_rel)
+        if ext_cand.is_file():
+            return ext_cand.parent
+
+    env_fw = os.environ.get("AIEF_FRAMEWORK_ROOT", "").strip()
+    if env_fw:
+        env_cand = Path(env_fw) / Path(canon_source_rel)
+        if env_cand.is_file():
+            return env_cand.parent
+
+    if (SCRIPT_DIR.parent / "skills" / "core").is_dir():
+        repo_cand = SCRIPT_DIR.parent / Path(canon_source_rel)
+        if repo_cand.is_file():
+            return repo_cand.parent
+
+    cache_root = Path.home() / ".cache" / "aief"
+    if cache_root.is_dir():
+        for bundle_dir in sorted(cache_root.iterdir(), reverse=True):
+            if bundle_dir.is_dir() and not bundle_dir.name.startswith(".tmp-"):
+                cache_cand = bundle_dir / Path(canon_source_rel)
+                if cache_cand.is_file():
+                    return cache_cand.parent
+
+    skill_name = str(skill_entry.get("name", ""))
+    cur_rel = str(skill_entry.get("path", "")).replace("\\", "/")
+    if cur_rel:
+        cur_path = target_dir / Path(cur_rel)
+        if cur_path.is_file():
+            return cur_path.parent
+    for proot in proj_roots:
+        proj_cand = target_dir / Path(proot) / skill_name / "SKILL.md"
+        if proj_cand.is_file():
+            return proj_cand.parent
+
+    raise FileNotFoundError(
+        f"Skill directory missing for '{skill_name}' ({canon_source_rel}); "
+        "run 'aief compose .' or 'aief update .' to restore disabled skills from bundle cache."
+    )
 
 
 def compose_consumer_artifacts(
@@ -850,9 +1081,28 @@ def compose_consumer_artifacts(
     config_data: Dict[str, object],
     overlay: Dict[str, object],
     digest: str | None = None,
+    layout: Dict[str, str] | None = None,
 ) -> Dict[str, object]:
     """Compose all filtered/customized consumer files without upstream-only references."""
-    controls = normalize_project_controls(config_data)
+    active_layout = layout or resolve_consumer_layout(target_dir)
+    fw_prefix = active_layout["fw_prefix"]
+    is_isolated = active_layout["mode"] == "isolated"
+    config_rel = active_layout["config_rel"]
+    state_rel = active_layout["state_rel"]
+    hooks_rel = active_layout["hooks_rel"]
+    agy_skills_rel = active_layout["agy_skills_rel"]
+    agy_mcp_rel = active_layout["agy_mcp_rel"]
+    compose_cmd = active_layout["compose_cmd"]
+    validate_cmd = active_layout["validate_cmd"]
+
+    assets_root = (
+        source_root / AIEF_DIR
+        if (is_isolated and (source_root / AIEF_DIR / "skills" / "registry.json").exists())
+        else source_root
+    )
+    external_source_root = source_root if (source_root / "skills" / "core").is_dir() else None
+
+    controls = normalize_project_controls(config_data, default_overlay_dir=active_layout["overlay_default"])
     disabled = controls["disabled"]
     customizations = controls["customizations"]
     disabled_skills: Set[str] = disabled["skills"]  # type: ignore[assignment]
@@ -860,10 +1110,17 @@ def compose_consumer_artifacts(
     disabled_phases: Set[int] = disabled["phases"]  # type: ignore[assignment]
     disabled_mechs: Set[str] = disabled["mechanisms"]  # type: ignore[assignment]
 
-    resolved_digest = digest or _compute_local_digest(source_root)
+    resolved_digest = digest or _compute_local_digest(assets_root)
+    root_to_platforms, platform_to_root = resolve_platform_projection_roots(assets_root, platforms)
+    sorted_proj_roots = sorted(root_to_platforms.keys())
+    primary_proj_root = (
+        ".agents/skills"
+        if ".agents/skills" in root_to_platforms
+        else (sorted_proj_roots[0] if sorted_proj_roots else ".agents/skills")
+    )
 
-    # 1. Load source registry (preserve full pack set in consumer skills/, mark enabled=False on disabled skills)
-    full_reg = json.loads((source_root / "skills" / "registry.json").read_text(encoding="utf-8"))
+    # 1. Load source registry (preserve pack set in consumer registry.json without duplicating skill dirs under .aief/skills/)
+    full_reg = json.loads((assets_root / "skills" / "registry.json").read_text(encoding="utf-8"))
     allowed_prefixes = ["skills/core/"] + [f"{OPTIONAL_PACK_DIRS[p]}/" for p in optional_packs if p in OPTIONAL_PACK_DIRS]
 
     registry_skills: List[Dict[str, object]] = []
@@ -871,11 +1128,22 @@ def compose_consumer_artifacts(
     custom_skills_map: Dict[str, Dict[str, object]] = overlay["custom_skills"]  # type: ignore[assignment]
 
     for skill in full_reg.get("skills", []):
-        rel_path = str(skill.get("path", "")).replace("\\", "/")
-        if not any(rel_path.startswith(pref) for pref in allowed_prefixes):
+        raw_src_path = str(skill.get("source_path") or skill.get("path") or "").replace("\\", "/")
+        canon_rel = (
+            raw_src_path[len(fw_prefix) :]
+            if (fw_prefix and raw_src_path.startswith(fw_prefix))
+            else raw_src_path
+        )
+        if not any(canon_rel.startswith(pref) for pref in allowed_prefixes):
             continue
         skill_copy = dict(skill)
         sname = str(skill_copy["name"])
+        skill_copy["source_path"] = canon_rel
+        if is_isolated:
+            skill_copy["path"] = f"{primary_proj_root}/{sname}/SKILL.md"
+            skill_copy["upstream_preserved_path"] = None
+        else:
+            skill_copy["path"] = canon_rel
         is_enabled = (sname not in disabled_skills) and (sname not in custom_skills_map)
         if not is_enabled:
             skill_copy["enabled"] = False
@@ -886,7 +1154,7 @@ def compose_consumer_artifacts(
 
     consumer_registry = {
         "schema_version": full_reg.get("schema_version", "2.0.0"),
-        "framework_version": full_reg.get("framework_version", "0.4.0"),
+        "framework_version": full_reg.get("framework_version", "0.5.0"),
         "description": "Filtered consumer skill registry generated by AI Engineering Framework",
         "total_skills": len(registry_skills),
         "skills": registry_skills,
@@ -902,7 +1170,7 @@ def compose_consumer_artifacts(
     composed_agent_files: Dict[str, bytes] = {}
     canonical_agent_names: Set[str] = set()
 
-    for agent_path in sorted((source_root / "agents").glob("*.md")):
+    for agent_path in sorted((assets_root / "agents").glob("*.md")):
         raw_text = agent_path.read_text(encoding="utf-8").replace("\r\n", "\n")
         meta, _ = parse_simple_frontmatter(raw_text)
         name = str(meta.get("name") or agent_path.stem)
@@ -921,10 +1189,9 @@ def compose_consumer_artifacts(
                         "meta": ov,
                     }
                 )
-            composed_agent_files[f"agents/{agent_path.name}"] = str(ov["raw_text"]).rstrip() + "\n"
+            composed_agent_files[f"{fw_prefix}agents/{agent_path.name}"] = str(ov["raw_text"]).rstrip() + "\n"
             continue
 
-        # Strip prior standalone append block so repeated compose runs stay strictly idempotent
         append_pattern = re.compile(rf"\n+## Project-Specific Rules \({re.escape(name)}\)\n.*\Z", re.DOTALL)
         base_text = append_pattern.sub("", raw_text).rstrip()
         filtered_text = filter_agent_required_skills(base_text, active_skill_names) + "\n"
@@ -936,12 +1203,12 @@ def compose_consumer_artifacts(
                     "name": name,
                     "title": meta.get("title", name),
                     "phases": meta.get("phases", []),
-                    "path": f"agents/{agent_path.name}",
+                    "path": f"{fw_prefix}agents/{agent_path.name}",
                     "source_type": "framework",
                     "meta": meta,
                 }
             )
-        composed_agent_files[f"agents/{agent_path.name}"] = filtered_text.encode("utf-8")
+        composed_agent_files[f"{fw_prefix}agents/{agent_path.name}"] = filtered_text.encode("utf-8")
 
     # Convert byte entries to bytes uniformly
     for key, val in list(composed_agent_files.items()):
@@ -980,8 +1247,9 @@ def compose_consumer_artifacts(
         "| :--- | :--- | :--- | :--- |",
     ]
     for sk in active_framework_skills:
+        sk_rel = str(sk["path"]).replace("\\", "/")
         skills_table_lines.append(
-            f"| `{sk['name']}` | `{sk['tier']}` | `framework` | [`{sk['path']}`](./{sk['path']}) |"
+            f"| `{sk['name']}` | `{sk['tier']}` | `framework` | [`{sk_rel}`](./{sk_rel}) |"
         )
     for cname in sorted(custom_skills_map.keys()):
         if cname in disabled_skills:
@@ -993,9 +1261,10 @@ def compose_consumer_artifacts(
 
     inj_mode = str(customizations["promptInjectionMode"])
     max_bytes = int(customizations["inlineMaxBytes"])
+    overlay_rel_eff = str(customizations["overlayDir"])
     overlay_section = _format_overlay_section(overlay, inj_mode, max_bytes)
-    stage_lines = _active_stage_lines(disabled_phases)
-    stages_md = "\n".join(f"- **{lbl}:** [`{p}`](./{p})" for lbl, p in stage_lines) or "- *All workflow stages disabled in `project.framework.json`.*"
+    stage_lines = _active_stage_lines(disabled_phases, fw_prefix=fw_prefix)
+    stages_md = "\n".join(f"- **{lbl}:** [`{p}`](./{p})" for lbl, p in stage_lines) or f"- *All workflow stages disabled in `{config_rel}`.*"
 
     custom_prompts_map: Dict[str, Dict[str, object]] = dict(overlay.get("custom_prompts") or {})  # type: ignore[arg-type]
     custom_mcp_map: Dict[str, Dict[str, object]] = dict(overlay.get("custom_mcp") or {})  # type: ignore[arg-type]
@@ -1009,16 +1278,26 @@ def compose_consumer_artifacts(
         for slug in sorted(custom_prompts_map.keys()):
             pr = custom_prompts_map[slug]
             prompt_rows.append(f"| `/{slug}` | {pr['description']} | [`{pr['rel_path']}`](./{pr['rel_path']}) |")
-        custom_extras_parts.append("## Custom Prompts (`.framework-custom/prompts/`)\n" + "\n".join(prompt_rows))
+        custom_extras_parts.append(f"## Custom Prompts (`{overlay_rel_eff}/prompts/`)\n" + "\n".join(prompt_rows))
     if custom_mcp_map:
         mcp_list = ", ".join(f"`{k}`" for k in sorted(custom_mcp_map.keys()))
         custom_extras_parts.append(
-            "## Custom MCP Servers (`.framework-custom/mcp.json`)\n"
-            f"- Active MCP servers: {mcp_list} (projected to `.mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`, `.gemini/settings.json`, and `adapters/antigravity/mcp_config.json`)."
+            f"## Custom MCP Servers (`{overlay_rel_eff}/mcp.json`)\n"
+            f"- Active MCP servers: {mcp_list} (projected to `.mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`, `.gemini/settings.json`, and `{agy_mcp_rel}`)."
         )
     custom_extras_md = ("\n\n" + "\n\n".join(custom_extras_parts)) if custom_extras_parts else ""
 
-    root_rules = "\n".join(_render_inline_rules_bullets(profile, disabled, prefix_rel="."))
+    root_rules = "\n".join(
+        _render_inline_rules_bullets(
+            profile,
+            disabled,
+            prefix_rel=".",
+            fw_prefix=fw_prefix,
+            config_rel=config_rel,
+            state_rel=state_rel,
+            validate_cmd=validate_cmd,
+        )
+    )
     agents_md_text = (
         f"<!-- AUTO-GENERATED CONSUMER ADAPTER | Canonical Digest: {resolved_digest} -->\n"
         "# AI Engineering Framework — Universal Agent Instructions (`AGENTS.md`)\n\n"
@@ -1026,10 +1305,10 @@ def compose_consumer_artifacts(
         "Follow these active instructions automatically without requiring per-turn file reminders.\n\n"
         "## 1. Active Engineering Rules & Gates\n"
         f"{root_rules}\n"
-        f"- **Self-Maintained Customizations:** Whenever you or the user modify `.framework-custom/` or `project.framework.json`, "
-        "automatically run `python scripts/compose.py` (which re-composes and validates consumer integrity in one step).\n\n"
+        f"- **Self-Maintained Customizations:** Whenever you or the user modify `{overlay_rel_eff}/` or `{config_rel}`, "
+        f"automatically run `{compose_cmd}` (which re-composes and validates consumer integrity in one step).\n\n"
         f"{overlay_section}{custom_extras_md}\n\n"
-        "## 2. Active Stage Runbooks (`workflows/`)\n"
+        f"## 2. Active Stage Runbooks (`{fw_prefix}workflows/`)\n"
         f"{stages_md}\n\n"
         "## 3. Active Agent Roles\n"
         f"{agents_table}\n\n"
@@ -1037,29 +1316,43 @@ def compose_consumer_artifacts(
         f"{skills_table}\n\n"
         "## 5. Consumer Command\n"
         "```bash\n"
-        "python scripts/compose.py   # Re-compose inline instructions + validate consumer workspace in one command\n"
+        f"{compose_cmd}   # Re-compose inline instructions + validate consumer workspace in one command\n"
         "```\n"
     )
 
     # Active skill pack entries for Antigravity .agents/skills.json
     agy_entries: List[Dict[str, str]] = []
     seen_agy_dirs: Set[str] = set()
-    for sk in active_framework_skills:
-        p_dir = posixpath.dirname(posixpath.dirname(str(sk["path"]).replace("\\", "/")))
-        if p_dir and p_dir not in seen_agy_dirs:
-            seen_agy_dirs.add(p_dir)
-            agy_entries.append({"path": p_dir})
-    for cname in sorted(custom_skills_map.keys()):
-        if cname not in disabled_skills and ".agents/skills" not in seen_agy_dirs:
-            seen_agy_dirs.add(".agents/skills")
+    if is_isolated:
+        if (active_framework_skills or any(c not in disabled_skills for c in custom_skills_map)) and ".agents/skills" in sorted_proj_roots:
             agy_entries.append({"path": ".agents/skills"})
-            break
+            seen_agy_dirs.add(".agents/skills")
+    else:
+        for sk in active_framework_skills:
+            raw_sk = str(sk["path"]).replace("\\", "/")
+            canon_sk = raw_sk[len(fw_prefix) :] if (fw_prefix and raw_sk.startswith(fw_prefix)) else raw_sk
+            p_dir = posixpath.dirname(posixpath.dirname(canon_sk))
+            mapped_dir = f"{fw_prefix}{p_dir}" if p_dir else ""
+            if mapped_dir and mapped_dir not in seen_agy_dirs:
+                seen_agy_dirs.add(mapped_dir)
+                agy_entries.append({"path": mapped_dir})
+        for cname in sorted(custom_skills_map.keys()):
+            if cname not in disabled_skills and ".agents/skills" not in seen_agy_dirs:
+                seen_agy_dirs.add(".agents/skills")
+                agy_entries.append({"path": ".agents/skills"})
+                break
 
-    # Build platform-specific inline entry files
+    fw_rel_from_dot = fw_prefix.rstrip("/") if fw_prefix else "."
+    fw_rel_from_one = f"../{fw_prefix.rstrip('/')}" if fw_prefix else ".."
+    fw_rel_from_two = f"../../{fw_prefix.rstrip('/')}" if fw_prefix else "../.."
+    compose_cmd_script = f"{fw_prefix}scripts/compose.py"
+    validate_cmd_script = f"{fw_prefix}scripts/validate.py"
+
+    # Build platform-specific entry files without duplicating AGENTS.md inline body on Antigravity/Gemini/Copilot
     platform_files: Dict[str, str] = {
         "AGENTS.md": agents_md_text,
         ".agents/skills.json": json.dumps({"entries": agy_entries}, indent=2) + "\n",
-        "adapters/antigravity/skills.json": json.dumps({"entries": agy_entries}, indent=2) + "\n",
+        agy_skills_rel: json.dumps({"entries": agy_entries}, indent=2) + "\n",
         "CLAUDE.md": (
             f"<!-- AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest} -->\n"
             "# Claude Code Instructions (`CLAUDE.md`)\n\n"
@@ -1072,28 +1365,23 @@ def compose_consumer_artifacts(
             "- **Subagents:** `.claude/agents/`\n"
             "- **Slash Commands:** `.claude/commands/`\n"
             "- **Full Index:** [`AGENTS.md`](./AGENTS.md)\n"
-            "- **Auto-Sync Rule:** Run `python scripts/compose.py` automatically after editing `.framework-custom/` or `project.framework.json` (composes + validates in one command).\n"
+            f"- **Auto-Sync Rule:** Run `{compose_cmd}` automatically after editing `{overlay_rel_eff}/` or `{config_rel}` (composes + validates in one command).\n"
         ),
         "GEMINI.md": (
             f"<!-- AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest} -->\n"
             "# Google Antigravity & Gemini CLI Instructions (`GEMINI.md`)\n\n"
-            "Apply all active framework and project rules automatically at session start.\n\n"
-            "## Active Rules & Gates\n"
-            f"{root_rules}\n\n"
-            f"{overlay_section}\n\n"
+            "Follow [`AGENTS.md`](./AGENTS.md) for all active framework rules, gates, stage runbooks, and project customizations.\n\n"
             "## Platform Integration Notes\n"
             "- **Google Antigravity:** Skills indexed in `.agents/skills.json` and projected into `.agents/skills/`; "
             "delegate isolated research to `research` and UI checks to `browser` (`Model=\"flash\"`).\n"
             "- **Gemini CLI:** Stage commands in `.gemini/commands/workflow.toml` and skills in `.agents/skills/`.\n"
-            "- **Auto-Sync Rule:** Run `python scripts/compose.py` automatically after editing `.framework-custom/` or `project.framework.json` (composes + validates in one command).\n"
+            f"- **Auto-Sync Rule:** Run `{compose_cmd}` automatically after editing `{overlay_rel_eff}/` or `{config_rel}`.\n"
         ),
         ".github/copilot-instructions.md": (
             f"<!-- AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest} -->\n"
             "# GitHub Copilot Workspace Instructions\n\n"
-            "Follow [`AGENTS.md`](../AGENTS.md) and these active project guardrails automatically:\n\n"
-            + "\n".join(_render_inline_rules_bullets(profile, disabled, prefix_rel=".."))
-            + f"\n\n{overlay_section}\n\n"
-            "- **Validation:** Run `python scripts/validate.py --mode consumer` (and `python scripts/compose.py` after editing `.framework-custom/`).\n"
+            "Follow [`AGENTS.md`](../AGENTS.md) for all active framework rules, gates, stage runbooks, and project customizations.\n\n"
+            f"- **Validation & Compose:** Run `{validate_cmd}` (or `{compose_cmd}` after editing `{overlay_rel_eff}/` or `{config_rel}`).\n"
         ),
         ".github/instructions/framework.instructions.md": (
             "---\n"
@@ -1101,10 +1389,8 @@ def compose_consumer_artifacts(
             'description: "AI Engineering Framework active rules and project customizations for GitHub Copilot"\n'
             "---\n"
             f"<!-- AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest} -->\n"
-            "Follow [`AGENTS.md`](../../AGENTS.md), [`core/rules/engineering-principles.md`](../../core/rules/engineering-principles.md), "
-            "and [`core/rules/security-guardrails.md`](../../core/rules/security-guardrails.md).\n\n"
-            + overlay_section
-            + "\n"
+            f"Follow [`AGENTS.md`](../../AGENTS.md), [`{fw_prefix}core/rules/engineering-principles.md`]({fw_rel_from_two}/core/rules/engineering-principles.md), "
+            f"and [`{fw_prefix}core/rules/security-guardrails.md`]({fw_rel_from_two}/core/rules/security-guardrails.md).\n"
         ),
         ".agents/rules/framework-core.md": (
             "---\n"
@@ -1112,16 +1398,16 @@ def compose_consumer_artifacts(
             "---\n"
             f"<!-- AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest} -->\n"
             "# Antigravity Workspace Rule — AI Engineering Framework\n\n"
-            "Follow [`AGENTS.md`](../../AGENTS.md) and [`core/rules/engineering-principles.md`](../../core/rules/engineering-principles.md).\n\n"
-            + "\n".join(_render_inline_rules_bullets(profile, disabled, prefix_rel="../.."))
-            + f"\n\n{overlay_section}\n"
+            f"Follow [`AGENTS.md`](../../AGENTS.md) and [`{fw_prefix}core/rules/engineering-principles.md`]({fw_rel_from_two}/core/rules/engineering-principles.md).\n"
+            f"- Run `{compose_cmd}` after editing `{overlay_rel_eff}/` or `{config_rel}`.\n"
+            f"- Run `{validate_cmd}` before finishing implementation or release steps.\n"
         ),
         ".claude/settings.json": json.dumps(
             {
                 "permissions": {
                     "allow": [
-                        "Bash(python scripts/validate.py*)",
-                        "Bash(python scripts/compose.py*)",
+                        f"Bash(python {validate_cmd_script}*)",
+                        f"Bash(python {compose_cmd_script}*)",
                         "Bash(graphify *)",
                     ],
                     "deny": [
@@ -1133,14 +1419,14 @@ def compose_consumer_artifacts(
             indent=2,
         )
         + "\n",
-        "adapters/antigravity/hooks.json": json.dumps(
+        hooks_rel: json.dumps(
             {
                 "framework-validation-reminder": {
                     "enabled": False,
                     "Stop": [
                         {
                             "type": "command",
-                            "command": "python scripts/validate.py --mode consumer --json",
+                            "command": f"{validate_cmd} --json",
                             "timeout": 30,
                         }
                     ],
@@ -1153,13 +1439,13 @@ def compose_consumer_artifacts(
             "---\n"
             'description: "Run AI Engineering Framework consumer workspace validation"\n'
             "---\n"
-            "Execute `python scripts/validate.py --mode consumer`. Report the exact exit code and validation results.\n"
+            f"Execute `{validate_cmd}`. Report the exact exit code and validation results.\n"
         ),
         ".gemini/commands/workflow.toml": (
             f"# AUTO-GENERATED CONSUMER ADAPTER | Canonical Digest: {resolved_digest}\n"
             'description = "Execute active AI Engineering Framework workflow stage"\n'
             'prompt = """\n'
-            f"Read AGENTS.md, follow active workflows/ stage runbooks, and check .framework-state/manifest.json (handoffs disabled: {'handoffs' in disabled_mechs}).\n"
+            f"Read AGENTS.md, follow active {fw_prefix}workflows/ stage runbooks, and check {state_rel}/manifest.json (handoffs disabled: {'handoffs' in disabled_mechs}).\n"
             f"Respect active gates: {', '.join(_active_gates(disabled['gates'])) or 'None'}.\n"  # type: ignore[arg-type]
             '"""\n'
         ),
@@ -1214,44 +1500,36 @@ def compose_consumer_artifacts(
             "consumer_custom_mcp",
             ["copilot"],
         )
-        mcp_entries["adapters/antigravity/mcp_config.json"] = (
+        mcp_entries[agy_mcp_rel] = (
             _build_standard_mcp_json(custom_mcp_map).encode("utf-8"),
             "consumer_custom_mcp",
             ["antigravity"],
         )
 
-    # Static reviewer agent definitions omitted when disabled
-    reviewer_enabled = ("code-reviewer" not in disabled_agents) and ("code-review" not in disabled_mechs) and (10 not in disabled_phases)
+    # Project every active canonical/overridden role into .claude/agents/ & .github/agents/
     claude_agent_entries: Dict[str, Tuple[bytes, str]] = {}
     copilot_agent_entries: Dict[str, Tuple[bytes, str]] = {}
-    if reviewer_enabled:
-        cr_append = f"\n\nProject-Specific Review Rules:\n{agent_appends['code-reviewer']}\n" if "code-reviewer" in agent_appends else ""
-        claude_agent_entries[".claude/agents/framework-code-reviewer.md"] = (
-            (
-                "---\n"
-                "name: framework-code-reviewer\n"
-                'description: "Independent Phase 10 Code Reviewer enforcing spec traceability, ADRs, and anti-slop rules"\n'
-                "tools: Read, Glob, Grep\n"
-                "disallowedTools: Write, Edit, Bash\n"
-                "---\n"
-                "Follow `agents/code-reviewer.md` and `quality/code-review-rubric.md`.\n"
-                "Inspect changes read-only without modifying production source files."
-                f"{cr_append}\n"
-            ).encode("utf-8"),
-            "framework_managed",
+    for agent_meta_row in composed_agents_meta:
+        src_type = str(agent_meta_row.get("source_type", ""))
+        if src_type not in {"framework", "custom_override"}:
+            continue
+        rname = str(agent_meta_row["name"])
+        if rname == "code-reviewer" and (("code-review" in disabled_mechs) or (10 in disabled_phases)):
+            continue
+        rmeta: Dict[str, object] = dict(agent_meta_row.get("meta") or {})  # type: ignore[arg-type]
+        claude_sub, claude_md, copilot_sub, copilot_md = render_platform_agent_files(
+            role_name=rname,
+            title=str(agent_meta_row.get("title", rname)),
+            description=str(rmeta.get("description", agent_meta_row.get("title", rname))),
+            allowed_tools=rmeta.get("allowed_tools", []),
+            phases=agent_meta_row.get("phases", []),
+            fw_prefix=fw_prefix,
+            append_rules=agent_appends.get(rname, ""),
         )
-        copilot_agent_entries[".github/agents/code-reviewer.agent.md"] = (
-            (
-                "---\n"
-                'description: "Independent Phase 10 Code & Architecture Reviewer"\n'
-                'tools: ["read", "search"]\n'
-                "---\n"
-                "Act as `code-reviewer` defined in `agents/code-reviewer.md`.\n"
-                "Review changes read-only against specs, ADRs, and `quality/code-review-rubric.md`."
-                f"{cr_append}\n"
-            ).encode("utf-8"),
-            "framework_managed",
-        )
+        claude_dst = ".claude/agents/framework-code-reviewer.md" if rname == "code-reviewer" else f".claude/agents/{claude_sub}"
+        ownership = "consumer_custom_agent" if src_type == "custom_override" else "framework_managed"
+        claude_agent_entries[claude_dst] = (claude_md.encode("utf-8"), ownership)
+        copilot_agent_entries[f".github/agents/{copilot_sub}"] = (copilot_md.encode("utf-8"), ownership)
 
     for ca in pure_custom_agents:
         cname = str(ca["name"])
@@ -1275,7 +1553,6 @@ def compose_consumer_artifacts(
         )
 
     # 4. Native projections (active framework skills + consumer custom skills)
-    root_to_platforms, platform_to_root = resolve_platform_projection_roots(source_root, platforms)
     projected_skills_summary: Dict[str, Dict[str, object]] = {}
     all_projected_names = sorted(
         {str(s["name"]) for s in active_framework_skills}
@@ -1289,6 +1566,14 @@ def compose_consumer_artifacts(
 
     projected_files: Dict[str, Dict[str, object]] = {}
     projected_md_checks: List[Tuple[str, str]] = []
+    skill_dir_map: Dict[str, str] = {}
+    if is_isolated:
+        for sk in active_framework_skills:
+            sname_m = str(sk["name"])
+            canon_src_m = str(sk.get("source_path") or sk["path"]).replace("\\", "/")
+            if fw_prefix and canon_src_m.startswith(fw_prefix):
+                canon_src_m = canon_src_m[len(fw_prefix) :]
+            skill_dir_map[posixpath.dirname(canon_src_m)] = f"{primary_proj_root}/{sname_m}"
 
     for proj_root, owner_pids in sorted(root_to_platforms.items()):
         # Framework active skills
@@ -1296,18 +1581,53 @@ def compose_consumer_artifacts(
             skill_name = validate_safe_rel_path(str(sk["name"]), label="skill name")
             if "/" in skill_name:
                 raise BootstrapSecurityError(f"Nested skill name rejected: {skill_name}")
-            skill_md_rel = validate_safe_rel_path(str(sk["path"]), label="skill registry path")
-            skill_src_dir = (source_root / Path(skill_md_rel)).parent
-            if not skill_src_dir.exists():
-                raise FileNotFoundError(f"Skill directory missing: {skill_src_dir}")
+            canon_source_rel = validate_safe_rel_path(
+                str(sk.get("source_path") or sk["path"]), label="skill source path"
+            )
+            if fw_prefix and canon_source_rel.startswith(fw_prefix):
+                canon_source_rel = canon_source_rel[len(fw_prefix) :]
+            canon_skill_dir = posixpath.dirname(canon_source_rel)
+            per_skill_map = dict(skill_dir_map)
+            per_skill_map[canon_skill_dir] = f"{proj_root}/{skill_name}"
+            skill_src_dir = _resolve_skill_source_dir(
+                sk,
+                assets_root,
+                target_dir,
+                canon_source_rel,
+                sorted_proj_roots,
+                external_source_root=external_source_root,
+            )
+            using_existing_projection = (
+                skill_src_dir.is_relative_to(target_dir)
+                and not skill_src_dir.is_relative_to(target_dir / AIEF_DIR)
+            )
             for src in sorted(skill_src_dir.rglob("*")):
                 if not src.is_file() or "__pycache__" in src.parts or src.suffix == ".pyc" or src.name == "UPSTREAM_SKILL.md":
                     continue
                 rel_inside = src.relative_to(skill_src_dir).as_posix()
-                src_rel = src.relative_to(source_root).as_posix()
+                src_rel_canon = f"{canon_skill_dir}/{rel_inside}"
+                consumer_src_rel = str(sk["path"]) if rel_inside == "SKILL.md" else f"{posixpath.dirname(str(sk['path']))}/{rel_inside}"
                 dst_rel = validate_safe_rel_path(f"{proj_root}/{skill_name}/{rel_inside}", label="projection")
                 if src.suffix.lower() == ".md":
-                    rewritten = rewrite_markdown_relative_links(src.read_text(encoding="utf-8"), src_rel, dst_rel)
+                    raw_src_md = src.read_text(encoding="utf-8")
+                    if using_existing_projection:
+                        src_cur_rel = src.relative_to(target_dir).as_posix()
+                        rewritten = rewrite_markdown_relative_links(
+                            raw_src_md,
+                            src_cur_rel,
+                            dst_rel,
+                            fw_prefix="",
+                            strip_upstream_snapshot_links=is_isolated,
+                        )
+                    else:
+                        rewritten = rewrite_markdown_relative_links(
+                            raw_src_md,
+                            src_rel_canon,
+                            dst_rel,
+                            fw_prefix=fw_prefix,
+                            skill_dir_map=per_skill_map if is_isolated else None,
+                            strip_upstream_snapshot_links=is_isolated,
+                        )
                     data = rewritten.encode("utf-8")
                     projected_md_checks.append((dst_rel, rewritten))
                 else:
@@ -1315,7 +1635,7 @@ def compose_consumer_artifacts(
                 projected_files[dst_rel] = {
                     "bytes": data,
                     "ownership": "platform_projected_skill",
-                    "source": src_rel,
+                    "source": consumer_src_rel,
                     "skill": skill_name,
                     "platforms": sorted(owner_pids),
                 }
@@ -1356,6 +1676,7 @@ def compose_consumer_artifacts(
         "projected_files": projected_files,
         "projected_skills_summary": projected_skills_summary,
         "projected_md_checks": projected_md_checks,
+        "skill_dir_map": skill_dir_map,
         "active_custom_skills": sorted(k for k in custom_skills_map if k not in disabled_skills),
         "active_custom_prompts": sorted(custom_prompts_map.keys()),
         "active_custom_mcp": sorted(custom_mcp_map.keys()),
@@ -1370,9 +1691,15 @@ def _collect_composed_plan_entries(
     optional_packs: List[str],
     cfg: Dict[str, object],
     digest: str | None = None,
-) -> Tuple[Dict[str, Dict[str, object]], Dict[str, Dict[str, object]], List[str], str]:
-    controls = normalize_project_controls(cfg)
-    overlay_rel = str(controls["customizations"]["overlayDir"])
+    layout: Dict[str, str] | None = None,
+) -> Tuple[Dict[str, Dict[str, object]], Dict[str, Dict[str, object]], List[str], List[str], List[str], str]:
+    active_layout = layout or resolve_consumer_layout(target_dir)
+    fw_prefix = active_layout["fw_prefix"]
+    hooks_rel = active_layout["hooks_rel"]
+    reg_rel = f"{fw_prefix}skills/registry.json"
+
+    controls = normalize_project_controls(cfg, default_overlay_dir=active_layout["overlay_default"])
+    overlay_rel = str(customizations_dir := controls["customizations"]["overlayDir"])  # noqa: F841
     overlay = load_project_overlay(target_dir, overlay_rel)
     comp = compose_consumer_artifacts(
         source_root=target_dir,
@@ -1383,6 +1710,7 @@ def _collect_composed_plan_entries(
         config_data=cfg,
         overlay=overlay,
         digest=digest,
+        layout=active_layout,
     )
 
     entries: Dict[str, Dict[str, object]] = {}
@@ -1402,10 +1730,10 @@ def _collect_composed_plan_entries(
         }
 
     _put(
-        "skills/registry.json",
+        reg_rel,
         (json.dumps(comp["consumer_registry"], indent=2) + "\n").encode("utf-8"),
         "framework_managed",
-        "skills/registry.json",
+        reg_rel,
         ["core"],
     )
     for rel, data in comp["composed_agent_files"].items():  # type: ignore[attr-defined]
@@ -1413,7 +1741,7 @@ def _collect_composed_plan_entries(
 
     pfiles: Dict[str, str] = comp["platform_files"]  # type: ignore[assignment]
     if "antigravity" in platforms:
-        for rel in ("GEMINI.md", "AGENTS.md", ".agents/rules/framework-core.md", ".agents/skills.json", "adapters/antigravity/hooks.json"):
+        for rel in ("GEMINI.md", "AGENTS.md", ".agents/rules/framework-core.md", ".agents/skills.json", hooks_rel):
             _put(rel, pfiles[rel].encode("utf-8"), "framework_managed", rel, ["antigravity"])
     if "copilot" in platforms:
         for rel in ("AGENTS.md", ".github/copilot-instructions.md", ".github/instructions/framework.instructions.md"):
@@ -1457,19 +1785,20 @@ def _collect_composed_plan_entries(
 
 
 def compose_consumer(target_dir: Path, dry_run: bool = False) -> Dict[str, object]:
-    """Re-compose a bootstrapped consumer workspace standalone from project.framework.json + overlay."""
+    """Re-compose a bootstrapped consumer workspace standalone from config + overlay."""
     target_dir = target_dir.resolve()
-    cfg_path = target_dir / "project.framework.json"
-    lock_path = target_dir / LOCKFILE_NAME
+    layout = resolve_consumer_layout(target_dir)
+    cfg_path = target_dir / layout["config_rel"]
+    lock_path = target_dir / layout["lock_rel"]
     if not cfg_path.exists():
-        raise FileNotFoundError(f"Missing project.framework.json in {target_dir}")
+        raise FileNotFoundError(f"Missing {layout['config_rel']} in {target_dir}")
     if not lock_path.exists():
-        raise LockfileError(f"Missing {LOCKFILE_NAME} in {target_dir}; run bootstrap.py first.")
+        raise LockfileError(f"Missing {layout['lock_rel']} in {target_dir}; run bootstrap.py / aief init first.")
 
     cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
     raw_lock = json.loads(lock_path.read_text(encoding="utf-8"))
     if raw_lock.get("schema_version") != LOCKFILE_SCHEMA_VERSION:
-        raise LockfileError(f"compose.py requires Lockfile v2.0.0; migrate via bootstrap.py --update first.")
+        raise LockfileError("compose.py requires Lockfile v2.0.0; migrate via bootstrap.py --update first.")
 
     platforms = [str(p) for p in cfg.get("enabledPlatforms", raw_lock.get("enabled_platforms", []))]
     optional_packs = [str(p) for p in raw_lock.get("optional_packs", [])]
@@ -1478,12 +1807,13 @@ def compose_consumer(target_dir: Path, dry_run: bool = False) -> Dict[str, objec
     locked_digest = str((raw_lock.get("projection_state") or {}).get("canonical_digest") or "").strip() or None
 
     desired_entries, projected_skills_summary, custom_skills, custom_prompts, custom_mcp, resolved_digest = _collect_composed_plan_entries(
-        target_dir, platforms, optional_packs, cfg, digest=locked_digest
+        target_dir, platforms, optional_packs, cfg, digest=locked_digest, layout=layout
     )
 
     # Preserve non-composed framework_managed entries (core/, workflows/, templates/, scripts/, skills/*)
     new_managed_files: Dict[str, Dict[str, object]] = {}
     prunable_prefixes = (".agents/skills/", ".claude/skills/", ".claude/agents/", ".github/agents/")
+    agy_mcp_rel = layout["agy_mcp_rel"]
     created: List[str] = []
     updated: List[str] = []
     unchanged: List[str] = []
@@ -1510,7 +1840,7 @@ def compose_consumer(target_dir: Path, dry_run: bool = False) -> Dict[str, objec
             old_rel.startswith((".github/prompts/", ".claude/commands/", ".gemini/commands/"))
             and own == "consumer_custom_prompt"
         ) or (
-            old_rel in {".mcp.json", ".vscode/mcp.json", "adapters/antigravity/mcp_config.json"}
+            old_rel in {".mcp.json", ".vscode/mcp.json", "adapters/antigravity/mcp_config.json", agy_mcp_rel}
             and own == "consumer_custom_mcp"
         )
         if is_dynamic_agent_or_proj and old_path.exists():
@@ -1589,7 +1919,7 @@ def compose_consumer(target_dir: Path, dry_run: bool = False) -> Dict[str, objec
             "status": "completed",
             "canonical_digest": resolved_digest,
             "last_successful_projection": {
-                "framework_version": str(cfg.get("frameworkVersion", raw_lock.get("framework_version", "0.4.0"))),
+                "framework_version": str(cfg.get("frameworkVersion", raw_lock.get("framework_version", "0.5.0"))),
                 "enabled_platforms": sorted(set(platforms)),
                 "projected_skill_count": len(skill_names),
                 "projected_file_count": proj_file_count,
@@ -1614,7 +1944,12 @@ def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Re-compose consumer instructions, toggles, and custom skills, then validate automatically."
     )
-    parser.add_argument("--root", type=Path, default=Path.cwd(), help="Consumer repository root (defaults to cwd)")
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=_default_repo_root(),
+        help="Consumer repository root (defaults to consumer root when invoked from .aief/scripts/)",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Preview composition changes without writing")
     parser.add_argument("--no-validate", action="store_true", help="Skip automatic post-compose consumer validation")
     args = parser.parse_args(argv)

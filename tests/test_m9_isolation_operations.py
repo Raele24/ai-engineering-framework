@@ -58,12 +58,12 @@ class TestM9ConsumerValidation(unittest.TestCase):
             self.assertTrue(any("local-helper/SKILL.md" in w for w in warnings), warnings)
 
             # Projected skill entry in lockfile missing from canonical registry -> ERROR
-            lock_path = target / ".framework-lock.json"
+            lock_path = target / ".aief" / "lock.json"
             lock = json.loads(lock_path.read_text(encoding="utf-8"))
             lock["managed_files"][".agents/skills/local-helper/SKILL.md"] = {
                 "ownership": "platform_projected_skill",
                 "skill": "local-helper",
-                "source": "skills/core/local-helper/SKILL.md",
+                "source": ".aief/skills/core/local-helper/SKILL.md",
                 "sha256": bootstrap.sha256_file(extra),
                 "platforms": ["antigravity"],
             }
@@ -92,7 +92,7 @@ class TestM9ConsumerValidation(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / "stale-own"
             bootstrap.bootstrap_project(target_dir=target, platforms=["codex"], optional_packs=[])
-            lock_path = target / ".framework-lock.json"
+            lock_path = target / ".aief" / "lock.json"
             lock = json.loads(lock_path.read_text(encoding="utf-8"))
             lock["projected_skills"]["claude-code"] = {
                 "projection_root": ".claude/skills",
@@ -124,7 +124,7 @@ class TestM9ConsumerValidation(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / "invalid-plat-own"
             bootstrap.bootstrap_project(target_dir=target, platforms=["antigravity"], optional_packs=[])
-            lock_path = target / ".framework-lock.json"
+            lock_path = target / ".aief" / "lock.json"
             lock = json.loads(lock_path.read_text(encoding="utf-8"))
             lock["managed_files"][".agents/skills/grill-me/SKILL.md"]["platforms"] = ["claude-code", "bogus-cli"]
             lock_path.write_text(json.dumps(lock, indent=2), encoding="utf-8")
@@ -139,7 +139,7 @@ class TestM9ConsumerValidation(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / "case-collide"
             bootstrap.bootstrap_project(target_dir=target, platforms=["antigravity"], optional_packs=[])
-            lock_path = target / ".framework-lock.json"
+            lock_path = target / ".aief" / "lock.json"
             lock = json.loads(lock_path.read_text(encoding="utf-8"))
             sample = dict(lock["managed_files"][".agents/skills/grill-me/SKILL.md"])
             lock["managed_files"][".agents/skills/Grill-Me/SKILL.md"] = sample
@@ -215,7 +215,7 @@ class TestM9ConsumerValidation(unittest.TestCase):
             bootstrap.bootstrap_project(target_dir=target, platforms=["antigravity"], optional_packs=[])
 
             # Invalid ownership class in lockfile -> ERROR
-            lock_path = target / ".framework-lock.json"
+            lock_path = target / ".aief" / "lock.json"
             lock_data = json.loads(lock_path.read_text(encoding="utf-8"))
             lock_data["managed_files"]["AGENTS.md"]["ownership"] = "invented_class"
             lock_path.write_text(json.dumps(lock_data, indent=2), encoding="utf-8")
@@ -224,11 +224,11 @@ class TestM9ConsumerValidation(unittest.TestCase):
             self.assertFalse(passed1)
             self.assertTrue(any("invalid ownership" in e for e in rep1["consumer_state"]), rep1["consumer_state"])
 
-            # Missing required consumer file (project.framework.json) -> ERROR
-            (target / "project.framework.json").unlink()
+            # Missing required consumer file (.aief/config.json) -> ERROR
+            (target / ".aief" / "config.json").unlink()
             passed2, rep2, _, _ = validate.run_validation_full(target, mode="consumer", home_dir=Path(tmp))
             self.assertFalse(passed2)
-            self.assertTrue(any("project.framework.json" in e for e in rep2["required_files"]), rep2["required_files"])
+            self.assertTrue(any(".aief/config.json" in e for e in rep2["required_files"]), rep2["required_files"])
 
     def test_10_validate_cli_exit_codes_across_modes(self) -> None:
         val_py = REPO_ROOT / "scripts" / "validate.py"

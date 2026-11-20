@@ -12,14 +12,14 @@
 3. If `graphify` is installed, run `graphify .` or `graphify update .` to refresh `graphify-out/`.
 
 ## Step 2: Phase 13 — Pre-Release Validation & Git Packaging
-1. Run full validation:
+1. Run full validation (and container/pipeline smoke checks when applicable):
    ```bash
    python scripts/sync_adapters.py --check
    python scripts/validate.py
    python -m unittest discover -s tests -v
    ```
 2. Stage and commit changes locally on the appropriate branch (`main` or feature branch).
-3. **STOP at `Gate-04`:** Request explicit human approval before pushing to GitHub, creating a remote repository, or tagging a public release.
+3. **STOP at `Gate-04`:** Request explicit human approval before pushing to GitHub, creating a remote repository, tagging a public release, or triggering production/cloud deployments (and verify post-deploy healthcheck + rollback readiness once approved).
 
 ## Step 3: Phase 15 — Retrospective & Continuous Improvement
 1. Review phase handoffs and any test/review failures from the cycle.

@@ -1,6 +1,6 @@
 # Project Roadmap (`ROADMAP.md`)
 
-**Version:** `0.4.0`  
+**Version:** `0.5.0`  
 
 ---
 
@@ -11,7 +11,8 @@ flowchart LR
     V01["v0.1.0: Canonical Core & Adapters"] --> V03["v0.3.0: Consumer Bootstrap & Preflight"]
     V03 --> V031["v0.3.1: Lockfile v2 & Platform Parity"]
     V031 --> V04["v0.4.0: Inline Overlay, Custom Prompts/MCP & `aief` CLI"]
-    V04 --> V05["v0.5.0: Optional Registry Ecosystems (PyPI / npm / dotnet tool)"]
+    V04 --> V05["v0.5.0: Isolated `.aief/` Layout & Zero-Collision Discovery"]
+    V05 --> V06["v0.6.0: Optional Registry Ecosystems (PyPI / npm / dotnet tool)"]
 ```
 
 ---
@@ -29,11 +30,15 @@ flowchart LR
 - Native skill projections (`.agents/skills/`, `.claude/skills/`), Lockfile `v2.0.0` ownership/pruning/atomic writes, legacy `v0.3.0` migration + backup, and consumer-safe adapter overrides.
 - Claude/Copilot read-only agent tool mappings, clean Claude/Gemini settings schemas, schema-valid opt-in Antigravity `hooks.json`, and stdlib `scripts/readiness.py` HTTP probe.
 
-### `v0.4.0` — Custom Composition Engine, Prompts/MCP & `aief` CLI *(Current)*
+### `v0.4.0` — Custom Composition Engine, Prompts/MCP & `aief` CLI *(Released)*
 - Autonomous consumer composition engine (`scripts/compose.py`) composing active rules + `.framework-custom/` overlays inline across all 5 platforms without per-prompt manual reminders.
 - Granular `disabled.*` (`skills`, `agents`, `phases`, `gates`, `mechanisms`) and `customizations.*` (`overlayDir`, `promptInjectionMode`, `inlineMaxBytes`) controls.
 - Custom project skills (`consumer_custom_skill`), custom/appended agents (`consumer_custom_agent` with read-only reviewer enforcement), custom slash prompts (`consumer_custom_prompt`), custom MCP servers (`consumer_custom_mcp` with secret guards), curated skills `session-handoff` / `i-have-adhd` / `humanizer` (`33/33` total), PEP 517 `aief` package + version-bump auto-release GitHub Action (`.github/workflows/release-on-version-bump.yml`), first-run brownfield instruction auto-import (`.framework-custom/imported/`), Angular/VS Code JSONC support, `pnpm`/`yarn` preflight, and `84/84` automated tests.
 
-### `v0.5.0`+ — Ecosystem Distribution *(Planned)*
+### `v0.5.0` — Isolated `.aief/` Layout & Brownfield Safety *(Current)*
+- Isolated consumer runtime under `.aief/` (`config.json`, `lock.json`, `state/`, `custom/`, `core/`, `agents/`, `skills/`, `workflows/`, `scripts/`) keeping consumer roots limited to native platform touchpoints.
+- Zero-collision brownfield validation scoped to `core/` and `optional/`, preserving pre-existing `skills/` and `.agents/rules/*.md`, plus Windows `MAX_PATH`-safe `bundle.zip` short-cache extraction (`86/86` automated checks).
+
+### `v0.6.0`+ — Ecosystem Distribution *(Planned)*
 - Optional PyPI Trusted Publishing activation (`PYPI_PUBLISH_ENABLED=true`) and thin `npx` / `dotnet tool` wrappers above the canonical Python engine.
 - Helper commands (`aief bump`, `aief doctor`) and additional optional domain skill packs.

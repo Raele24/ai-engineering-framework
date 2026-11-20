@@ -1,8 +1,8 @@
 # Token Efficiency & Context Optimization Guide (`TOKEN_OPTIMIZATION.md`)
 
 **Project:** AI Engineering Framework (`ai-engineering-framework`)  
-**Version:** `0.4.0`  
-**Date:** `2026-11-19`  
+**Version:** `0.5.0`  
+**Date:** `2026-11-20`  
 *(Empirical byte/token measurements below were captured on the M2 baseline corpus; M9 native projections in `.agents/skills/` and `.claude/skills/` follow the exact same progressive-disclosure index so startup prompt overhead remains unchanged unless skills are explicitly loaded via `read_file`.)*
 
 ---

@@ -1,7 +1,7 @@
 # Architecture Guide (`ARCHITECTURE.md`)
 
 **Status:** Canonical Architecture Specification  
-**Version:** `0.4.0`  
+**Version:** `0.5.0`  
 
 ---
 
@@ -35,15 +35,15 @@ flowchart TD
     end
 
     subgraph T3["Tier 3: Consumer Project Layer (Project-Owned / Never Overwritten)"]
-        PCFG["project.framework.json"]
+        PCFG[".aief/config.json & .aief/custom/"]
         PSPEC["docs/specs/ (PRDs, Clarified Reqs, Specs)"]
         PADR["docs/adr/ (Architecture Decision Records)"]
         PPLAN["docs/plans/ (Implementation Plans & Task Backlogs)"]
     end
 
-    subgraph T4["Tier 4: Runtime & Lockfile State (.framework-state/ & .framework-lock.json)"]
-        FSTATE[".framework-state/ (manifest.json, handoffs/, scratch/)"]
-        FLOCK[".framework-lock.json (v2.0.0 Ownership & SHA-256 Registry)"]
+    subgraph T4["Tier 4: Isolated Runtime & Lockfile (.aief/state/ & .aief/lock.json)"]
+        FSTATE[".aief/state/ (manifest.json, handoffs/, scratch/)"]
+        FLOCK[".aief/lock.json (v2.0.0 Ownership & SHA-256 Registry)"]
         GRAPH["graphify-out/ (graph.json, GRAPH_REPORT.md)"]
     end
 
@@ -66,7 +66,7 @@ flowchart TD
 | :--- | :--- | :--- | :--- | :--- |
 | **Core Rules** | `core/rules/` | Defines non-negotiable engineering, approval, context-handoff, and security invariants | None | All agents, workflows, and platform adapters |
 | **Core Schemas & Capabilities** | `core/schemas/`, `core/platform-capabilities.json` | Defines JSON schemas for roles, skills, handoffs, and config, plus declarative verified platform capability states | None | `scripts/platform_capabilities.py`, `scripts/validate.py`, `scripts/bootstrap.py`, `scripts/sync_adapters.py` |
-| **Canonical Roles** | `agents/` | Defines the 8 specialized engineering roles, tool permissions, and boundaries | `core/schemas/agent-role.schema.json` | `workflows/`, `adapters/` |
+| **Canonical Roles** | `agents/` | Defines the 13 specialized engineering roles, tool permissions, and boundaries | `core/schemas/agent-role.schema.json` | `workflows/`, `adapters/` |
 | **Skill Library & Projections** | `skills/`, `.agents/skills/`, `.claude/skills/` | Stores canonical `core/` and `optional/` runbooks (`SKILL.md`, `registry.json`); `bootstrap.py` projects active skills into native runtime directories (excluding `UPSTREAM_SKILL.md`/`__pycache__`) and rewrites relocated links | `core/schemas/skill-frontmatter.schema.json`, `core/platform-capabilities.json` | `agents/`, host skill loaders |
 | **Workflow Runbooks** | `workflows/` | Operational stage playbooks implementing the 15 phases of `docs/WORKFLOW.md` (incl. PowerShell 5.1 & readiness protocols) | `core/rules/`, `agents/`, `skills/` | Host agents, slash commands, orchestrators |
 | **Platform Adapters** | `adapters/` | Maps canonical roles, rules, tools, and workflows to native platform files | `core/`, `agents/`, `skills/`, `workflows/` | All 5 supported platforms (`antigravity`, `copilot`, `claude-code`, `codex`, `gemini-cli`) |

@@ -6,7 +6,7 @@ version: "1.0.0"
 phases: [12]
 allowed_tools: [read_file, write_file, run_command, ask_question]
 required_skills: [anti-slop, tool-design]
-delegation_targets: [devops-release-engineer, implementation-engineer]
+delegation_targets: [devops-release-engineer, backend-engineer, frontend-engineer, data-engineer, ai-engineer, implementation-engineer]
 approval_gates: [Gate-Sec]
 ---
 

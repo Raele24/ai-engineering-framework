@@ -1,19 +1,19 @@
 # Skills Catalog, Installation & Compatibility Matrix (`SKILL_COMPATIBILITY_MATRIX.md`)
 
-**Version:** `0.4.0`
+**Version:** `0.5.0`
 
 ---
 
 ## 1. Installation Policy & Optional Packs
 
-Canonical skills live under `skills/` (`33` skills across `core/` and `5` `optional/` packs, indexed by [`skills/registry.json`](../skills/registry.json)). Consumer workspaces receive native projections under `.agents/skills/<name>/SKILL.md` and `.claude/skills/<name>/SKILL.md` (plus custom project skills under `.framework-custom/skills/<name>/`).
+Canonical skills live under `skills/` (`33` skills across `core/` and `5` `optional/` packs, indexed by [`skills/registry.json`](../skills/registry.json)). Consumer workspaces store `.aief/skills/registry.json` and project native skill folders once under `.agents/skills/<name>/SKILL.md` (and `.claude/skills/<name>/SKILL.md` when `claude-code` is enabled), plus custom project skills from `.aief/custom/skills/<name>/`.
 
 - **Policy A (Repository-Local):** Markdown skills, offline CSV/reference datasets, and Python stdlib scripts under `skills/`. Installed via `aief init` / `bootstrap.py`.
 - **Policy B (External CLI — User Approval Required):** Optional host binaries such as `rtk` (`rtk-ai/rtk`) or `graphify` (`graphifyy`). Never installed silently by framework scripts.
 - **Policy C (Excluded References):** Overlapping packages kept out of runtime to prevent prompt bloat.
 
 ### Available `--optional-packs` Values
-`aief init` and `scripts/bootstrap.py` default to `all` (`33` skills). Pass `--optional-packs` to filter at install time, or disable individual skills anytime in `project.framework.json` (`disabled.skills`):
+`aief init` and `scripts/bootstrap.py` default to `all` (`33` skills). Pass `--optional-packs` to filter at install time, or disable individual skills anytime in `.aief/config.json` (`disabled.skills`):
 
 | Pack ID | Skills Included | Count |
 | :--- | :--- | :---: |
@@ -33,7 +33,7 @@ Canonical skills live under `skills/` (`33` skills across `core/` and `5` `optio
 
 ## 2. Platform Skill Discovery Paths
 
-| Platform | Support (`v0.4.0`) | Native Skill Discovery Path | Bundled Scripts & `references/` Support |
+| Platform | Support (`v0.5.0`) | Native Skill Discovery Path | Bundled Scripts & `references/` Support |
 | :--- | :---: | :--- | :--- |
 | **1. Google Antigravity** | **`SUPPORTED`** | `.agents/skills.json` + `.agents/skills/<name>/SKILL.md` (workspace); `~/.gemini/config/skills/` (host-global) | `read_file` for `references/*.md`; shell execution for `scripts/*.py` |
 | **2. OpenAI Codex CLI** | **`SUPPORTED`** | `.agents/skills/<name>/SKILL.md` (workspace) & `~/.codex/skills/` + `AGENTS.md` | Supported under `workspace-write` sandbox |

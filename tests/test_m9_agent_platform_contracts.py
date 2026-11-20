@@ -192,7 +192,7 @@ class TestM9AgentPlatformContracts(unittest.TestCase):
             )
 
             # Consumer hooks template is valid, disabled, and points to consumer validate mode
-            c_hooks = json.loads((target / "adapters" / "antigravity" / "hooks.json").read_text(encoding="utf-8"))
+            c_hooks = json.loads((target / ".aief" / "adapters" / "antigravity" / "hooks.json").read_text(encoding="utf-8"))
             self.assertIs(c_hooks["framework-validation-reminder"]["enabled"], False)
             self.assertIn("--mode consumer", c_hooks["framework-validation-reminder"]["Stop"][0]["command"])
 
@@ -248,6 +248,52 @@ class TestM9AgentPlatformContracts(unittest.TestCase):
             self.assertIn("workflows/", str(c_gemini.get("prompt", "")))
             for banned in validate.BANNED_CONSUMER_UPSTREAM_TOKENS:
                 self.assertNotIn(banned, str(c_gemini.get("prompt", "")))
+
+    def test_10_all_canonical_roles_projected_to_claude_and_copilot(self) -> None:
+        import compose
+
+        expected_specialists = [
+            "product-analyst",
+            "software-architect",
+            "ui-ux-designer",
+            "data-engineer",
+            "planner-orchestrator",
+            "backend-engineer",
+            "frontend-engineer",
+            "ai-engineer",
+            "implementation-engineer",
+            "qa-engineer",
+            "security-engineer",
+            "devops-release-engineer",
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "subagent-consumer"
+            bootstrap.bootstrap_project(
+                target_dir=target,
+                platforms=["claude-code", "copilot", "antigravity"],
+                optional_packs=["all"],
+            )
+            self.assertTrue((target / ".claude" / "agents" / "framework-code-reviewer.md").exists())
+            self.assertTrue((target / ".github" / "agents" / "code-reviewer.agent.md").exists())
+            for role in expected_specialists:
+                claude_f = target / ".claude" / "agents" / f"{role}.md"
+                copilot_f = target / ".github" / "agents" / f"{role}.agent.md"
+                self.assertTrue(claude_f.exists(), f"Missing Claude subagent {claude_f}")
+                self.assertTrue(copilot_f.exists(), f"Missing Copilot subagent {copilot_f}")
+
+            cfg_path = target / ".aief" / "config.json"
+            cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+            cfg.setdefault("disabled", {})["agents"] = ["ui-ux-designer"]
+            cfg_path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+
+            compose.compose_consumer(target)
+            self.assertFalse((target / ".claude" / "agents" / "ui-ux-designer.md").exists())
+            self.assertFalse((target / ".github" / "agents" / "ui-ux-designer.agent.md").exists())
+            self.assertTrue((target / ".claude" / "agents" / "backend-engineer.md").exists())
+            self.assertTrue((target / ".github" / "agents" / "frontend-engineer.agent.md").exists())
+
+            passed, report, _warns, _infos = validate.run_validation_full(target, mode="consumer")
+            self.assertTrue(passed, report)
 
 
 if __name__ == "__main__":

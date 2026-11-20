@@ -1,6 +1,6 @@
 # Installation & Update Guide (`INSTALLATION.md`)
 
-**Version:** `0.4.0`  
+**Version:** `0.5.0`  
 
 ---
 
@@ -41,8 +41,8 @@ uvx --from git+https://github.com/Raele24/ai-engineering-framework.git aief init
 
 # Or install globally in isolation once via pipx
 pipx install git+https://github.com/Raele24/ai-engineering-framework.git
-aief init .                  # Bootstrap current project (all 5 platforms, 33 skills, auto stacks)
-aief compose .               # Re-compose after editing .framework-custom/ or project.framework.json
+aief init .                  # Bootstrap into isolated .aief/ (all 5 platforms, 33 skills, auto stacks)
+aief compose .               # Re-compose after editing .aief/custom/ or .aief/config.json
 aief update .                # Non-destructively upgrade framework files
 aief validate . --mode consumer
 
@@ -50,7 +50,7 @@ aief validate . --mode consumer
 uvx ai-engineering-framework init .
 ```
 
-**Automated Release Workflow:** [`.github/workflows/release-on-version-bump.yml`](../.github/workflows/release-on-version-bump.yml) runs on every push to `main`: whenever `pyproject.toml`'s `project.version` produces a new `v<version>` tag not yet on GitHub, CI validates `84` tests + version parity, builds & smoke-tests the wheel, creates the annotated GitHub Release + SHA-256 checksums, and publishes to PyPI if OIDC Trusted Publishing (`PYPI_PUBLISH_ENABLED=true`) is enabled.
+**Automated Release Workflow:** [`.github/workflows/release-on-version-bump.yml`](../.github/workflows/release-on-version-bump.yml) runs on every push to `main`: whenever `pyproject.toml`'s `project.version` produces a new `v<version>` tag not yet on GitHub, CI validates `86` tests + version parity, builds & smoke-tests the wheel, creates the annotated GitHub Release + SHA-256 checksums, and publishes to PyPI if OIDC Trusted Publishing (`PYPI_PUBLISH_ENABLED=true`) is enabled.
 
 ---
 
@@ -117,11 +117,12 @@ python /path/to/ai-engineering-framework/scripts/bootstrap.py \
   --update
 ```
 
-- **Tier 3 Consumer-Owned Files (`project.framework.json`, `.framework-custom/`, `.framework-state/manifest.json`, `.gitignore`, `README.md`, `docs/specs/`, `docs/adr/`, `docs/plans/`):** Created if missing; **never overwritten** on subsequent runs or `--update`.
-- **Brownfield Auto-Import on First Bootstrap:** If a brownfield project already contains non-framework root instruction files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`) before the first bootstrap (no `.framework-lock.json`), `bootstrap.py` backs up their contents into `.framework-custom/imported/` and composes them inline into the new entry points so nothing is lost and automatic framework loading still activates across all enabled platforms.
-- **Tier 1 & 2 Framework-Managed Files & Native Projections (Lockfile `v2.0.0`):** Tracked by explicit ownership class (`framework_managed`, `platform_projected_skill`, `consumer_custom_skill`, `consumer_custom_agent`), source path, active platform owners, and SHA-256 hash inside `.framework-lock.json`. Unmodified files are updated safely via two-phase atomic writes while preserving and re-composing `.framework-custom/` + `disabled.*` settings automatically; locally modified files are preserved (`skipped_modified`); obsolete or disabled projections are pruned only when ownership and unmodified hash are proven.
-- **Migration from Legacy `v0.3.0` Lockfiles:** Running `--update` against a `v0.3.0` consumer validates the legacy lockfile, backs it up to `.framework-state/lock-backups/framework-lock-v0.3.0.json`, reconstructs ownership safely, and migrates to `schema_version: "2.0.0"` without touching consumer-customized files (failing closed on corrupted/ambiguous lockfiles).
-- **Capabilities, Composition & Operational Helpers Installed:** Consumer projects receive `core/platform-capabilities.json`, `scripts/compose.py` (standalone consumer composition CLI), `scripts/platform_capabilities.py`, and `scripts/readiness.py` (stdlib bounded HTTP readiness check for Stage 5 E2E verification under Windows PowerShell `5.1+`).
+- **Isolated Consumer Layout (`.aief/`):** New consumer installations place framework rules/agents/workflows/config/state (`core/`, `agents/`, `skills/registry.json`, `workflows/`, `templates/`, `quality/`, `security/`, `scripts/`, `adapters/antigravity/`, `config.json`, `lock.json`, `state/`, `custom/`, `.gitignore`, `ENVIRONMENT_PREFLIGHT.md`, `gitignore.recommended`) inside `.aief/`. Skill files live only once in native platform folders (`.agents/skills/` and `.claude/skills/` when enabled) without duplicating them inside `.aief/skills/`. Legacy `0.3.x`/`0.4.x` consumer layouts (`project.framework.json`, `.framework-lock.json`, `.framework-state/`) continue to be auto-detected and supported seamlessly on `--update` and validation.
+- **Tier 3 Consumer-Owned Files (`.aief/config.json`, `.aief/custom/`, `.aief/state/manifest.json`, `.gitignore`, `README.md`, `docs/`, host `skills/`):** Created if missing inside `.aief/` (never creating empty `docs/*` directories at root in isolated mode); **never overwritten** on subsequent runs or `--update`.
+- **Brownfield Auto-Import on First Bootstrap:** If a brownfield project already contains non-framework root instruction files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`) before the first bootstrap (no `.aief/lock.json`), `bootstrap.py` backs up their contents into `.aief/custom/imported/` and composes them inline into the new entry points so nothing is lost. Pre-existing project skills (`skills/<project>/SKILL.md`) and `.agents/rules/*.md` are preserved untouched outside `.aief/`.
+- **Tier 1 & 2 Framework-Managed Files & Native Projections (Lockfile `v2.0.0`):** Tracked by explicit ownership class (`framework_managed`, `platform_projected_skill`, `consumer_custom_skill`, `consumer_custom_agent`), source path, active platform owners, and SHA-256 hash inside `.aief/lock.json`. Unmodified files are updated safely via two-phase atomic writes while preserving and re-composing `.aief/custom/` + `disabled.*` settings automatically; locally modified files are preserved (`skipped_modified`).
+- **Migration from Legacy `v0.3.0` Lockfiles:** Running `--update` against a `v0.3.0` consumer validates the legacy lockfile, backs it up to `<stateDir>/lock-backups/framework-lock-v0.3.0.json`, reconstructs ownership safely, and migrates to `schema_version: "2.0.0"` without touching consumer-customized files (failing closed on corrupted/ambiguous lockfiles).
+- **Capabilities, Composition & Operational Helpers Installed:** Consumer projects receive `.aief/core/platform-capabilities.json`, `.aief/scripts/compose.py` (standalone consumer composition CLI), `.aief/scripts/platform_capabilities.py`, and `.aief/scripts/readiness.py`.
 
 ---
 
@@ -134,14 +135,14 @@ python /path/to/ai-engineering-framework/scripts/bootstrap.py \
 python scripts/validate.py --root /path/to/project
 
 # Explicit consumer mode (does NOT require PROJECT_CHARTER.md, scripts/bootstrap.py, or scripts/sync_adapters.py)
-python scripts/validate.py --root /path/to/consumer-project --mode consumer
+python /path/to/consumer-project/.aief/scripts/validate.py --mode consumer
 
 # Explicit upstream framework mode
 python scripts/validate.py --root /path/to/ai-engineering-framework --mode framework
 ```
 
 In **`consumer` mode**, `validate.py` verifies:
-- `project.framework.json`, `.framework-lock.json`, `.framework-state/manifest.json`, and `.framework-state/handoffs/*.json` schema integrity.
-- Installed skills under `skills/` match `skills/registry.json`, `AGENTS.md`, `.agents/skills.json`, and `agents/*.md` `required_skills`.
+- `.aief/config.json`, `.aief/lock.json`, `.aief/state/manifest.json`, and `.aief/state/handoffs/*.json` schema integrity (or legacy root equivalents when auto-detected).
+- Installed skills in `.agents/skills/` (or `.claude/skills/`) match `.aief/skills/registry.json`, `AGENTS.md`, `.agents/skills.json`, and `.aief/agents/*.md` `required_skills`, ignoring external host-app skills under root `skills/`.
 - Platform adapter files exist for all `enabledPlatforms` and all relative Markdown links resolve inside the consumer repository root.
 - Zero leaked private keys or API token patterns across the working tree.

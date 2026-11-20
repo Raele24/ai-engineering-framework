@@ -90,9 +90,22 @@ def get_git_info(project_path: str) -> dict:
     return info
 
 
+def _resolve_session_handoffs_dir(project_path: str) -> Path:
+    base = Path(project_path)
+    if (base / ".aief").is_dir():
+        return base / ".aief" / "state" / "session-handoffs"
+    if (
+        (base / ".framework-state").is_dir()
+        or (base / ".framework-lock.json").is_file()
+        or (base / "project.framework.json").is_file()
+    ):
+        return base / ".framework-state" / "session-handoffs"
+    return base / ".aief" / "state" / "session-handoffs"
+
+
 def find_previous_handoffs(project_path: str) -> list[dict]:
     """Find existing handoffs in the project."""
-    handoffs_dir = Path(project_path) / ".framework-state" / "session-handoffs"
+    handoffs_dir = _resolve_session_handoffs_dir(project_path)
     if not handoffs_dir.exists():
         return []
 
@@ -181,7 +194,7 @@ def generate_handoff(
     filename = f"{file_timestamp}-{slug}.md"
 
     # Create handoffs directory
-    handoffs_dir = Path(project_path) / ".framework-state" / "session-handoffs"
+    handoffs_dir = _resolve_session_handoffs_dir(project_path)
     handoffs_dir.mkdir(parents=True, exist_ok=True)
 
     filepath = handoffs_dir / filename

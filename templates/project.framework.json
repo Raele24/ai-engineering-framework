@@ -1,6 +1,6 @@
 {
   "$schema": "./core/schemas/framework-config.schema.json",
-  "frameworkVersion": "0.4.0",
+  "frameworkVersion": "0.5.0",
   "projectName": "ai-engineering-framework",
   "workflowProfile": "full",
   "enabledPlatforms": [
@@ -46,14 +46,14 @@
   "security": {
     "enforcePreCommitSecretScan": true,
     "allowActiveSecurityTesting": false,
-    "strixProfilePath": "security/strix-profile.yaml"
+    "strixProfilePath": ".aief/security/strix-profile.yaml"
   },
   "paths": {
     "specsDir": "docs/specs",
     "adrDir": "docs/adr",
     "plansDir": "docs/plans",
     "retrospectivesDir": "docs/retrospectives",
-    "stateDir": ".framework-state"
+    "stateDir": ".aief/state"
   },
   "disabled": {
     "skills": [],
@@ -63,7 +63,7 @@
     "mechanisms": []
   },
   "customizations": {
-    "overlayDir": ".framework-custom",
+    "overlayDir": ".aief/custom",
     "promptInjectionMode": "inline",
     "inlineMaxBytes": 16384
   }

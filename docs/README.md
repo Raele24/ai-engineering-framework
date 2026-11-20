@@ -1,6 +1,6 @@
 # Documentation Index (`docs/README.md`)
 
-**Version:** `0.4.0`
+**Version:** `0.5.0`
 
 Active user guides and canonical specifications included in this repository.
 
@@ -11,9 +11,9 @@ Active user guides and canonical specifications included in this repository.
 | Document | Purpose | Audience |
 | :--- | :--- | :--- |
 | [`GETTING_STARTED.md`](./GETTING_STARTED.md) | Quickstart, first feature walkthrough, session handoffs, and bounded readiness | Adopters & devs |
-| [`CUSTOMIZATION_GUIDE.md`](./CUSTOMIZATION_GUIDE.md) | `.framework-custom/` recipes (rules, skills, agents, prompts, MCP), `disabled.*` toggles, and `compose.py` | Project owners |
-| [`INSTALLATION.md`](./INSTALLATION.md) | System prerequisites, `aief` CLI / `bootstrap.py` flags, `.gitignore`, and `--update` | Maintainers & adopters |
-| [`CONFIGURATION.md`](./CONFIGURATION.md) | `project.framework.json` schema, lockfile `v2.0.0`, ownership classes, and validation severities | Maintainers & adopters |
+| [`CUSTOMIZATION_GUIDE.md`](./CUSTOMIZATION_GUIDE.md) | `.aief/custom/` recipes (rules, skills, agents, prompts, MCP), `disabled.*` toggles, and `compose.py` | Project owners |
+| [`INSTALLATION.md`](./INSTALLATION.md) | System prerequisites, `aief` CLI / `bootstrap.py` flags, `.aief/` isolation, and `--update` | Maintainers & adopters |
+| [`CONFIGURATION.md`](./CONFIGURATION.md) | `.aief/config.json` schema, lockfile `v2.0.0`, ownership classes, and validation severities | Maintainers & adopters |
 
 ---
 

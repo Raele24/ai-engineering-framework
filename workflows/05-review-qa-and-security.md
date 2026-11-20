@@ -1,7 +1,7 @@
 # Stage 5 Runbook: Code Review, QA & Security Validation (Phases 10–12)
 
 **Canonical Reference:** [`AGENTS.md`](../AGENTS.md) & [`core/rules/engineering-principles.md`](../core/rules/engineering-principles.md) (Phases 10, 11, 12)  
-**Responsible Roles:** [`code-reviewer`](../agents/code-reviewer.md), [`qa-engineer`](../agents/qa-engineer.md), [`security-engineer`](../agents/security-engineer.md)  
+**Responsible Roles:** [`code-reviewer`](../agents/code-reviewer.md), [`qa-engineer`](../agents/qa-engineer.md), [`ui-ux-designer`](../agents/ui-ux-designer.md) (UI audit), [`security-engineer`](../agents/security-engineer.md) *(each executed in an isolated fresh subagent)*  
 **Required Skills:** [`anti-slop`](../skills/core/anti-slop/SKILL.md), [`tdd-cycle`](../skills/core/tdd-cycle/SKILL.md), [`agent-browser`](../skills/core/agent-browser/SKILL.md)  
 **Human Approval Gates:** `Gate-Sec` (Required before any active/dynamic security scan such as Strix)  
 
@@ -16,7 +16,7 @@
   3. Record findings classified by severity (`BLOCKER`, `MAJOR`, `MINOR`, `NIT`) with exact `file:line` references.
 - **Expected Outputs & Gate Behavior:**
   - Write `.framework-state/10-review-report.md` and `.framework-state/handoffs/phase-10-handoff.json`.
-  - If any `BLOCKER` or `MAJOR` defect exists, return to Phase 9 (`implementation-engineer`) before Phase 11.
+  - If any `BLOCKER` or `MAJOR` defect exists, route fixes back to Phase 9 (`backend-engineer` / `frontend-engineer` / `data-engineer` / `ai-engineer` / `devops-release-engineer` / `implementation-engineer`) before Phase 11.
 
 ---
 

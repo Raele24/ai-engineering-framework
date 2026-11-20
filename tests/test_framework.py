@@ -49,7 +49,24 @@ class TestAIEngineeringFramework(unittest.TestCase):
 
     def test_02_canonical_agents_and_skills_inventory(self) -> None:
         agents, registry = sync_adapters.load_canonical_metadata(REPO_ROOT)
-        self.assertEqual(len(agents), 8, "Expected exactly 8 non-redundant canonical agent roles")
+        self.assertEqual(len(agents), 13, "Expected 13 non-redundant canonical agent roles")
+        agent_names = {a.get("name") for a in agents}
+        for expected_role in [
+            "product-analyst",
+            "software-architect",
+            "ui-ux-designer",
+            "data-engineer",
+            "planner-orchestrator",
+            "backend-engineer",
+            "frontend-engineer",
+            "ai-engineer",
+            "implementation-engineer",
+            "code-reviewer",
+            "qa-engineer",
+            "security-engineer",
+            "devops-release-engineer",
+        ]:
+            self.assertIn(expected_role, agent_names, f"Missing canonical agent '{expected_role}'")
         skills = registry.get("skills", [])
         self.assertEqual(len(skills), 33, "Expected 33 curated skills in skills/registry.json")
 
@@ -124,7 +141,7 @@ class TestAIEngineeringFramework(unittest.TestCase):
                 dry_run=True,
             )
             self.assertGreater(len(dry_summary["created"]), 15)
-            self.assertFalse((target / "project.framework.json").exists())
+            self.assertFalse((target / ".aief" / "config.json").exists())
 
             real_summary = bootstrap.bootstrap_project(
                 target_dir=target,
@@ -134,20 +151,13 @@ class TestAIEngineeringFramework(unittest.TestCase):
                 dry_run=False,
             )
             self.assertGreater(len(real_summary["created"]), 15)
-            self.assertTrue((target / "project.framework.json").exists())
-            self.assertTrue((target / ".framework-lock.json").exists())
+            self.assertTrue((target / ".aief" / "config.json").exists())
+            self.assertTrue((target / ".aief" / "lock.json").exists())
             self.assertTrue((target / "AGENTS.md").exists())
-            self.assertTrue((target / "skills" / "core" / "ponytail" / "SKILL.md").exists())
-            self.assertTrue(
-                (
-                    target
-                    / "skills"
-                    / "optional"
-                    / "context-engineering"
-                    / "context-optimization"
-                    / "SKILL.md"
-                ).exists()
-            )
+            self.assertTrue((target / ".aief" / "skills" / "registry.json").exists())
+            self.assertFalse((target / ".aief" / "skills" / "core").exists())
+            self.assertTrue((target / ".agents" / "skills" / "ponytail" / "SKILL.md").exists())
+            self.assertTrue((target / ".agents" / "skills" / "context-optimization" / "SKILL.md").exists())
             self.assertEqual(custom_readme.read_text(encoding="utf-8"), "# My Custom Consumer App\n")
 
             agents_md = target / "AGENTS.md"
