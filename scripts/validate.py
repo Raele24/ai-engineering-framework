@@ -869,9 +869,11 @@ def _strip_jsonc(raw_text: str) -> str:
 
 def _is_jsonc_config(rel_path: str) -> bool:
     norm = rel_path.replace("\\", "/")
-    name = Path(norm).name
+    parts = [p for p in norm.split("/") if p]
+    name = parts[-1] if parts else ""
     return (
-        norm.startswith(".vscode/")
+        ".vscode" in parts[:-1]
+        or ".devcontainer" in parts[:-1]
         or name == "jsconfig.json"
         or (name.startswith("tsconfig") and name.endswith(".json"))
     )

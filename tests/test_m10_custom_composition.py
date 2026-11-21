@@ -464,6 +464,12 @@ class TestM10CustomComposition(unittest.TestCase):
                 '{\n  // VS Code URL contains https://example.com\n  "version": "0.2.0",\n  "configurations": [],\n}\n',
                 encoding="utf-8",
             )
+            nested_vscode = target / "apps" / "web" / ".vscode"
+            nested_vscode.mkdir(parents=True)
+            (nested_vscode / "extensions.json").write_text(
+                '{\n  // Nested workspace recommendations\n  "recommendations": ["angular.ng-template"]\n}\n',
+                encoding="utf-8",
+            )
 
             bootstrap.bootstrap_project(target_dir=target, platforms=["antigravity", "copilot"], optional_packs=[])
             passed, report, _, _ = validate.run_validation_full(target, mode="consumer", home_dir=fake_home)
@@ -820,6 +826,9 @@ class TestM10CustomComposition(unittest.TestCase):
             self.assertTrue((target / ".aief" / "config.json").exists())
             self.assertTrue((target / ".aief" / "lock.json").exists())
             self.assertTrue((target / ".aief" / ".gitignore").exists())
+            aief_gi_text = (target / ".aief" / ".gitignore").read_text(encoding="utf-8")
+            self.assertIn("__pycache__/", aief_gi_text)
+            self.assertIn("*.py[cod]", aief_gi_text)
             self.assertTrue((target / ".aief" / "state" / "manifest.json").exists())
             self.assertTrue((target / ".aief" / "skills" / "registry.json").exists())
             for legacy_root in ("project.framework.json", ".framework-lock.json", ".framework-state", ".framework-custom", "core", "agents", "workflows", "scripts"):

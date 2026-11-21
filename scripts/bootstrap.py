@@ -1378,9 +1378,20 @@ def bootstrap_project(
     if is_isolated:
         aief_gi_rel = ".aief/.gitignore"
         aief_gi_path = target_dir / Path(aief_gi_rel)
+        legacy_aief_gi = b"# Ephemeral framework runtime state\nstate/\nlock.json.tmp\n"
+        default_aief_gi = (
+            b"# Ephemeral framework runtime state & Python bytecode\n"
+            b"state/\n"
+            b"lock.json.tmp\n"
+            b"__pycache__/\n"
+            b"*.py[cod]\n"
+        )
         if not aief_gi_path.exists():
             created.append(aief_gi_rel)
-            tier3_writes.append((aief_gi_rel, b"# Ephemeral framework runtime state\nstate/\nlock.json.tmp\n"))
+            tier3_writes.append((aief_gi_rel, default_aief_gi))
+        elif update_mode and aief_gi_path.read_bytes().replace(b"\r\n", b"\n") == legacy_aief_gi:
+            updated.append(aief_gi_rel)
+            tier3_writes.append((aief_gi_rel, default_aief_gi))
         else:
             unchanged.append(aief_gi_rel)
 
