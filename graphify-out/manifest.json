@@ -48,27 +48,27 @@
     "semantic_hash": ""
   },
   "scripts/bootstrap.py": {
-    "mtime": 1795173339.733543,
-    "seen": 1795176324.365227,
-    "ast_hash": "dd57efb5b830dab9d10590f1996a41ac",
+    "mtime": 1795260462.8741136,
+    "seen": 1795278463.8986986,
+    "ast_hash": "cc020eaf34e6e97e031d81f9812c25be",
     "semantic_hash": ""
   },
   "scripts/sync_adapters.py": {
-    "mtime": 1795176981.7594843,
-    "seen": 1795177100.6613958,
-    "ast_hash": "b2a02caa9a2b6551692f77bafe586928",
+    "mtime": 1795278263.2969296,
+    "seen": 1795278463.898705,
+    "ast_hash": "82d81d7d4b1973921c29d6517dd98908",
     "semantic_hash": ""
   },
   "scripts/validate.py": {
-    "mtime": 1795176984.9749498,
-    "seen": 1795177100.6613965,
-    "ast_hash": "5bc330a9f15360aeb2cc02c9f6917132",
+    "mtime": 1795278155.872188,
+    "seen": 1795278463.8987057,
+    "ast_hash": "2e4e20dc4250a328437dc3db509275e0",
     "semantic_hash": ""
   },
   "skills/registry.json": {
-    "mtime": 1795136387.982494,
-    "seen": 1795136945.2912693,
-    "ast_hash": "29fafbc4fbe418056b31ad6cc70e3944",
+    "mtime": 1795278361.2036974,
+    "seen": 1795278463.8987231,
+    "ast_hash": "942149affe6a5492ed857aa923eb41e3",
     "semantic_hash": ""
   },
   "templates/HANDOFF_PACKET.template.json": {
@@ -108,9 +108,9 @@
     "semantic_hash": ""
   },
   ".github/copilot-instructions.md": {
-    "mtime": 1795176999.503302,
-    "seen": 1795177100.6614244,
-    "ast_hash": "f7948827d0f2d10b7774a5e8e3c73406",
+    "mtime": 1795278369.8633902,
+    "seen": 1795278463.898734,
+    "ast_hash": "9e1ad69407a929c11a59aa93f3543614",
     "semantic_hash": ""
   },
   ".github/workflows/ci-validate.yml": {
@@ -126,21 +126,21 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1795176999.503302,
-    "seen": 1795177100.6614277,
-    "ast_hash": "04fd46c091de02e3700b13d81bfe3a5f",
+    "mtime": 1795278369.8633902,
+    "seen": 1795278463.8987367,
+    "ast_hash": "4a79262c5bc2db2921d21745b14e013c",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1795176999.503302,
-    "seen": 1795177100.6614287,
-    "ast_hash": "4ff1341249829ce47efef3e69abd9412",
+    "mtime": 1795278369.8641865,
+    "seen": 1795278463.8987381,
+    "ast_hash": "8cd76ab57e833ae1b1ca8cc95f5c8389",
     "semantic_hash": ""
   },
   "GEMINI.md": {
-    "mtime": 1795176999.5052772,
-    "seen": 1795177100.6614292,
-    "ast_hash": "b79132abbf9d2f6a3b5a81d684ad6a05",
+    "mtime": 1795278369.8641865,
+    "seen": 1795278463.8987389,
+    "ast_hash": "454ec8b68a8e8a1db6da687985a47a1a",
     "semantic_hash": ""
   },
   "PROJECT_CHARTER.md": {
@@ -156,9 +156,9 @@
     "semantic_hash": ""
   },
   "adapters/antigravity/rules/framework-core.md": {
-    "mtime": 1795176999.5052772,
-    "seen": 1795177100.6614313,
-    "ast_hash": "6601f7fe3fd4553e4322af6cd41a2b27",
+    "mtime": 1795278369.8646922,
+    "seen": 1795278463.898741,
+    "ast_hash": "30eaed5b5b8d499558d6a53c9d7a32d5",
     "semantic_hash": ""
   },
   "adapters/claude-code/agents/code-reviewer.md": {
@@ -192,9 +192,9 @@
     "semantic_hash": ""
   },
   "adapters/copilot/framework.instructions.md": {
-    "mtime": 1795176999.5087824,
-    "seen": 1795177100.6614482,
-    "ast_hash": "e3184337709daddee7f5d3f7ca9947f8",
+    "mtime": 1795278369.8682232,
+    "seen": 1795278463.8987596,
+    "ast_hash": "06ed27eb1b4a20198c4ea78523c8d394",
     "semantic_hash": ""
   },
   "adapters/copilot/grill-me.prompt.md": {
@@ -660,9 +660,9 @@
     "semantic_hash": ""
   },
   "skills/core/graphify/SKILL.md": {
-    "mtime": 1794861454.1624427,
-    "seen": 1794861800.6547878,
-    "ast_hash": "a4dc0336e92ed826e244396be3b02853",
+    "mtime": 1795278163.351252,
+    "seen": 1795278463.898798,
+    "ast_hash": "7bd814073cf0d0f65b104d95591ac4c8",
     "semantic_hash": ""
   },
   "skills/core/graphify/UPSTREAM_SKILL.md": {
@@ -1200,9 +1200,9 @@
     "semantic_hash": ""
   },
   ".agents/rules/framework-core.md": {
-    "mtime": 1795176999.503302,
-    "seen": 1795177100.6614215,
-    "ast_hash": "b7ff74b9aa99f3cc4830aebc566e7b8f",
+    "mtime": 1795278369.8623898,
+    "seen": 1795278463.8987315,
+    "ast_hash": "af5ddf86fc1187afda4ee834606df0e8",
     "semantic_hash": ""
   },
   "aief_cli/__init__.py": {
@@ -1230,9 +1230,9 @@
     "semantic_hash": ""
   },
   "scripts/compose.py": {
-    "mtime": 1795176983.4917955,
-    "seen": 1795177100.6613913,
-    "ast_hash": "73c744ba1d2827866404b30324df5462",
+    "mtime": 1795278261.2843423,
+    "seen": 1795278463.8987,
+    "ast_hash": "90d8ffabc7872ba5020ef2a607586b41",
     "semantic_hash": ""
   },
   "scripts/platform_capabilities.py": {
@@ -1284,9 +1284,9 @@
     "semantic_hash": ""
   },
   "tests/test_m10_custom_composition.py": {
-    "mtime": 1795172659.0114186,
-    "seen": 1795172941.4661965,
-    "ast_hash": "956c8edb5de853234cda15750f172535",
+    "mtime": 1795260464.9219656,
+    "seen": 1795278463.898726,
+    "ast_hash": "8e53bd62fd6c1b9c235bce2cee00d211",
     "semantic_hash": ""
   },
   "tests/test_m9_agent_platform_contracts.py": {
@@ -1302,9 +1302,9 @@
     "semantic_hash": ""
   },
   "tests/test_m9_isolation_operations.py": {
-    "mtime": 1795136444.2464883,
-    "seen": 1795136945.2912786,
-    "ast_hash": "a05d3bab02bc8e8f51aecb0ce90bf153",
+    "mtime": 1795278165.5121913,
+    "seen": 1795278463.8987296,
+    "ast_hash": "3fe0a1807c819d5c5adcdf3af03d0b80",
     "semantic_hash": ""
   },
   "tests/test_m9_projection_lifecycle.py": {

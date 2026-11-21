@@ -175,16 +175,16 @@ All instructions below derive from the canonical source of truth in `core/rules/
 ## 1. Non-Negotiable Core Rules
 1. **Engineering Principles ([`core/rules/engineering-principles.md`](./core/rules/engineering-principles.md)):**
    - Clarify ambiguities (`Phase 2: Grill Me`) and lock testable `Given / When / Then` acceptance criteria (`Phase 3`) before writing production code.
-   - Follow strict **Red -> Green -> Refactor TDD** (`Phase 9`).
-   - Query `graphify-out/graph.json` (`graphify query`) first when present.
+   - Read relevant `SKILL.md` (`tdd-cycle` + domain skills) first; follow strict **Red -> Green -> Refactor TDD** (`Phase 9`, using `node --test` / Python `unittest` if a package lacks a test runner).
+   - Query `graphify-out/graph.json` (`graphify query`) first when present; if `graphify` CLI is blocked in a host sandbox, read `graphify-out/GRAPH_REPORT.md` / JSON directly without failing.
 2. **Filesystem Context Handoff ([`core/rules/context-handoff-protocol.md`](./core/rules/context-handoff-protocol.md)):**
    - Persist phase deliverables to `docs/specs/`, `docs/adr/`, `docs/plans/`, and `.framework-state/handoffs/phase-<NN>-handoff.json`.
 3. **Human Approval Gates ([`core/rules/human-approval-gates.md`](./core/rules/human-approval-gates.md)):**
    - Pause for explicit human approval at `Gate-01a` (Clarifications), `Gate-01b` (Spec), `Gate-02` (Architecture/ADR), `Gate-03` (Plan), `Gate-Sec` (Active Security/Strix), `Gate-04` (Release/Push), and `Gate-05` (Rule Evolution).
 4. **Security Guardrails ([`core/rules/security-guardrails.md`](./core/rules/security-guardrails.md)):**
    - Never commit or echo secrets, tokens, or private keys. Never run active security scans without `Gate-Sec` approval.
-5. **Subagent-First Delegation (`Category B/C`):**
-   - Delegate specialist phases (`ui-ux-designer`, `data-engineer`, `backend-engineer`, `frontend-engineer`, `ai-engineer`, `devops-release-engineer`, `implementation-engineer`) and independent gates (`code-reviewer`, `qa-engineer`, `security-engineer`) to fresh role subagents; run parallel workers only on disjoint `target_files`.
+5. **Subagent-First Delegation (`>=2` source files or feature/refactor):**
+   - Delegate specialist layers (`ui-ux-designer`, `data-engineer`, `backend-engineer`, `frontend-engineer`, `ai-engineer`, `devops-release-engineer`, `implementation-engineer`) via `invoke_subagent`/`define_subagent` (`TypeName="self"` loading `agents/<role>.md`) or `.claude/agents/` / `.github/agents/` with disjoint `target_files`, and always run `code-reviewer` (+ `qa-engineer` for UI/behavior changes) in a fresh independent subagent.
 
 ## 2. Canonical Stage Runbooks (`workflows/`)
 - **Stage 1 (Phases 1–3):** [`workflows/01-discovery-and-grill-me.md`](./workflows/01-discovery-and-grill-me.md)

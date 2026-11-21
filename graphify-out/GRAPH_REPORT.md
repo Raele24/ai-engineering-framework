@@ -1,16 +1,16 @@
-# Graph Report - ai-engineering-framework  (2026-11-20)
+# Graph Report - ai-engineering-framework  (2026-11-21)
 
 ## Corpus Check
-- 253 files · ~208,407 words
+- 253 files · ~208,763 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3440 nodes · 4101 edges · 341 communities (328 shown, 13 thin omitted)
+- 3440 nodes · 4100 edges · 340 communities (327 shown, 13 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 8 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e05d5be6`
+- Built from commit: `281ce4f8`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -112,7 +112,7 @@
 - Any
 - DesignSystemGenerator
 - Role: Product & Requirements Analyst (`product-analyst`)
-- design_system.py
+- format_ascii_box
 - _sync_all.py
 - search
 - Messaging Framework
@@ -219,7 +219,7 @@
 - 2. Passive vs. Active Security Checks
 - properties
 - Component Host Elements
-- _generate_intelligent_overrides
+- design_system.py
 - Role: UI/UX & Design System Designer (`ui-ux-designer`)
 - platform_capabilities.py
 - FILLER AND HEDGING
@@ -230,14 +230,14 @@
 - Common Pitfalls
 - Detailed Topics
 - Detailed Topics
-- linked-signal.md
+- RESUME Workflow
 - Ponytail — YAGNI & Minimalist Implementation Skill
 - testing-fundamentals.md
 - angular-new-app/SKILL.md
 - Core Rule: Human Approval Gates (`human-approval-gates.md`)
 - FILLER AND HEDGING
 - list_handoffs.py
-- persist_design_system
+- Hierarchical Injectors
 - Brand Guidelines Template
 - description
 - Agent Browser — Live Web & UI Verification Skill
@@ -262,7 +262,6 @@
 - Find Skills — Safe Skill Discovery & Vetting Protocol
 - test_sync_brand_to_tokens.py
 - /graphify
-- CREATE Workflow
 - Handoff
 - TestM9AgentPlatformContracts
 - Role: Backend & API TDD Implementation Engineer (`backend-engineer`)
@@ -349,7 +348,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (341 total, 13 thin omitted)
+## Communities (340 total, 13 thin omitted)
 
 ### Community 0 - "security"
 Cohesion: 0.15
@@ -484,8 +483,8 @@ Cohesion: 0.25
 Nodes (8): 1. Responsibilities, 2. Allowed Activities, 3. Expected Inputs, 4. Expected Outputs, 5. Delegation Rules, 6. Restrictions, 7. Completion Criteria, Role: Technical Project Planner & Workflow Orchestrator (`planner-orchestrator`)
 
 ### Community 33 - "Handoff"
-Cohesion: 0.14
-Nodes (14): Handoff, Handoff Chaining, Mode Selection, references/, Resources, RESUME Workflow, scripts/, Step 1: Find Available Handoffs (+6 more)
+Cohesion: 0.17
+Nodes (12): CREATE Workflow, Handoff, Handoff Chaining, Mode Selection, references/, Resources, scripts/, Step 1: Generate Scaffold (+4 more)
 
 ### Community 34 - "Any"
 Cohesion: 0.06
@@ -724,16 +723,16 @@ Cohesion: 0.18
 Nodes (10): Any, Central supervisor agent that coordinates worker agents. Use when: tasks have…, Register a worker agent with the supervisor., Decompose a task into subtasks. Use when: a high-level task needs to be broken…, Select the best available worker for a subtask. Use when: the supervisor needs…, Aggregate results from completed subtasks., Execute a complete workflow with supervision. Use when: running an end-to-end…, Simulate a worker completing a subtask. In production, replace with actual… (+2 more)
 
 ### Community 100 - "DesignSystemGenerator"
-Cohesion: 0.16
-Nodes (9): DesignSystemGenerator, Find matching reasoning rule for a category., Apply reasoning rules to search results., Select best matching result based on priority keywords., Extract results list from search result dict., Generate complete design system recommendation. variance/motion/density are…, Generates design system recommendations from aggregated searches., Load reasoning rules from CSV. (+1 more)
+Cohesion: 0.14
+Nodes (11): DesignSystemGenerator, Find matching reasoning rule for a category., Apply reasoning rules to search results., Select best matching result based on priority keywords., Extract results list from search result dict., Generate complete design system recommendation. variance/motion/density are…, Bucket a 1-10 dial value into its tier config. Returns None if value is None., Generates design system recommendations from aggregated searches. (+3 more)
 
 ### Community 101 - "Role: Product & Requirements Analyst (`product-analyst`)"
 Cohesion: 0.07
 Nodes (23): 1. Responsibilities, 2. Allowed Activities, 3. Expected Inputs, 4. Expected Outputs, 5. Delegation Rules, 6. Restrictions, 7. Completion Criteria, Role: Product & Requirements Analyst (`product-analyst`) (+15 more)
 
-### Community 102 - "design_system.py"
-Cohesion: 0.18
-Nodes (14): ansi_ljust(), format_ascii_box(), format_markdown(), generate_design_system(), hex_to_ansi(), Convert hex color to ANSI True Color swatch (██) with fallback., Like str.ljust but accounts for zero-width ANSI escape sequences., Create a Unicode section separator: ├─── NAME ───...┤ (+6 more)
+### Community 102 - "format_ascii_box"
+Cohesion: 0.25
+Nodes (8): ansi_ljust(), format_ascii_box(), hex_to_ansi(), Convert hex color to ANSI True Color swatch (██) with fallback., Like str.ljust but accounts for zero-width ANSI escape sequences., Create a Unicode section separator: ├─── NAME ───...┤, Format design system as Unicode box with ANSI color swatches., section_header()
 
 ### Community 103 - "_sync_all.py"
 Cohesion: 0.29
@@ -1136,8 +1135,8 @@ Cohesion: 0.33
 Nodes (6): Budget Management, Compaction Strategies, Context Partitioning, Detailed Topics, KV-Cache Optimization, Observation Masking
 
 ### Community 203 - "angular-developer/SKILL.md"
-Cohesion: 0.11
-Nodes (14): Hierarchical Injectors, `providers` vs `viewProviders`, Resolution Modifiers, Resolution Rules, Types of Injector Hierarchies, `assertInInjectionContext`, Injection Context, `runInInjectionContext` (+6 more)
+Cohesion: 0.12
+Nodes (13): `assertInInjectionContext`, Injection Context, `runInInjectionContext`, Where is an Injection Context Available?, Advanced Usage: Accounting for Previous State, Basic Usage, Dependent State with `linkedSignal`, When to use `linkedSignal` vs `computed` vs `effect` (+5 more)
 
 ### Community 204 - "e2e-testing.md"
 Cohesion: 0.33
@@ -1159,9 +1158,9 @@ Nodes (16): additionalProperties, properties, type, maximum, minimum, type, minL
 Cohesion: 0.33
 Nodes (5): Binding Collisions, Binding to the Host Element, Component Host Elements, Injecting Host Attributes, Legacy Decorators
 
-### Community 209 - "_generate_intelligent_overrides"
-Cohesion: 0.33
-Nodes (6): _detect_page_type(), format_page_override_md(), _generate_intelligent_overrides(), Format a page-specific override file with intelligent AI-generated content., Generate intelligent overrides based on page type using layered search. Uses…, Detect page type from context and search results.
+### Community 209 - "design_system.py"
+Cohesion: 0.17
+Nodes (16): _detect_page_type(), format_markdown(), format_master_md(), format_page_override_md(), generate_design_system(), _generate_intelligent_overrides(), persist_design_system(), Format a page-specific override file with intelligent AI-generated content. (+8 more)
 
 ### Community 210 - "Role: UI/UX & Design System Designer (`ui-ux-designer`)"
 Cohesion: 0.33
@@ -1199,9 +1198,9 @@ Nodes (5): Detailed Topics, Memory Consolidation, Memory Layers (Decision Points
 Cohesion: 0.40
 Nodes (5): Detailed Topics, Memory Consolidation, Memory Layers (Decision Points), Production Framework Landscape, Retrieval Strategies
 
-### Community 220 - "linked-signal.md"
-Cohesion: 0.40
-Nodes (4): Advanced Usage: Accounting for Previous State, Basic Usage, Dependent State with `linkedSignal`, When to use `linkedSignal` vs `computed` vs `effect`
+### Community 220 - "RESUME Workflow"
+Cohesion: 0.29
+Nodes (7): RESUME Workflow, Step 1: Find Available Handoffs, Step 2: Check Staleness, Step 3: Load the Handoff, Step 4: Verify Context, Step 5: Begin Work, Step 6: Update or Chain Handoffs
 
 ### Community 221 - "Ponytail — YAGNI & Minimalist Implementation Skill"
 Cohesion: 0.29
@@ -1227,9 +1226,9 @@ Nodes (14): 23. Filler Phrases, 24. Excessive Hedging, 25. Generic Positive Conc
 Cohesion: 0.23
 Nodes (14): check_completion_status(), extract_title(), format_date(), list_handoffs(), main(), parse_date_from_filename(), datetime, Path (+6 more)
 
-### Community 227 - "persist_design_system"
+### Community 227 - "Hierarchical Injectors"
 Cohesion: 0.33
-Nodes (6): format_master_md(), persist_design_system(), Slugify a name into a single safe path segment. Only [a-z0-9_-] survives; every…, Persist design system to design-system/<project>/ folder using Master +…, Format design system as MASTER.md with hierarchical override logic., safe_slug()
+Nodes (5): Hierarchical Injectors, `providers` vs `viewProviders`, Resolution Modifiers, Resolution Rules, Types of Injector Hierarchies
 
 ### Community 228 - "Brand Guidelines Template"
 Cohesion: 0.40
@@ -1302,10 +1301,6 @@ Nodes (5): 1. Purpose, 2. Discovery Protocol, 3. Mandatory Security Quarantine C
 ### Community 251 - "/graphify"
 Cohesion: 0.33
 Nodes (6): /graphify, Honesty Rules, Outputs (in graphify-out/), Quick Reference, Usage, What You Must Do When Invoked
-
-### Community 252 - "CREATE Workflow"
-Cohesion: 0.40
-Nodes (5): CREATE Workflow, Step 1: Generate Scaffold, Step 2: Complete the Handoff Document, Step 3: Validate the Handoff, Step 4: Confirm Handoff
 
 ### Community 253 - "Handoff"
 Cohesion: 0.17

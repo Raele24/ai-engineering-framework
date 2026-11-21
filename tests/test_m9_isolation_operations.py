@@ -188,6 +188,11 @@ class TestM9ConsumerValidation(unittest.TestCase):
             for path, before_hash in before_hashes.items():
                 self.assertEqual(bootstrap.sha256_file(path), before_hash)
 
+            # Sandbox PermissionError ([WinError 5]) on external home folders must emit INFO only, never FAIL
+            with mock.patch.object(Path, "exists", side_effect=PermissionError(5, "Access is denied", str(fake_home))):
+                info_perm = validate.inspect_host_global_skill_visibility(home_dir=fake_home)
+                self.assertTrue(any("blocked by sandbox/host permissions" in msg for msg in info_perm), info_perm)
+
     def test_08_three_tier_severity_classification(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
