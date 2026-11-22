@@ -1,6 +1,6 @@
 # Installation & Update Guide (`INSTALLATION.md`)
 
-**Version:** `0.5.0`  
+**Version:** `0.6.0`  
 
 ---
 
@@ -41,7 +41,8 @@ uvx --from git+https://github.com/Raele24/ai-engineering-framework.git aief init
 
 # Or install globally in isolation once via pipx
 pipx install git+https://github.com/Raele24/ai-engineering-framework.git
-aief init .                  # Bootstrap into isolated .aief/ (all 5 platforms, 33 skills, auto stacks)
+aief init .                  # Interactive wizard on TTY (or --yes / non-TTY for zero-flag defaults)
+aief init . --yes --no-import # Non-interactive bootstrap without legacy instruction auto-import
 aief compose .               # Re-compose after editing .aief/custom/ or .aief/config.json
 aief update .                # Non-destructively upgrade framework files
 aief validate . --mode consumer
@@ -50,7 +51,7 @@ aief validate . --mode consumer
 uvx ai-engineering-framework init .
 ```
 
-**Automated Release Workflow:** [`.github/workflows/release-on-version-bump.yml`](../.github/workflows/release-on-version-bump.yml) runs on every push to `main`: whenever `pyproject.toml`'s `project.version` produces a new `v<version>` tag not yet on GitHub, CI validates `86` tests + version parity, builds & smoke-tests the wheel, creates the annotated GitHub Release + SHA-256 checksums, and publishes to PyPI if OIDC Trusted Publishing (`PYPI_PUBLISH_ENABLED=true`) is enabled.
+**Automated Release Workflow:** [`.github/workflows/release-on-version-bump.yml`](../.github/workflows/release-on-version-bump.yml) runs on every push to `main`: whenever `pyproject.toml`'s `project.version` produces a new `v<version>` tag not yet on GitHub, CI validates `87` tests + version parity, builds & smoke-tests the wheel, creates the annotated GitHub Release + SHA-256 checksums, and publishes to PyPI if OIDC Trusted Publishing (`PYPI_PUBLISH_ENABLED=true`) is enabled.
 
 ---
 

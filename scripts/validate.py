@@ -18,11 +18,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import shutil
 import sys
-from typing import Dict, List, Set, Tuple
+from typing import Dict, Iterator, List, Set, Tuple
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
@@ -890,12 +891,34 @@ def _is_jsonc_config(rel_path: str) -> bool:
     )
 
 
+WORKSPACE_SCAN_SKIP_DIRS: Set[str] = {
+    ".git",
+    "node_modules",
+    "graphify-out",
+    "dist",
+    ".angular",
+    "bin",
+    "obj",
+    "__pycache__",
+    ".venv",
+    "venv",
+}
+
+
+def _iter_workspace_files(root: Path, suffix: str | None = None) -> Iterator[Path]:
+    """Yield workspace files while pruning skipped vendor/build directories before descending."""
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = sorted(d for d in dirnames if d not in WORKSPACE_SCAN_SKIP_DIRS)
+        dir_p = Path(dirpath)
+        for fn in sorted(filenames):
+            if suffix is not None and not fn.lower().endswith(suffix):
+                continue
+            yield dir_p / fn
+
+
 def check_json_files(root: Path) -> List[str]:
     errors: List[str] = []
-    skip_dirs = {".git", "node_modules", "graphify-out", "dist", ".angular", "bin", "obj", "__pycache__"}
-    for json_path in sorted(root.rglob("*.json")):
-        if any(part in skip_dirs for part in json_path.parts):
-            continue
+    for json_path in _iter_workspace_files(root, suffix=".json"):
         rel = json_path.relative_to(root).as_posix()
         try:
             raw = json_path.read_text(encoding="utf-8")
@@ -1534,18 +1557,13 @@ def check_secrets(root: Path) -> List[str]:
         ".aief/scripts/validate.py",
         "tests/test_framework.py",
     }
-    skip_dirs = {".git", "node_modules", "graphify-out", "dist", ".angular", "bin", "obj", "__pycache__"}
-    for file_path in sorted(root.rglob("*")):
-        if not file_path.is_file():
-            continue
-        if any(part in skip_dirs for part in file_path.parts):
-            continue
+    for file_path in _iter_workspace_files(root):
         rel = file_path.relative_to(root).as_posix()
         if rel in exempt_rel_paths:
             continue
         try:
             content = file_path.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
+        except (UnicodeDecodeError, OSError):
             continue
         for rule_id, regex in SECRET_PATTERNS:
             if regex.search(content):

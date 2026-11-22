@@ -243,7 +243,7 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Entry Criteria:** Task backlog validated in Phase 7.
 - **Exit Criteria:** Every task is assigned a role (`implementation-engineer`, `qa-engineer`, etc.), an explicit list of `SKILL.md` files to load, and an isolation mode (`inherit`, `share`, or `branch`).
 - **Quality Gates:**
-  - **Single-Agent First Rule:** Default to sequential single-agent execution unless tasks have independent file trees and parallel execution saves wall-clock time or prevents context saturation.
+  - **Subagent-First Rule (HARD GATE on `>=3` files or `>=2` layers):** Delegate each disjoint layer to a specialist subagent (`implementation-engineer`, `backend-engineer`, `frontend-engineer`, etc.) and reserve Phase 10 for an independent `code-reviewer` subagent (`conversationId` distinct from Phase 9); keep single-agent sequential execution strictly for trivial `<3`-file single-layer edits.
   - **Supervisor Cap:** Never assign more than 3–5 concurrent subagents to a single supervisor turn.
 - **Human Approval Requirements:** Required only if installing a new external skill from a third-party repository (**Category B**).
 - **Failure and Recovery Procedures:**

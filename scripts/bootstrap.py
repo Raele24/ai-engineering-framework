@@ -35,10 +35,17 @@ import preflight  # noqa: E402
 import sync_adapters  # noqa: E402
 
 FRAMEWORK_ROOT = SCRIPT_DIR.parent
-FRAMEWORK_VERSION = "0.5.0"
+FRAMEWORK_VERSION = "0.6.0"
 LOCKFILE_NAME = ".aief/lock.json"
 LOCKFILE_SCHEMA_VERSION = "2.0.0"
 LOCKFILE_BACKUP_REL = ".aief/state/lock-backups/framework-lock-v0.3.0.json"
+
+LEGACY_INSTRUCTION_SOURCES: Tuple[Tuple[str, str], ...] = (
+    ("AGENTS.md", "AGENTS.md"),
+    ("CLAUDE.md", "CLAUDE.md"),
+    ("GEMINI.md", "GEMINI.md"),
+    (".github/copilot-instructions.md", "copilot-instructions.md"),
+)
 
 ALL_PLATFORMS: List[str] = list(
     platform_capabilities.load_platform_capabilities()["platform_ids"]
@@ -1036,6 +1043,18 @@ def _cleanup_empty_dirs(target_dir: Path, pruned_paths: List[str] | None = None)
                     d.rmdir()
 
 
+def _normalize_rule_filename(raw_name: str, fallback: str) -> str:
+    """Normalize a user-provided custom rule filename into a safe single .md filename."""
+    cleaned = raw_name.strip().replace("\\", "/")
+    if not cleaned:
+        return fallback
+    if "/" in cleaned or cleaned in {".", ".."}:
+        raise ValueError(f"Unsafe rule filename '{raw_name}': subdirectories are not allowed")
+    if not cleaned.lower().endswith(".md"):
+        cleaned = f"{cleaned}.md"
+    return validate_safe_rel_path(cleaned, label="moved rule filename")
+
+
 def bootstrap_project(
     target_dir: Path,
     platforms: List[str],
@@ -1045,6 +1064,11 @@ def bootstrap_project(
     update_mode: bool = False,
     dry_run: bool = False,
     framework_root: Path = FRAMEWORK_ROOT,
+    legacy_actions: Dict[str, str] | None = None,
+    legacy_move_names: Dict[str, str] | None = None,
+    no_import: bool = False,
+    unify_external_skills: bool = False,
+    move_external_rules: bool = False,
 ) -> Dict[str, object]:
     """Bootstrap or update the framework in target_dir non-destructively using Lockfile v2."""
     raw_packs = optional_packs if optional_packs is not None else ["all"]
@@ -1077,7 +1101,12 @@ def bootstrap_project(
     unknown_preserved: List[str] = []
     recovered: List[str] = []
     imported_files: List[str] = []
+    moved_files: List[str] = []
+    deleted_legacy: List[str] = []
+    skipped_legacy: List[str] = []
+    copied_external_skills: List[str] = []
     preserved_external: List[str] = []
+    legacy_deletes: List[str] = []
     tier3_writes: List[Tuple[str, bytes]] = []
 
     config_path = target_dir / Path(config_rel)
@@ -1097,20 +1126,44 @@ def bootstrap_project(
     overlay_rel = str(controls_pre["customizations"]["overlayDir"])
     _assert_overlay_safe(target_dir, overlay_rel)
 
-    # Brownfield auto-import on first bootstrap (no lockfile): preserve existing root instructions into overlay/imported/
+    # Brownfield handling on first bootstrap (no lockfile): copy, move, skip, or delete legacy instructions
     imported_entries: Dict[str, str] = {}
     in_memory_imported: List[Tuple[str, str]] = []
     if not existing_lock["exists"] and not update_mode:
-        for entry_rel, imp_name in (
-            ("AGENTS.md", "AGENTS.md"),
-            ("CLAUDE.md", "CLAUDE.md"),
-            ("GEMINI.md", "GEMINI.md"),
-            (".github/copilot-instructions.md", "copilot-instructions.md"),
-        ):
+        for entry_rel, imp_name in LEGACY_INSTRUCTION_SOURCES:
             entry_path = target_dir / Path(entry_rel)
             if entry_path.exists() and not _is_reparse_or_symlink(entry_path) and entry_path.is_file():
                 raw_entry = entry_path.read_text(encoding="utf-8").replace("\r\n", "\n")
                 if "AUTO-GENERATED" not in raw_entry and raw_entry.strip():
+                    default_act = "skip" if no_import else "copy"
+                    action = str((legacy_actions or {}).get(entry_rel, default_act)).strip().lower()
+                    if action == "skip":
+                        skipped_legacy.append(entry_rel)
+                        continue
+                    if action == "delete":
+                        imported_entries[entry_rel] = ""
+                        deleted_legacy.append(entry_rel)
+                        legacy_deletes.append(entry_rel)
+                        continue
+                    if action == "move":
+                        default_slug = "project-instructions.md"
+                        raw_custom_name = (legacy_move_names or {}).get(entry_rel, "")
+                        base_slug = _normalize_rule_filename(raw_custom_name, default_slug)
+                        cand_rel = validate_safe_rel_path(f"{overlay_rel}/rules/{base_slug}", label="moved instruction")
+                        if cand_rel in {p for p, _ in tier3_writes}:
+                            cand_rel = validate_safe_rel_path(
+                                f"{overlay_rel}/rules/{Path(imp_name).stem}.md", label="moved instruction"
+                            )
+                        imp_rel = cand_rel
+                        assert_safe_target_path(target_dir, imp_rel, label="moved destination")
+                        imported_entries[entry_rel] = imp_rel
+                        if not (target_dir / Path(imp_rel)).exists():
+                            tier3_writes.append((imp_rel, raw_entry.encode("utf-8")))
+                            created.append(imp_rel)
+                        moved_files.append(f"{entry_rel} -> {imp_rel}")
+                        in_memory_imported.append((imp_rel, raw_entry.strip()))
+                        legacy_deletes.append(entry_rel)
+                        continue
                     imp_rel = validate_safe_rel_path(f"{overlay_rel}/imported/{imp_name}", label="imported instruction")
                     assert_safe_target_path(target_dir, imp_rel, label="imported destination")
                     imported_entries[entry_rel] = imp_rel
@@ -1119,6 +1172,42 @@ def bootstrap_project(
                         created.append(imp_rel)
                         imported_files.append(imp_rel)
                         in_memory_imported.append((imp_rel, raw_entry.strip()))
+
+        # Optional user-requested migration of pre-existing external skills / .agents/rules/
+        if unify_external_skills and is_isolated:
+            root_skills_dir = target_dir / "skills"
+            if root_skills_dir.exists() and not _is_reparse_or_symlink(root_skills_dir):
+                for ext_skill in sorted(root_skills_dir.glob("*/SKILL.md")):
+                    if _is_reparse_or_symlink(ext_skill):
+                        continue
+                    skill_folder = ext_skill.parent
+                    dst_skill_dir = validate_safe_rel_path(f"{overlay_rel}/skills/{skill_folder.name}", label="custom skill import")
+                    copied_external_skills.append(f"{skill_folder.relative_to(target_dir).as_posix()} -> {dst_skill_dir}")
+                    for item in sorted(skill_folder.rglob("*")):
+                        if item.is_file() and not _is_reparse_or_symlink(item):
+                            dst_item_rel = f"{dst_skill_dir}/{item.relative_to(skill_folder).as_posix()}"
+                            dst_item_path = assert_safe_target_path(target_dir, dst_item_rel, label="custom skill file")
+                            if not dry_run and not dst_item_path.exists():
+                                _atomic_write_bytes(dst_item_path, _read_normalized_skill_file(item))
+                                created.append(dst_item_rel)
+
+        if move_external_rules:
+            ext_rules_dir = target_dir / ".agents" / "rules"
+            if ext_rules_dir.exists() and not _is_reparse_or_symlink(ext_rules_dir):
+                for ext_rule in sorted(ext_rules_dir.glob("*.md")):
+                    if ext_rule.name == "framework-core.md" or _is_reparse_or_symlink(ext_rule) or not ext_rule.is_file():
+                        continue
+                    ext_rel = ext_rule.relative_to(target_dir).as_posix()
+                    raw_rule = ext_rule.read_text(encoding="utf-8").replace("\r\n", "\n")
+                    if raw_rule.strip():
+                        dst_rule_rel = validate_safe_rel_path(f"{overlay_rel}/rules/{ext_rule.name}", label="moved rule")
+                        assert_safe_target_path(target_dir, dst_rule_rel, label="moved rule destination")
+                        if not (target_dir / Path(dst_rule_rel)).exists():
+                            tier3_writes.append((dst_rule_rel, raw_rule.encode("utf-8")))
+                            created.append(dst_rule_rel)
+                        moved_files.append(f"{ext_rel} -> {dst_rule_rel}")
+                        in_memory_imported.append((dst_rule_rel, raw_rule.strip()))
+                        legacy_deletes.append(ext_rel)
 
     effective_profile = (
         str(existing_cfg_for_plan.get("workflowProfile", profile))
@@ -1144,7 +1233,7 @@ def bootstrap_project(
     if agents_rules_dir.exists() and not _is_reparse_or_symlink(agents_rules_dir):
         for ext_rule in sorted(agents_rules_dir.glob("*.md")):
             ext_rel = ext_rule.relative_to(target_dir).as_posix()
-            if ext_rel not in desired_entries:
+            if ext_rel not in desired_entries and ext_rel not in legacy_deletes:
                 preserved_external.append(ext_rel)
     canonical_digest = sync_adapters.compute_canonical_digest(framework_root)
 
@@ -1508,9 +1597,19 @@ def bootstrap_project(
             dst = assert_safe_target_path(target_dir, t3_rel, label="tier3 destination")
             _atomic_write_bytes(dst, t3_bytes)
 
+        for del_rel in legacy_deletes:
+            if del_rel in desired_entries:
+                continue
+            del_path = assert_safe_target_path(target_dir, del_rel, label="legacy cleanup destination")
+            if del_path.exists() and not _is_reparse_or_symlink(del_path):
+                del_path.unlink()
+
         # Phase 3: Commit final completed lockfile only if needed (zero-write when idempotent)
         if need_lock_write or writes_to_apply or prunes_to_apply or pending_recovery:
             _atomic_write_bytes(lock_path, final_lock_bytes)
+
+        if copied_external_skills:
+            compose.compose_consumer(target_dir, dry_run=False)
 
     return {
         "created": created,
@@ -1522,6 +1621,10 @@ def bootstrap_project(
         "unknown_preserved": unknown_preserved,
         "recovered": recovered,
         "imported": imported_files,
+        "moved": moved_files,
+        "deleted_legacy": deleted_legacy,
+        "skipped_legacy": skipped_legacy,
+        "copied_external_skills": copied_external_skills,
         "preserved_external": preserved_external,
         "migrated_from": migrated_from,
         "layout": layout["mode"],
@@ -1580,6 +1683,518 @@ def detect_project_stacks(target_dir: Path) -> List[str]:
     return detected
 
 
+def discover_workspace_context(target_dir: Path) -> Dict[str, object]:
+    """Read-only pre-flight discovery of stacks, legacy AI entry files, and external skills/rules."""
+    target_dir = target_dir.resolve()
+    legacy_items: List[Dict[str, object]] = []
+    seen_hashes: Dict[str, str] = {}
+
+    for entry_rel, imp_name in LEGACY_INSTRUCTION_SOURCES:
+        entry_path = target_dir / Path(entry_rel)
+        if not entry_path.exists() or _is_reparse_or_symlink(entry_path) or not entry_path.is_file():
+            continue
+        raw_entry = entry_path.read_text(encoding="utf-8").replace("\r\n", "\n")
+        if "AUTO-GENERATED" in raw_entry or not raw_entry.strip():
+            continue
+        digest = sha256_bytes(raw_entry.strip().encode("utf-8"))
+        dup_of = seen_hashes.get(digest)
+        if dup_of is None:
+            seen_hashes[digest] = entry_rel
+        legacy_items.append(
+            {
+                "rel": entry_rel,
+                "imp_name": imp_name,
+                "lines": len(raw_entry.strip().splitlines()),
+                "sha256": digest,
+                "duplicate_of": dup_of,
+            }
+        )
+
+    external_skills: List[str] = []
+    root_skills_dir = target_dir / "skills"
+    if root_skills_dir.exists() and not _is_reparse_or_symlink(root_skills_dir):
+        for ext_skill in sorted(root_skills_dir.glob("*/SKILL.md")):
+            if not _is_reparse_or_symlink(ext_skill):
+                external_skills.append(ext_skill.relative_to(target_dir).as_posix())
+
+    external_rules: List[str] = []
+    ext_rules_dir = target_dir / ".agents" / "rules"
+    if ext_rules_dir.exists() and not _is_reparse_or_symlink(ext_rules_dir):
+        for ext_rule in sorted(ext_rules_dir.glob("*.md")):
+            if ext_rule.name != "framework-core.md" and not _is_reparse_or_symlink(ext_rule):
+                external_rules.append(ext_rule.relative_to(target_dir).as_posix())
+
+    return {
+        "stacks": detect_project_stacks(target_dir),
+        "legacy_instructions": legacy_items,
+        "external_skills": external_skills,
+        "external_rules": external_rules,
+        "has_existing_install": (target_dir / ".aief" / "lock.json").exists()
+        or (target_dir / ".framework-lock.json").exists(),
+    }
+
+
+def _parse_wizard_selection(
+    raw_answer: str,
+    ordered_choices: List[str],
+    default_choices: List[str],
+    *,
+    allow_none: bool = False,
+) -> List[str] | None:
+    """Parse numbered ('1,5'), name ('antigravity,gemini-cli'), 'all', or 'none' CLI selections."""
+    cleaned = raw_answer.strip().lower()
+    if not cleaned:
+        return list(default_choices)
+    if cleaned == "all":
+        return list(ordered_choices)
+    if allow_none and cleaned == "none":
+        return []
+    selected: List[str] = []
+    for token in [p.strip() for p in cleaned.split(",") if p.strip()]:
+        if token.isdigit():
+            idx = int(token) - 1
+            if 0 <= idx < len(ordered_choices):
+                val = ordered_choices[idx]
+                if val not in selected:
+                    selected.append(val)
+                continue
+            return None
+        if token in ordered_choices:
+            if token not in selected:
+                selected.append(token)
+            continue
+        return None
+    return selected if selected else None
+
+
+def _enable_windows_ansi() -> bool:
+    """Best-effort enablement of VT100 ANSI escapes on Windows consoles."""
+    if os.name != "nt":
+        return True
+    try:
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+        handle = kernel32.GetStdHandle(-11)  # STD_OUTPUT_HANDLE
+        mode = ctypes.c_uint32()
+        if not kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+            return False
+        if not (mode.value & 0x0004):
+            kernel32.SetConsoleMode(handle, mode.value | 0x0004)
+        return True
+    except Exception:
+        return bool(os.environ.get("WT_SESSION") or os.environ.get("TERM_PROGRAM"))
+
+
+def _read_tui_key() -> str:
+    """Read a single normalized navigation key (UP, DOWN, SPACE, ALL, ENTER, ESC, 1-9)."""
+    if os.name == "nt":
+        import msvcrt
+
+        ch = msvcrt.getwch()  # type: ignore[attr-defined]
+        if ch == "\x03":
+            raise KeyboardInterrupt
+        if ch in ("\x00", "\xe0"):
+            nxt = msvcrt.getwch()  # type: ignore[attr-defined]
+            return {"H": "UP", "P": "DOWN"}.get(nxt, "")
+        if ch == "\x1b":
+            if msvcrt.kbhit():  # type: ignore[attr-defined]
+                seq = msvcrt.getwch()  # type: ignore[attr-defined]
+                if seq in ("[", "O") and msvcrt.kbhit():  # type: ignore[attr-defined]
+                    code = msvcrt.getwch()  # type: ignore[attr-defined]
+                    return {"A": "UP", "B": "DOWN"}.get(code, "")
+            return "ESC"
+    else:
+        import select
+        import termios
+        import tty
+
+        fd = sys.stdin.fileno()
+        old_attrs = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            ch = sys.stdin.read(1)
+            if ch == "\x03":
+                raise KeyboardInterrupt
+            if ch == "\x1b":
+                if select.select([sys.stdin], [], [], 0.05)[0]:
+                    seq = sys.stdin.read(1)
+                    if seq in ("[", "O") and select.select([sys.stdin], [], [], 0.05)[0]:
+                        code = sys.stdin.read(1)
+                        return {"A": "UP", "B": "DOWN"}.get(code, "")
+                return "ESC"
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_attrs)
+
+    if ch in ("\r", "\n"):
+        return "ENTER"
+    if ch == " ":
+        return "SPACE"
+    if ch in ("a", "A"):
+        return "ALL"
+    if "1" <= ch <= "9":
+        return ch
+    return ""
+
+
+def _tui_render_lines(lines: List[str], prev_count: int, stream=None) -> int:
+    """Redraw TUI option lines in-place cleanly without clearing scrollback."""
+    out = stream if stream is not None else sys.stdout
+    if prev_count > 0:
+        out.write(f"\x1b[{prev_count}A\r\x1b[J")
+    out.write("\n".join(lines) + "\n")
+    out.flush()
+    return len(lines)
+
+
+def _tui_multiselect(
+    title: str,
+    choices: List[str],
+    preselected: Set[str] | None = None,
+    *,
+    min_selected: int = 0,
+    key_fn=None,
+    stream=None,
+) -> List[str] | None:
+    """Interactive arrow-key checkbox selector returning chosen items, or None on cancel."""
+    out = stream if stream is not None else sys.stdout
+    selected = set(preselected) if preselected is not None else set(choices)
+    cursor = 0
+    hint = ""
+    prev_lines = 0
+    next_key = key_fn or _read_tui_key
+    is_interactive_tty = key_fn is None and sys.stdout.isatty()
+    if is_interactive_tty:
+        out.write("\x1b[?25l")
+        out.flush()
+    try:
+        while True:
+            rows = [
+                f"\x1b[1;36m?\x1b[0m \x1b[1m{title}\x1b[0m  \x1b[2m(↑/↓ move, Space toggle, a all/none, Enter confirm)\x1b[0m"
+            ]
+            for idx, item in enumerate(choices):
+                pointer = "\x1b[36m❯\x1b[0m" if idx == cursor else " "
+                checked = "\x1b[32m[x]\x1b[0m" if item in selected else "\x1b[2m[ ]\x1b[0m"
+                label = f"\x1b[1m{item}\x1b[0m" if idx == cursor else item
+                rows.append(f"  {pointer} {checked} {label}")
+            if hint:
+                rows.append(f"  \x1b[33m{hint}\x1b[0m")
+            prev_lines = _tui_render_lines(rows, prev_lines, stream=out)
+
+            k = next_key()
+            hint = ""
+            if k == "UP":
+                cursor = (cursor - 1) % len(choices)
+            elif k == "DOWN":
+                cursor = (cursor + 1) % len(choices)
+            elif k == "SPACE":
+                cur_val = choices[cursor]
+                if cur_val in selected:
+                    selected.remove(cur_val)
+                else:
+                    selected.add(cur_val)
+            elif k == "ALL":
+                selected = set() if len(selected) == len(choices) else set(choices)
+            elif k == "ENTER":
+                ordered = [c for c in choices if c in selected]
+                if len(ordered) < min_selected:
+                    hint = f"Select at least {min_selected} option(s)."
+                    continue
+                summary = ", ".join(ordered) if ordered else "none"
+                _tui_render_lines([f"\x1b[32m✓\x1b[0m \x1b[1m{title}:\x1b[0m \x1b[36m{summary}\x1b[0m"], prev_lines, stream=out)
+                return ordered
+            elif k == "ESC":
+                _tui_render_lines([f"\x1b[31m✗\x1b[0m {title}: cancelled"], prev_lines, stream=out)
+                return None
+    except KeyboardInterrupt:
+        _tui_render_lines([f"\x1b[31m✗\x1b[0m {title}: cancelled"], prev_lines, stream=out)
+        return None
+    finally:
+        if is_interactive_tty:
+            out.write("\x1b[?25h")
+            out.flush()
+
+
+def _tui_select(
+    title: str,
+    options: List[Tuple[str, str]],
+    default_index: int = 0,
+    *,
+    key_fn=None,
+    stream=None,
+) -> str | None:
+    """Interactive arrow-key single selector returning chosen value, or None on cancel."""
+    out = stream if stream is not None else sys.stdout
+    cursor = max(0, min(default_index, len(options) - 1))
+    prev_lines = 0
+    next_key = key_fn or _read_tui_key
+    is_interactive_tty = key_fn is None and sys.stdout.isatty()
+    if is_interactive_tty:
+        out.write("\x1b[?25l")
+        out.flush()
+    try:
+        while True:
+            rows = [
+                f"\x1b[1;36m?\x1b[0m \x1b[1m{title}\x1b[0m  \x1b[2m(↑/↓ move, Enter confirm)\x1b[0m"
+            ]
+            for idx, (_val, label) in enumerate(options):
+                pointer = "\x1b[36m❯\x1b[0m" if idx == cursor else " "
+                bullet = "\x1b[32m●\x1b[0m" if idx == cursor else "\x1b[2m○\x1b[0m"
+                txt = f"\x1b[1m{label}\x1b[0m" if idx == cursor else label
+                rows.append(f"  {pointer} {bullet} {txt}")
+            prev_lines = _tui_render_lines(rows, prev_lines, stream=out)
+
+            k = next_key()
+            if k == "UP":
+                cursor = (cursor - 1) % len(options)
+            elif k == "DOWN":
+                cursor = (cursor + 1) % len(options)
+            elif k.isdigit() and 1 <= int(k) <= len(options):
+                cursor = int(k) - 1
+                chosen_val, chosen_lbl = options[cursor]
+                _tui_render_lines([f"\x1b[32m✓\x1b[0m \x1b[1m{title}:\x1b[0m \x1b[36m{chosen_lbl}\x1b[0m"], prev_lines, stream=out)
+                return chosen_val
+            elif k == "ENTER":
+                chosen_val, chosen_lbl = options[cursor]
+                _tui_render_lines([f"\x1b[32m✓\x1b[0m \x1b[1m{title}:\x1b[0m \x1b[36m{chosen_lbl}\x1b[0m"], prev_lines, stream=out)
+                return chosen_val
+            elif k == "ESC":
+                _tui_render_lines([f"\x1b[31m✗\x1b[0m {title}: cancelled"], prev_lines, stream=out)
+                return None
+    except KeyboardInterrupt:
+        _tui_render_lines([f"\x1b[31m✗\x1b[0m {title}: cancelled"], prev_lines, stream=out)
+        return None
+    finally:
+        if is_interactive_tty:
+            out.write("\x1b[?25h")
+            out.flush()
+
+
+def run_interactive_init_wizard(
+    target_dir: Path,
+    *,
+    cli_platforms: List[str] | None = None,
+    cli_optional_packs: List[str] | None = None,
+    no_import: bool = False,
+    input_fn=None,
+    output_fn=None,
+    key_fn=None,
+) -> Dict[str, object] | None:
+    """Run an interactive pre-flight discovery & choice wizard for fresh `aief init`."""
+    use_tui = (
+        key_fn is not None
+        or (input_fn is None and output_fn is None and sys.stdin.isatty() and sys.stdout.isatty() and _enable_windows_ansi())
+    )
+    read_line = input_fn if input_fn is not None else input
+    emit = output_fn if output_fn is not None else print
+
+    ctx = discover_workspace_context(target_dir)
+    stacks: List[str] = list(ctx["stacks"])  # type: ignore[arg-type]
+    legacy_items: List[Dict[str, object]] = list(ctx["legacy_instructions"])  # type: ignore[arg-type]
+    external_skills: List[str] = list(ctx["external_skills"])  # type: ignore[arg-type]
+    external_rules: List[str] = list(ctx["external_rules"])  # type: ignore[arg-type]
+
+    emit(f"\n=== AI Engineering Framework Interactive Setup ({target_dir.resolve()}) ===")
+    emit(f"  Stacks detected:      {', '.join(stacks) if stacks else 'none'}")
+    emit(f"  Legacy instructions:  {len(legacy_items)} found")
+    for item in legacy_items:
+        dup_note = f" [DUPLICATE CONTENT of {item['duplicate_of']}]" if item["duplicate_of"] else ""
+        emit(f"    - {item['rel']} ({item['lines']} lines){dup_note}")
+    if external_skills:
+        emit(f"  External skills:      {', '.join(external_skills)}")
+    if external_rules:
+        emit(f"  External .agents/rules: {', '.join(external_rules)}")
+    emit("")
+
+    if cli_platforms is not None:
+        platforms = list(cli_platforms)
+    elif use_tui:
+        picked = _tui_multiselect(
+            "Target platforms",
+            list(ALL_PLATFORMS),
+            preselected=set(ALL_PLATFORMS),
+            min_selected=1,
+            key_fn=key_fn,
+        )
+        if picked is None:
+            return None
+        platforms = picked
+    else:
+        emit("[1] Target platforms (comma numbers/names or 'all'; Enter = all):")
+        for idx, pid in enumerate(ALL_PLATFORMS, start=1):
+            emit(f"  {idx}. {pid}")
+        while True:
+            ans = read_line("  Select platforms [all]: ")
+            picked = _parse_wizard_selection(ans, ALL_PLATFORMS, ALL_PLATFORMS)
+            if picked is not None:
+                platforms = picked
+                break
+            emit("  Invalid selection. Enter numbers (e.g. 1,5), names, or 'all'.")
+
+    pack_order = ["communication", "context-engineering", "agent-architecture", "frontend-design", "growth-media"]
+    if cli_optional_packs is not None:
+        optional_packs = list(cli_optional_packs)
+    elif use_tui:
+        picked = _tui_multiselect(
+            "Optional skill packs",
+            pack_order,
+            preselected=set(pack_order),
+            min_selected=0,
+            key_fn=key_fn,
+        )
+        if picked is None:
+            return None
+        optional_packs = picked
+    else:
+        emit("\n[2] Optional skill packs (comma numbers/names, 'all', or 'none'; Enter = all):")
+        for idx, pk in enumerate(pack_order, start=1):
+            emit(f"  {idx}. {pk}")
+        while True:
+            ans = read_line("  Select packs [all]: ")
+            picked = _parse_wizard_selection(ans, pack_order, pack_order, allow_none=True)
+            if picked is not None:
+                optional_packs = picked
+                break
+            emit("  Invalid selection. Enter numbers, pack names, 'all', or 'none'.")
+
+    legacy_actions: Dict[str, str] = {}
+    legacy_move_names: Dict[str, str] = {}
+    used_move_names: Set[str] = set()
+    if legacy_items and not no_import:
+        if len(legacy_items) >= 2:
+            emit("\nMultiple legacy instruction files detected — choose how to handle each:")
+        legacy_opts = [
+            ("copy", "Copy to .aief/custom/imported/ (keep original untouched)"),
+            ("move", "Move to .aief/custom/rules/ and remove old file (single source)"),
+            ("skip", "Skip / do not import"),
+            ("delete", "Delete old file without importing"),
+        ]
+        action_map = {"1": "copy", "copy": "copy", "2": "move", "move": "move", "3": "skip", "skip": "skip", "4": "delete", "delete": "delete"}
+        for item in legacy_items:
+            rel = str(item["rel"])
+            dup_hint = f" [duplicate of {item['duplicate_of']}]" if item["duplicate_of"] else ""
+            if use_tui:
+                def_idx = 2 if item["duplicate_of"] else 0
+                chosen = _tui_select(
+                    f"Action for {rel}{dup_hint}",
+                    legacy_opts,
+                    default_index=def_idx,
+                    key_fn=key_fn,
+                )
+                if chosen is None:
+                    return None
+                legacy_actions[rel] = chosen
+            else:
+                default_choice = "3" if item["duplicate_of"] else "1"
+                emit(f"\n  File: {rel}{dup_hint}")
+                for idx, (_val, lbl) in enumerate(legacy_opts, start=1):
+                    emit(f"    {idx}. {lbl}")
+                while True:
+                    ans = read_line(f"  Action for {rel} [{default_choice}]: ").strip().lower() or default_choice
+                    if ans in action_map:
+                        legacy_actions[rel] = action_map[ans]
+                        break
+                    emit("  Invalid choice. Enter 1, 2, 3, or 4.")
+
+            if legacy_actions[rel] == "move":
+                fallback_name = (
+                    "project-instructions.md"
+                    if "project-instructions.md" not in used_move_names
+                    else f"{Path(str(item['imp_name'])).stem}.md"
+                )
+                while True:
+                    raw_rename = read_line(f"  Rule filename in .aief/custom/rules/ [{fallback_name}]: ")
+                    try:
+                        chosen_name = _normalize_rule_filename(raw_rename, fallback_name)
+                    except ValueError as exc:
+                        emit(f"  {exc}")
+                        continue
+                    legacy_move_names[rel] = chosen_name
+                    used_move_names.add(chosen_name)
+                    break
+
+    unify_external_skills = False
+    if external_skills:
+        if use_tui:
+            chosen = _tui_select(
+                "External skills in skills/",
+                [
+                    ("keep", "Keep untouched in skills/ (default)"),
+                    ("unify", "Also copy into .aief/custom/skills/ for all enabled agents"),
+                ],
+                default_index=0,
+                key_fn=key_fn,
+            )
+            if chosen is None:
+                return None
+            unify_external_skills = chosen == "unify"
+        else:
+            emit("\n[4] External project skills detected in skills/:")
+            emit("    1. Keep untouched in skills/ (default)")
+            emit("    2. Also copy into .aief/custom/skills/ so all enabled agents load them")
+            ans = read_line("  Choice [1]: ").strip().lower() or "1"
+            unify_external_skills = ans in {"2", "copy", "unify", "yes", "y"}
+
+    move_external_rules = False
+    if external_rules:
+        if use_tui:
+            chosen = _tui_select(
+                "External rules in .agents/rules/",
+                [
+                    ("keep", "Keep untouched in .agents/rules/ (Antigravity-only, default)"),
+                    ("move", "Move into .aief/custom/rules/ and remove old (all agents, no 2x)"),
+                ],
+                default_index=0,
+                key_fn=key_fn,
+            )
+            if chosen is None:
+                return None
+            move_external_rules = chosen == "move"
+        else:
+            emit("\n[5] External .agents/rules/ files detected:")
+            emit("    1. Keep untouched in .agents/rules/ (Antigravity-only, default)")
+            emit("    2. Move into .aief/custom/rules/ and remove old (shared via AGENTS.md, no 2x)")
+            ans = read_line("  Choice [1]: ").strip().lower() or "1"
+            move_external_rules = ans in {"2", "move", "yes", "y"}
+
+    emit("\n--- Setup Summary ---")
+    emit(f"  Platforms:            {', '.join(platforms)}")
+    emit(f"  Optional packs:       {', '.join(optional_packs) if optional_packs else 'none'}")
+    if legacy_actions:
+        actions_summary = ", ".join(
+            f"{k}=move({legacy_move_names.get(k, 'project-instructions.md')})" if v == "move" else f"{k}={v}"
+            for k, v in legacy_actions.items()
+        )
+        emit(f"  Legacy instructions:  {actions_summary}")
+    if external_skills:
+        emit(f"  External skills:      {'copy to .aief/custom/skills/' if unify_external_skills else 'keep untouched'}")
+    if external_rules:
+        emit(f"  External rules:       {'move to .aief/custom/rules/' if move_external_rules else 'keep untouched'}")
+
+    if use_tui:
+        confirm_val = _tui_select(
+            "Proceed with installation?",
+            [("yes", "Yes — apply configuration"), ("no", "No — cancel without modifying files")],
+            default_index=0,
+            key_fn=key_fn,
+        )
+        if confirm_val != "yes":
+            return None
+    else:
+        confirm = read_line("Proceed with installation? [Y/n]: ").strip().lower()
+        if confirm in {"n", "no"}:
+            return None
+
+    return {
+        "platforms": platforms,
+        "optional_packs": optional_packs,
+        "legacy_actions": legacy_actions,
+        "legacy_move_names": legacy_move_names,
+        "unify_external_skills": unify_external_skills,
+        "move_external_rules": move_external_rules,
+    }
+
+
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Bootstrap or update AI Engineering Framework in a target repository."
@@ -1618,6 +2233,13 @@ def main(argv: List[str] | None = None) -> int:
     )
     parser.add_argument("--update", action="store_true", help="Update unmodified framework-managed files")
     parser.add_argument("--dry-run", action="store_true", help="Preview file operations without writing to disk")
+    parser.add_argument("-y", "--yes", action="store_true", help="Skip interactive setup prompts and accept defaults")
+    parser.add_argument("-i", "--interactive", action="store_true", help="Run interactive discovery and setup wizard")
+    parser.add_argument(
+        "--no-import",
+        action="store_true",
+        help="Skip auto-importing legacy root AI instruction files during first init",
+    )
     args = parser.parse_args(argv)
 
     target_arg = args.target_flag or args.target_pos
@@ -1647,8 +2269,10 @@ def main(argv: List[str] | None = None) -> int:
                 pass
 
     try:
+        cli_platforms: List[str] | None = None
         if args.platforms is not None:
-            platforms = parse_csv_list(args.platforms, set(ALL_PLATFORMS), "--platforms")
+            cli_platforms = parse_csv_list(args.platforms, set(ALL_PLATFORMS), "--platforms")
+            platforms = cli_platforms
         elif args.update and isinstance(existing_cfg.get("enabledPlatforms"), list):
             platforms = parse_csv_list(
                 ",".join(str(p) for p in existing_cfg["enabledPlatforms"]),
@@ -1663,9 +2287,11 @@ def main(argv: List[str] | None = None) -> int:
             or (str(existing_cfg["workflowProfile"]) if args.update and existing_cfg.get("workflowProfile") else "standard")
         )
 
+        cli_optional_packs: List[str] | None = None
         if args.optional_packs is not None:
             raw_packs = [p.strip() for p in args.optional_packs.split(",") if p.strip()]
-            optional_packs = normalize_optional_packs(raw_packs)
+            cli_optional_packs = normalize_optional_packs(raw_packs)
+            optional_packs = cli_optional_packs
         elif args.update and isinstance(existing_lock_raw.get("optional_packs"), list):
             optional_packs = normalize_optional_packs([str(p) for p in existing_lock_raw["optional_packs"]])
         else:
@@ -1685,6 +2311,35 @@ def main(argv: List[str] | None = None) -> int:
         else:
             stacks = detect_project_stacks(target_arg)
 
+        legacy_actions: Dict[str, str] | None = None
+        legacy_move_names: Dict[str, str] | None = None
+        unify_external_skills = False
+        move_external_rules = False
+        should_wizard = (
+            not args.update
+            and not args.yes
+            and (args.interactive or (not args.dry_run and sys.stdin.isatty()))
+        )
+        if should_wizard:
+            try:
+                wiz = run_interactive_init_wizard(
+                    target_arg,
+                    cli_platforms=cli_platforms,
+                    cli_optional_packs=cli_optional_packs,
+                    no_import=args.no_import,
+                )
+            except (KeyboardInterrupt, EOFError):
+                wiz = None
+            if wiz is None:
+                print("\nSetup cancelled by user. No files modified.")
+                return 0
+            platforms = list(wiz["platforms"])  # type: ignore[arg-type]
+            optional_packs = list(wiz["optional_packs"])  # type: ignore[arg-type]
+            legacy_actions = dict(wiz["legacy_actions"])  # type: ignore[arg-type]
+            legacy_move_names = dict(wiz.get("legacy_move_names") or {})  # type: ignore[arg-type]
+            unify_external_skills = bool(wiz["unify_external_skills"])
+            move_external_rules = bool(wiz["move_external_rules"])
+
         summary = bootstrap_project(
             target_dir=target_arg,
             platforms=platforms,
@@ -1693,6 +2348,11 @@ def main(argv: List[str] | None = None) -> int:
             stacks=stacks,
             update_mode=args.update,
             dry_run=args.dry_run,
+            legacy_actions=legacy_actions,
+            legacy_move_names=legacy_move_names,
+            no_import=args.no_import,
+            unify_external_skills=unify_external_skills,
+            move_external_rules=move_external_rules,
         )
     except (ValueError, LockfileError) as exc:
         print(f"BOOTSTRAP_ERROR: {exc}", file=sys.stderr)
@@ -1714,6 +2374,14 @@ def main(argv: List[str] | None = None) -> int:
     print(f"  Skipped/Modified:   {len(summary['skipped_modified'])} (preserved)")
     if summary.get("imported"):
         print(f"  Imported Custom:    {', '.join(summary['imported'])}")
+    if summary.get("moved"):
+        print(f"  Moved Legacy:       {', '.join(summary['moved'])}")
+    if summary.get("deleted_legacy"):
+        print(f"  Deleted Legacy:     {', '.join(summary['deleted_legacy'])}")
+    if summary.get("skipped_legacy"):
+        print(f"  Skipped Legacy:     {', '.join(summary['skipped_legacy'])}")
+    if summary.get("copied_external_skills"):
+        print(f"  Unified Skills:     {', '.join(summary['copied_external_skills'])}")
     if summary.get("preserved_external"):
         print(f"  Preserved External: {', '.join(summary['preserved_external'])}")
     if summary.get("unknown_preserved"):

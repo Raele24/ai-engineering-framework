@@ -11,6 +11,7 @@
 
 - **Required Inputs:** Working tree / branch diff (`git diff`), approved specification (`docs/specs/03-specification.md`), architecture decisions (`docs/adr/ADR-*.md`), and [`quality/code-review-rubric.md`](../quality/code-review-rubric.md).
 - **Execution Rules:**
+  0. **Fresh Subagent Isolation (HARD GATE):** Phase 10 MUST execute in an independent subagent (`conversationId` distinct from Phase 9 implementers). NEVER self-review `>=3` modified files or `>=2` layers in the parent session.
   1. Conduct read-only adversarial review against every acceptance criterion (`AC-01..N`) and ADR boundary.
   2. If `graphify` is installed, run `graphify update .` to check module dependencies and architectural drift.
   3. Record findings classified by severity (`BLOCKER`, `MAJOR`, `MINOR`, `NIT`) with exact `file:line` references.

@@ -16,8 +16,11 @@ def _run_script(script_path: Path, script_args: List[str], extra_env: Dict[str, 
     env = os.environ.copy()
     if extra_env:
         env.update(extra_env)
-    proc = subprocess.run([sys.executable, str(script_path), *script_args], check=False, env=env)
-    return int(proc.returncode)
+    try:
+        proc = subprocess.run([sys.executable, str(script_path), *script_args], check=False, env=env)
+        return int(proc.returncode)
+    except KeyboardInterrupt:
+        return 130
 
 
 def _resolve_consumer_or_bundled(target_dir: Path, script_name: str, framework_root: Path) -> Path:
@@ -49,6 +52,9 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument("--optional-packs", type=str, default=None, help="Comma-separated optional skill packs")
         p.add_argument("--stacks", type=str, default=None, help="Stacks: auto, none, dotnet, node/angular, python")
         p.add_argument("--dry-run", action="store_true", help="Preview changes without modifying files")
+        p.add_argument("-y", "--yes", action="store_true", help="Skip interactive setup prompts and accept defaults")
+        p.add_argument("-i", "--interactive", action="store_true", help="Force interactive discovery and setup wizard")
+        p.add_argument("--no-import", action="store_true", help="Skip auto-importing legacy root AI instructions on first init")
 
     p_compose = sub.add_parser("compose", help="Re-compose inline instructions, toggles, prompts, and MCPs")
     p_compose.add_argument("target", nargs="?", default=".", help="Consumer repository directory (default: .)")
@@ -89,6 +95,12 @@ def main(argv: List[str] | None = None) -> int:
             cmd_args.append("--update")
         if args.dry_run:
             cmd_args.append("--dry-run")
+        if getattr(args, "yes", False):
+            cmd_args.append("--yes")
+        if getattr(args, "interactive", False):
+            cmd_args.append("--interactive")
+        if getattr(args, "no_import", False):
+            cmd_args.append("--no-import")
         return _run_script(framework_root / "scripts" / "bootstrap.py", cmd_args)
 
     if args.command == "compose":

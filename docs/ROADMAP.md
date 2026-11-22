@@ -35,10 +35,14 @@ flowchart LR
 - Granular `disabled.*` (`skills`, `agents`, `phases`, `gates`, `mechanisms`) and `customizations.*` (`overlayDir`, `promptInjectionMode`, `inlineMaxBytes`) controls.
 - Custom project skills (`consumer_custom_skill`), custom/appended agents (`consumer_custom_agent` with read-only reviewer enforcement), custom slash prompts (`consumer_custom_prompt`), custom MCP servers (`consumer_custom_mcp` with secret guards), curated skills `session-handoff` / `i-have-adhd` / `humanizer` (`33/33` total), PEP 517 `aief` package + version-bump auto-release GitHub Action (`.github/workflows/release-on-version-bump.yml`), first-run brownfield instruction auto-import (`.framework-custom/imported/`), Angular/VS Code JSONC support, `pnpm`/`yarn` preflight, and `84/84` automated tests.
 
-### `v0.5.0` — Isolated `.aief/` Layout & Brownfield Safety *(Current)*
+### `v0.5.0` — Isolated `.aief/` Layout & Brownfield Safety *(Released)*
 - Isolated consumer runtime under `.aief/` (`config.json`, `lock.json`, `state/`, `custom/`, `core/`, `agents/`, `skills/`, `workflows/`, `scripts/`) keeping consumer roots limited to native platform touchpoints.
 - Zero-collision brownfield validation scoped to `core/` and `optional/`, preserving pre-existing `skills/` and `.agents/rules/*.md`, plus Windows `MAX_PATH`-safe `bundle.zip` short-cache extraction (`86/86` automated checks).
 
-### `v0.6.0`+ — Ecosystem Distribution *(Planned)*
+### `v0.6.0` — Interactive Setup Wizard, Monorepo Speed & Sandbox Hardening *(Current)*
+- Interactive pre-flight discovery and legacy migration wizard in `aief init` (`copy` / `move` / `skip` / `delete` per legacy entry file, duplicate content detection, external skill/rule unification, plus `--yes`, `--interactive`, `--no-import`).
+- Pruned `os.walk` validation (`_iter_workspace_files`) for sub-second `pnpm` monorepo checks, nested `.vscode/*.json` JSONC support, `.aief/.gitignore` Python bytecode hygiene, and Windows sandbox-safe validation (`87/87` automated checks).
+
+### `v0.7.0`+ — Ecosystem Distribution *(Planned)*
 - Optional PyPI Trusted Publishing activation (`PYPI_PUBLISH_ENABLED=true`) and thin `npx` / `dotnet tool` wrappers above the canonical Python engine.
 - Helper commands (`aief bump`, `aief doctor`) and additional optional domain skill packs.

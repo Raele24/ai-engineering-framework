@@ -67,6 +67,8 @@ class TestM10CustomComposition(unittest.TestCase):
                 content = (target / Path(rel)).read_text(encoding="utf-8")
                 self.assertIn("USE STRICT POSTGRESQL MIGRATIONS", content, f"Missing inline custom in {rel}")
                 self.assertIn("ALL ENDPOINTS MUST VALIDATE JWT CLAIMS", content, f"Missing inline rule in {rel}")
+                self.assertIn("HARD GATE", content, f"Missing subagent HARD GATE in {rel}")
+                self.assertIn("conversationId", content, f"Missing conversationId audit rule in {rel}")
             for thin_rel in (
                 "GEMINI.md",
                 ".agents/rules/framework-core.md",
@@ -76,6 +78,9 @@ class TestM10CustomComposition(unittest.TestCase):
                 thin_txt = (target / Path(thin_rel)).read_text(encoding="utf-8")
                 self.assertIn("AGENTS.md", thin_txt, f"Missing AGENTS.md pointer in {thin_rel}")
                 self.assertNotIn("USE STRICT POSTGRESQL MIGRATIONS", thin_txt, f"Unexpected duplication in {thin_rel}")
+            fw_rule_txt = (target / ".agents" / "rules" / "framework-core.md").read_text(encoding="utf-8")
+            self.assertIn("code-reviewer", fw_rule_txt)
+            self.assertIn("conversationId", fw_rule_txt)
 
             passed, report, warnings, _ = validate.run_validation_full(
                 target, mode="consumer", home_dir=fake_home
@@ -229,9 +234,14 @@ class TestM10CustomComposition(unittest.TestCase):
             agents_md = (target / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn("TDD Requirement:** Disabled", agents_md)
             self.assertIn("Filesystem Handoffs:** Disabled", agents_md)
+            self.assertIn("Independent Code Review:** Disabled", agents_md)
+            self.assertNotIn("MUST run an independent `code-reviewer`", agents_md)
             self.assertNotIn("`Gate-02`", agents_md)
             self.assertNotIn("| `caveman` |", agents_md)
             self.assertNotIn("| `code-reviewer` |", agents_md)
+            fw_rule_disabled = (target / ".agents" / "rules" / "framework-core.md").read_text(encoding="utf-8")
+            self.assertIn("`code-reviewer` disabled", fw_rule_disabled)
+            self.assertNotIn("run an independent `code-reviewer`", fw_rule_disabled)
 
             passed, report, _, _ = validate.run_validation_full(
                 target, mode="consumer", home_dir=fake_home
@@ -844,6 +854,148 @@ class TestM10CustomComposition(unittest.TestCase):
             )
             self.assertTrue(passed, f"Brownfield isolated validation failed: {report}")
             self.assertEqual(warnings, [], f"Expected zero warnings, got: {warnings}")
+
+    def test_18_interactive_wizard_discovery_duplicates_and_actions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "wizard-brownfield"
+            fake_home = root / "isolated-home"
+            fake_home.mkdir()
+            target.mkdir()
+            (target / "package.json").write_text('{"name": "wizard-app"}\n', encoding="utf-8")
+
+            shared_rules = "# Product Domain Rules\nKeep domain model clean.\n"
+            (target / "AGENTS.md").write_text(shared_rules, encoding="utf-8")
+            (target / "CLAUDE.md").write_text("# Claude Legacy Rules\nCheck security.\n", encoding="utf-8")
+            (target / ".github").mkdir()
+            (target / ".github" / "copilot-instructions.md").write_text(shared_rules, encoding="utf-8")
+
+            ext_skill_dir = target / "skills" / "museum-api"
+            ext_skill_dir.mkdir(parents=True)
+            (ext_skill_dir / "SKILL.md").write_text(
+                "---\nname: museum-api\ndescription: Museum domain API rules\n---\n\n# Museum API\n",
+                encoding="utf-8",
+            )
+            ext_rules_dir = target / ".agents" / "rules"
+            ext_rules_dir.mkdir(parents=True)
+            (ext_rules_dir / "ascii-only.md").write_text("# ASCII Rule\nUse ASCII in new files.\n", encoding="utf-8")
+
+            ctx = bootstrap.discover_workspace_context(target)
+            legacy_map = {item["rel"]: item for item in ctx["legacy_instructions"]}  # type: ignore[index]
+            self.assertEqual(legacy_map[".github/copilot-instructions.md"]["duplicate_of"], "AGENTS.md")
+            self.assertIsNone(legacy_map["CLAUDE.md"]["duplicate_of"])
+
+            answers = iter([
+                "1,5",     # platforms: antigravity, gemini-cli
+                "1,2,4",   # packs: communication, context-engineering, frontend-design
+                "1",       # AGENTS.md -> copy
+                "2",       # CLAUDE.md -> move to .aief/custom/rules/ and remove old
+                "project-guidelines",  # custom rule filename for moved CLAUDE.md
+                "4",       # .github/copilot-instructions.md -> delete duplicate
+                "2",       # external skills -> copy into .aief/custom/skills/
+                "2",       # external .agents/rules/ -> move into .aief/custom/rules/
+                "y",       # confirm
+            ])
+            logs: list[str] = []
+            wiz = bootstrap.run_interactive_init_wizard(
+                target,
+                input_fn=lambda _prompt: next(answers),
+                output_fn=logs.append,
+            )
+            self.assertIsNotNone(wiz)
+            assert wiz is not None
+            self.assertEqual(wiz["platforms"], ["antigravity", "gemini-cli"])
+            self.assertEqual(
+                wiz["optional_packs"],
+                ["communication", "context-engineering", "frontend-design"],
+            )
+            self.assertEqual(wiz["legacy_actions"]["CLAUDE.md"], "move")
+            self.assertEqual(wiz["legacy_move_names"]["CLAUDE.md"], "project-guidelines.md")
+            self.assertEqual(wiz["legacy_actions"][".github/copilot-instructions.md"], "delete")
+            self.assertTrue(any("DUPLICATE CONTENT" in line for line in logs), logs)
+
+            res = bootstrap.bootstrap_project(
+                target_dir=target,
+                platforms=list(wiz["platforms"]),
+                optional_packs=list(wiz["optional_packs"]),
+                stacks=bootstrap.detect_project_stacks(target),
+                legacy_actions=dict(wiz["legacy_actions"]),
+                legacy_move_names=dict(wiz["legacy_move_names"]),
+                unify_external_skills=bool(wiz["unify_external_skills"]),
+                move_external_rules=bool(wiz["move_external_rules"]),
+            )
+
+            self.assertFalse((target / "CLAUDE.md").exists())
+            self.assertFalse((target / ".github" / "copilot-instructions.md").exists())
+            self.assertFalse((target / ".agents" / "rules" / "ascii-only.md").exists())
+            self.assertTrue((target / ".aief" / "custom" / "imported" / "AGENTS.md").exists())
+            self.assertTrue((target / ".aief" / "custom" / "rules" / "project-guidelines.md").exists())
+            self.assertTrue((target / ".aief" / "custom" / "rules" / "ascii-only.md").exists())
+            self.assertTrue((target / ".agents" / "skills" / "museum-api" / "SKILL.md").exists())
+            self.assertIn(".github/copilot-instructions.md", res["deleted_legacy"])
+            self.assertTrue(any("CLAUDE.md" in m for m in res["moved"]), res["moved"])
+
+            agents_txt = (target / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn("Check security.", agents_txt)
+            self.assertIn("Use ASCII in new files.", agents_txt)
+            self.assertIn("museum-api", agents_txt)
+
+            passed, report, warnings, _ = validate.run_validation_full(
+                target, mode="consumer", home_dir=fake_home
+            )
+            self.assertTrue(passed, f"Wizard brownfield validation failed: {report}")
+            self.assertEqual(warnings, [], f"Expected zero warnings, got: {warnings}")
+
+            # --no-import flag skips legacy instruction import in non-interactive mode
+            target_no_imp = root / "no-import-app"
+            target_no_imp.mkdir()
+            (target_no_imp / ".github").mkdir()
+            (target_no_imp / ".github" / "copilot-instructions.md").write_text("# Old\n", encoding="utf-8")
+            res_no_imp = bootstrap.bootstrap_project(
+                target_dir=target_no_imp,
+                platforms=["antigravity"],
+                optional_packs=[],
+                no_import=True,
+            )
+            self.assertEqual(res_no_imp["imported"], [])
+            self.assertIn(".github/copilot-instructions.md", res_no_imp["skipped_legacy"])
+            self.assertFalse((target_no_imp / ".aief" / "custom" / "imported" / "copilot-instructions.md").exists())
+
+            # Arrow-key TUI mode (UP/DOWN/SPACE/ALL/ENTER) drives multi-select and single-select identically
+            import io
+            buf = io.StringIO()
+            with mock.patch("sys.stdout", buf):
+                # Toggle off item 1 (a -> none, then space selects 1=antigravity, DOWNx4, space selects 5=gemini-cli, ENTER)
+                keys = iter(["ALL", "SPACE", "DOWN", "DOWN", "DOWN", "DOWN", "SPACE", "ENTER"])
+                picked_tui = bootstrap._tui_multiselect(
+                    "Target platforms",
+                    list(bootstrap.ALL_PLATFORMS),
+                    preselected=set(bootstrap.ALL_PLATFORMS),
+                    min_selected=1,
+                    key_fn=lambda: next(keys),
+                    stream=buf,
+                )
+                self.assertEqual(picked_tui, ["antigravity", "gemini-cli"])
+
+                keys_sel = iter(["DOWN", "ENTER"])
+                picked_action = bootstrap._tui_select(
+                    "Legacy action",
+                    [("copy", "Copy"), ("move", "Move"), ("skip", "Skip")],
+                    default_index=0,
+                    key_fn=lambda: next(keys_sel),
+                    stream=buf,
+                )
+                self.assertEqual(picked_action, "move")
+
+                keys_esc = iter(["ESC"])
+                self.assertIsNone(
+                    bootstrap._tui_select(
+                        "Cancel check",
+                        [("a", "A")],
+                        key_fn=lambda: next(keys_esc),
+                        stream=buf,
+                    )
+                )
 
 
 if __name__ == "__main__":

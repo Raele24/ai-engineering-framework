@@ -5,7 +5,19 @@ The format follows [Semantic Versioning 2.0.0](https://semver.org/) ([`docs/CONT
 
 ---
 
-## [0.5.0] - 2026-11-20 (Local Working Tree — Pending `Gate-04`)
+## [0.6.0] - 2026-11-22 (Pending `Gate-04`)
+
+### Added
+- **Interactive Arrow-Key TUI Discovery & Migration Wizard (`scripts/bootstrap.py`, `aief_cli/cli.py`):** On interactive TTY fresh installs (`aief init`), performs read-only discovery before writing files, detects identical/duplicate legacy entry files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`), provides a `↑`/`↓`/`Space`/`a`/`Enter`/`Esc` multi-select/select TUI (with clean `Ctrl+C`/`Esc` abort and ASCII fallback on non-TTY pipes) for target platforms, optional skill packs, per-file legacy migration actions (`copy`, `move` to `.aief/custom/rules/` with optional custom rule filename & old-file cleanup, `skip`, or `delete`), and external skill/rule unification, then outputs an explicit action receipt. Added `--yes` (`-y`), `--interactive` (`-i`), and `--no-import` CLI flags (`test_18_interactive_wizard_discovery_duplicates_and_actions`).
+
+### Fixed
+- **Sub-Second Monorepo `pnpm` Validation (`scripts/validate.py`):** Replaced full-tree `Path.rglob()` scans in `check_json_files` and `check_secrets` with `_iter_workspace_files()` using `os.walk` directory pruning (`node_modules/`, `.git/`, `.angular/`, `dist/`, `.venv/`), cutting validation on large `pnpm` / Angular workspaces from minutes to `<1s`.
+- **`.aief/.gitignore` Python Bytecode Hygiene & Nested Monorepo JSONC:** Added `__pycache__/` and `*.py[cod]` to `.aief/.gitignore` (auto-upgrading unmodified defaults on `aief update`) and enabled nested `.vscode/*.json` / `.devcontainer/*.json` JSONC support (`apps/web/.vscode/*.json`).
+- **Sandbox-Safe Consumer Validation & Mandatory Subagent Gate:** Handled host-sandbox `PermissionError` (`[WinError 5]`) cleanly in `inspect_host_global_skill_visibility()`, added Windows sandbox fallback to `graphify`, and enforced a non-skippable `HARD GATE` on `>=3` modified/created files or `>=2` layers across `AGENTS.md`, `CLAUDE.md`, `.agents/rules/framework-core.md`, `adapters/antigravity/rules/framework-core.md`, `docs/WORKFLOW.md`, `workflows/04-tdd-and-implementation.md`, and `workflows/05-review-qa-and-security.md` (requiring layer delegation via `invoke_subagent`/`define_subagent` and independent `code-reviewer` execution reporting each `conversationId` + verdict when review is enabled).
+
+---
+
+## [0.5.0] - 2026-11-20
 
 ### Added
 - **Isolated Consumer Layout (`.aief/`):** New consumer installations isolate all framework-managed runtime assets inside `.aief/` (`config.json`, `lock.json`, `state/`, `custom/`, `core/`, `agents/`, `skills/registry.json`, `workflows/`, `templates/`, `quality/`, `security/`, `scripts/`, `adapters/antigravity/`, `.aief/.gitignore`, `.aief/ENVIRONMENT_PREFLIGHT.md`, `.aief/gitignore.recommended`). Skill directories live solely in native platform paths (`.agents/skills/` and `.claude/skills/`) without duplicating skill files under `.aief/skills/`.
