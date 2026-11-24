@@ -60,7 +60,7 @@ flowchart TB
 
 ## Supported Platforms
 
-All **5 platforms** ship complete inline entry files, adapters, native skill projections, custom prompts/MCP support, and schema contracts (`87/87` automated checks green):
+All **5 platforms** ship complete inline entry files, adapters, native skill projections, custom prompts/MCP support, and schema contracts (`88/88` automated checks green):
 
 | Platform | Entry Point | Adapter & Projection Layout | Status |
 | :--- | :--- | :--- | :---: |
@@ -130,7 +130,7 @@ python scripts/sync_adapters.py --check
 | [`aief_cli/`](./aief_cli/) | Tier 1 | Packaged `aief` CLI entrypoint (`init`, `update`, `compose`, `validate`, `preflight`, `check-sync`) and bundled assets |
 | [`scripts/`](./scripts/) | Tier 1 | Pure-stdlib Python CLIs (`bootstrap.py`, `compose.py`, `validate.py`, `sync_adapters.py`, `preflight.py`, `platform_capabilities.py`, `readiness.py`, `run_tests.py`) |
 | [`docs/`](./docs/) | Tier 1 | Complete documentation suite (Architecture, Workflow, Getting Started, Consumer Usage Guide, Installation, Security, Roadmap) |
-| [`tests/`](./tests/) | Tier 1 | Automated 6-tier offline regression suite (`87` stdlib tests via `scripts/run_tests.py`) |
+| [`tests/`](./tests/) | Tier 1 | Automated 6-tier offline regression suite (`88` stdlib tests via `scripts/run_tests.py`) |
 
 ---
 

@@ -18,6 +18,9 @@ The format follows [Semantic Versioning 2.0.0](https://semver.org/) ([`docs/CONT
   - Extended `core/schemas/skill-frontmatter.schema.json` with `backend-engineering` (`category`) and `optional-backend` (`tier`), and added optional `backendDotnet` to `core/schemas/framework-config.schema.json` (preserving compatibility with `v0.3.x`–`v0.6.x` configs lacking `backendDotnet`).
   - Updated `scripts/bootstrap.py` (`dotnet` alias and interactive TUI wizard pack index `6` for `backend-dotnet`), `scripts/compose.py`, `scripts/validate.py`, synced platform adapters (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.agents/skills.json`, etc.), and automated tests.
 
+### Fixed
+- **Consumer Validation for `.NET`/App JSON Configs & Disabled-Skill Workflow Links (`scripts/validate.py`, `test_19`):** Scoped `check_json_files(..., mode="consumer")` to framework, platform, and root build/IDE configuration JSON files (with UTF-8 BOM `utf-8-sig` decoding), avoiding false positives on `.NET` `appsettings*.json` JSONC files or test fixtures; skipped broken-link errors in `.aief/workflows/` and `.aief/agents/` when targeting skills explicitly disabled in `disabled.skills` (`88/88` automated tests passing).
+
 ---
 
 ## [0.6.0] - 2026-11-22

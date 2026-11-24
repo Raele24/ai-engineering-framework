@@ -1009,6 +1009,74 @@ class TestM10CustomComposition(unittest.TestCase):
                     )
                 )
 
+    def test_19_consumer_validation_ignores_app_json_and_disabled_skill_workflow_links(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "onedoc-like"
+            fake_home = root / "isolated-home"
+            fake_home.mkdir()
+            target.mkdir()
+            (target / "OneDoc.sln").write_text("", encoding="utf-8")
+            (target / "package.json").write_text('{"name": "onedoc-web"}\n', encoding="utf-8")
+
+            # Application JSONC (with UTF-8 BOM, comments, trailing commas) and test fixture JSON
+            app_cfg_dir = target / "Backend" / "Api"
+            app_cfg_dir.mkdir(parents=True)
+            (app_cfg_dir / "appsettings.Development.json").write_bytes(
+                b"\xef\xbb\xbf{\n  // ASP.NET dev settings\n  \"Logging\": { \"LogLevel\": \"Information\", }\n}\n"
+            )
+            fixture_dir = target / "Backend" / "Tests" / "Fixtures"
+            fixture_dir.mkdir(parents=True)
+            (fixture_dir / "malformed-payload.json").write_text("{not valid json", encoding="utf-8")
+
+            bootstrap.bootstrap_project(
+                target_dir=target,
+                platforms=ALL_PLATFORMS,
+                optional_packs=["all"],
+                stacks=["dotnet", "node-angular"],
+            )
+
+            cfg_path = target / ".aief" / "config.json"
+            cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+            cfg["disabled"] = {
+                "skills": ["tdd-cycle"],
+                "agents": ["qa-engineer"],
+                "phases": [11],
+                "gates": [],
+                "mechanisms": ["tdd"],
+            }
+            cfg["qualityGates"]["requireTddRedGreen"] = False
+            cfg_path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+
+            res = compose.compose_consumer(target)
+            self.assertIn(".agents/skills/tdd-cycle/SKILL.md", res["pruned"])
+
+            passed, report, _, _ = validate.run_validation_full(target, mode="consumer", home_dir=fake_home)
+            self.assertTrue(passed, f"Expected consumer validation pass with disabled tdd-cycle and app JSONs: {report}")
+
+            # Framework/platform JSON, nested IDE JSONC, and broken non-disabled skill links must still fail
+            bad_mcp = target / ".mcp.json"
+            bad_mcp.write_text("{broken json", encoding="utf-8")
+            nested_vscode = target / "apps" / "web" / ".vscode"
+            nested_vscode.mkdir(parents=True)
+            (nested_vscode / "broken.json").write_text("{not valid jsonc", encoding="utf-8")
+            wf_path = target / ".aief" / "workflows" / "04-tdd-and-implementation.md"
+            wf_path.write_text(
+                wf_path.read_text(encoding="utf-8") + "\nSee [missing](../../.agents/skills/nonexistent-skill/SKILL.md)\n",
+                encoding="utf-8",
+            )
+            passed_bad, report_bad, _, _ = validate.run_validation_full(target, mode="consumer", home_dir=fake_home)
+            self.assertFalse(passed_bad)
+            self.assertTrue(any(".mcp.json" in e for e in report_bad["json_syntax"]), report_bad["json_syntax"])
+            self.assertTrue(
+                any("apps/web/.vscode/broken.json" in e for e in report_bad["json_syntax"]),
+                report_bad["json_syntax"],
+            )
+            self.assertTrue(
+                any("nonexistent-skill/SKILL.md" in e for e in report_bad["markdown_links"]),
+                report_bad["markdown_links"],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

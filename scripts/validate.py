@@ -918,12 +918,49 @@ def _iter_workspace_files(root: Path, suffix: str | None = None) -> Iterator[Pat
             yield dir_p / fn
 
 
-def check_json_files(root: Path) -> List[str]:
+def _is_consumer_managed_or_config_json(rel_path: str, lp: Dict[str, str]) -> bool:
+    """Return True if a consumer JSON file belongs to framework, platform, or workspace IDE/TS config."""
+    norm = rel_path.replace("\\", "/")
+    parts = [p for p in norm.split("/") if p]
+    if not parts:
+        return False
+    if _is_jsonc_config(norm):
+        return True
+    if parts[0] in {".aief", ".agents", ".claude", ".github", ".gemini", ".vscode", ".devcontainer", ".framework-state"}:
+        return True
+    managed_prefixes = (
+        f"{lp['core_rel']}/",
+        f"{lp['overlay_rel']}/",
+        f"{lp['state_rel']}/",
+    )
+    if norm.startswith(managed_prefixes) or (lp["mode"] == "legacy" and norm.startswith("adapters/")):
+        return True
+    if norm in {
+        lp["config_rel"],
+        lp["lock_rel"],
+        lp["hooks_rel"],
+        f"{lp['skills_rel']}/registry.json",
+        "project.framework.json",
+        ".framework-lock.json",
+        ".mcp.json",
+        "docs/plans/07-task-backlog.json",
+    }:
+        return True
+    return len(parts) == 1 and parts[0] in {"package.json", "angular.json"}
+
+
+def check_json_files(root: Path, mode: str = "auto") -> List[str]:
     errors: List[str] = []
+    effective_mode = detect_validation_mode(root) if mode == "auto" else mode
+    lp = resolve_consumer_layout_paths(root) if effective_mode == "consumer" else None
+    read_encoding = "utf-8-sig" if effective_mode == "consumer" else "utf-8"
+
     for json_path in _iter_workspace_files(root, suffix=".json"):
         rel = json_path.relative_to(root).as_posix()
+        if lp is not None and not _is_consumer_managed_or_config_json(rel, lp):
+            continue
         try:
-            raw = json_path.read_text(encoding="utf-8")
+            raw = json_path.read_text(encoding=read_encoding)
             text = _strip_jsonc(raw) if _is_jsonc_config(rel) else raw
             json.loads(text)
         except Exception as exc:
@@ -1517,6 +1554,17 @@ def check_markdown_links(root: Path, mode: str = "auto") -> List[str]:
         if sub_dir.exists():
             md_files.extend(sorted(sub_dir.rglob("*.md")))
 
+    disabled_skills: Set[str] = set()
+    if effective_mode == "consumer":
+        controls, _, _ = _load_consumer_overlay_controls(root)
+        disabled_ctrl = controls.get("disabled", {})
+        if isinstance(disabled_ctrl, dict):
+            disabled_skills = set(str(s) for s in disabled_ctrl.get("skills", set()))
+
+    disabled_skill_target_re = re.compile(
+        r"^(?:\.agents/skills/|\.claude/skills/|\.aief/skills/(?:core|optional/[^/]+)/|skills/(?:core|optional/[^/]+)/)([^/]+)/"
+    )
+
     seen: Set[Path] = set()
     for md_path in md_files:
         if not md_path.exists() or md_path in seen:
@@ -1546,6 +1594,11 @@ def check_markdown_links(root: Path, mode: str = "auto") -> List[str]:
                     f"{rel_source}: Relative link escapes repository root -> '{target_raw}'"
                 )
             elif not resolved.exists():
+                if disabled_skills and rel_source.startswith((".aief/workflows/", "workflows/", ".aief/agents/", "agents/")):
+                    rel_target = resolved.relative_to(root_resolved).as_posix()
+                    m_disabled = disabled_skill_target_re.match(rel_target)
+                    if m_disabled and m_disabled.group(1) in disabled_skills:
+                        continue
                 errors.append(f"{rel_source}: Broken relative link -> '{target_raw}'")
     return errors
 
@@ -1586,7 +1639,7 @@ def run_validation_full(
     info: List[str] = []
     report: Dict[str, List[str]] = {
         "required_files": check_required_files(root, mode=effective_mode),
-        "json_syntax": check_json_files(root),
+        "json_syntax": check_json_files(root, mode=effective_mode),
         "agents_frontmatter": check_agents_frontmatter(root, mode=effective_mode),
         "skills_and_registry": check_skills_and_registry(root, mode=effective_mode),
         "adapter_sync": check_adapter_sync(root, mode=effective_mode, warnings=warnings),

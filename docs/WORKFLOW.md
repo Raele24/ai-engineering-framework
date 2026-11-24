@@ -361,7 +361,7 @@ Every phase handoff packet in `.aief/state/handoffs/phase-<NN>-handoff.json` (le
 - **Entry Criteria:** Phases 10, 11, and 12 all report `PASS` (no `CRITICAL` or `HIGH` findings, and no `NOT_RUN`/`BLOCKED` checks mislabeled as `PASS`).
 - **Exit Criteria:** Local validation script (`python scripts/validate.py --mode auto`) exits `0`, Git working tree is clean, and approved release artifacts are published.
 - **Quality Gates:**
-  - Inside consumer projects: `python scripts/validate.py --mode consumer` exits `0`. Inside the upstream framework repo: `python scripts/sync_adapters.py --check`, `python scripts/validate.py --mode framework`, and `python scripts/run_tests.py --fail-on-skip` pass (`87/87` tests, 0 errors).
+  - Inside consumer projects: `python scripts/validate.py --mode consumer` exits `0`. Inside the upstream framework repo: `python scripts/sync_adapters.py --check`, `python scripts/validate.py --mode framework`, and `python scripts/run_tests.py --fail-on-skip` pass (`88/88` tests, 0 errors).
   - Note: Phase 11 live E2E startup verification should derive endpoints from config and poll via `scripts/readiness.py` under PowerShell `5.1`-safe commands (see [`workflows/05-review-qa-and-security.md`](../workflows/05-review-qa-and-security.md)).
   - Rollback procedure is documented before deployment executes.
 - **Human Approval Requirements:** **Mandatory (`Gate-04: Release & Publish Approval`)** before pushing commits/tags to remote GitHub repositories, creating public releases, or deploying to staging/production environments.

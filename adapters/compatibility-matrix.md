@@ -36,7 +36,7 @@
    - *Design Note:* Some CLI runtimes scan host-global directories (`$HOME/.agents/skills/`, `$HOME/.gemini/config/skills/`, `$HOME/.claude/skills/`, `$HOME/.codex/skills/`) alongside workspace skill directories.
    - *Boundary:* `scripts/validate.py --mode consumer` enforces lockfile-backed workspace boundaries inside `.agents/skills/` and `.claude/skills/` (`ERROR`/`WARNING`) and reports host-global skill folders as `INFO` only without touching user-global files.
 5. **Current Compatibility Summary (`v0.7.0`):**
-   - **All 5 Platforms (Adapter & Schema Level):** Full inline entry composition (`.aief/scripts/compose.py`), native skill projection (`.agents/skills/` and `.claude/skills/`), read-only reviewer enforcement, and schema contracts are **`SUPPORTED & CONTRACT_VALIDATED`** (`87/87` automated offline tests).
+   - **All 5 Platforms (Adapter & Schema Level):** Full inline entry composition (`.aief/scripts/compose.py`), native skill projection (`.agents/skills/` and `.claude/skills/`), read-only reviewer enforcement, and schema contracts are **`SUPPORTED & CONTRACT_VALIDATED`** (`88/88` automated offline tests).
 
 ---
 
