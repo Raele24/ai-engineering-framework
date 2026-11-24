@@ -9,7 +9,7 @@
 ## Step 1: Load Clean Context
 1. Read `docs/specs/03-specification.md`, `docs/adr/ADR-*.md`, and the assigned task in `docs/plans/07-task-backlog.json`.
 2. Load [`skills/core/tdd-cycle/SKILL.md`](../skills/core/tdd-cycle/SKILL.md) and any assigned domain skills (e.g., `web-design-guidelines`).
-3. **Subagent Delegation (HARD GATE on `>=3` files or `>=2` architectural layers):** NEVER author all layers in the parent turn. Spawn a dedicated specialist subagent per disjoint layer (`TypeName="self"` loading its `agents/<role>.md`, or `.claude/agents/` / `.github/agents/`) with explicit `target_files`, and record its `conversationId` in `.framework-state/handoffs/phase-09-handoff.json`.
+3. **Subagent Delegation (HARD GATE on `>=3` files or `>=2` architectural layers):** NEVER author all layers in the parent turn. Spawn a dedicated specialist subagent per disjoint layer—loading `agents/<role>.md` via the platform's subagent mechanism (`invoke_subagent` on Antigravity, `runSubagent` / `.github/agents/<role>.agent.md` on Copilot, `Agent` / `.claude/agents/` on Claude Code, `spawn_agent` on Codex)—with explicit `target_files`, and record its subagent ID/reference in `.framework-state/handoffs/phase-09-handoff.json`.
 
 ## Step 2: Execute Red-Green-Refactor Loop
 For each atomic task:

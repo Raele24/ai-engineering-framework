@@ -1097,6 +1097,57 @@ class TestM10CustomComposition(unittest.TestCase):
             self.assertIn(".aief/custom/", copilot_txt)
             self.assertIn("never edit `.agents/skills/`", copilot_txt.lower())
 
+    def test_21_copilot_only_independent_code_review_and_no_antigravity_leak(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "copilot-only-app"
+            fake_home = root / "isolated-home"
+            fake_home.mkdir()
+
+            bootstrap.bootstrap_project(
+                target_dir=target,
+                platforms=["copilot"],
+                optional_packs=[],
+            )
+
+            agents_txt = (target / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn("Independent Code Review (HARD GATE)", agents_txt)
+            self.assertIn("regardless of file count", agents_txt)
+            self.assertIn(".github/agents/code-reviewer.agent.md", agents_txt)
+            self.assertIn("runSubagent", agents_txt)
+            self.assertIn(".github/agents/", agents_txt)
+            for agy_token in ("invoke_subagent", "define_subagent", "TypeName=", "conversationId"):
+                self.assertNotIn(agy_token, agents_txt, f"Unexpected Antigravity leak '{agy_token}' in AGENTS.md")
+
+            copilot_txt = (target / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
+            self.assertIn("code-reviewer", copilot_txt)
+            self.assertIn(".github/agents/code-reviewer.agent.md", copilot_txt)
+            self.assertIn("runSubagent", copilot_txt)
+            self.assertIn("regardless of file count", copilot_txt)
+            self.assertNotIn("conversationId", copilot_txt)
+            self.assertNotIn("invoke_subagent", copilot_txt)
+
+            # Verify disabling code-reviewer removes the mandatory instruction cleanly
+            cfg_path = target / ".aief" / "config.json"
+            cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+            cfg.setdefault("disabled", {})["agents"] = ["code-reviewer"]
+            cfg_path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+            compose.compose_consumer(target)
+
+            agents_disabled = (target / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn("Independent Code Review:** Disabled", agents_disabled)
+            self.assertNotIn("MUST run an independent", agents_disabled)
+            self.assertNotIn("conversationId", agents_disabled)
+
+            copilot_disabled = (target / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
+            self.assertIn("Independent Code Review:** Disabled", copilot_disabled)
+            self.assertNotIn("runSubagent", copilot_disabled)
+
+            passed, report, _, _ = validate.run_validation_full(
+                target, mode="consumer", home_dir=fake_home
+            )
+            self.assertTrue(passed, report)
+
 
 if __name__ == "__main__":
     unittest.main()

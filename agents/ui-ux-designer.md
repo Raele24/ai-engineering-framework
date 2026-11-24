@@ -20,7 +20,7 @@ approval_gates: [Gate-02]
 ## 2. Allowed Activities
 - Auditing brand identity, design tokens, component libraries, and accessibility contrast/keyboard navigation.
 - Writing `docs/design/05-design-spec.md`, UX review checklists, and visual inspection notes.
-- Invoking `browser` verification subagents during `Phase 11` visual checks.
+- Running browser verification via `agent-browser` (Playwright MCP or `browser` subagent on Antigravity) during `Phase 11` visual checks.
 
 ## 3. Expected Inputs
 - Approved `docs/specs/03-specification.md` and `phase-03-handoff.json`.

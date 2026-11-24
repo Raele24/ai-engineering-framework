@@ -34,7 +34,7 @@ approval_gates: [Gate-02]
 - `.framework-state/handoffs/phase-05-handoff.json`
 
 ## 5. Delegation Rules
-- May delegate broad documentation/library lookups to the `research` subagent.
+- May delegate broad documentation/library lookups to an isolated read-only research/exploration subagent (e.g., `research` / `Explore` / read-only search).
 - Hands off to `planner-orchestrator` once `Gate-02` (Architecture & ADR Approval) is satisfied.
 
 ## 6. Restrictions

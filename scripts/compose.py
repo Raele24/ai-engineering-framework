@@ -145,6 +145,7 @@ VALID_GATES: Tuple[str, ...] = (
     "Gate-05",
 )
 VALID_MECHANISMS: Set[str] = {"tdd", "handoffs", "graphify", "code-review"}
+ALL_PLATFORMS: Tuple[str, ...] = ("antigravity", "copilot", "claude-code", "codex", "gemini-cli")
 
 FENCED_CODE_RE = re.compile(r"```.*?```", re.DOTALL)
 INLINE_CODE_RE = re.compile(r"`[^`\n]+`")
@@ -974,6 +975,7 @@ def _render_inline_rules_bullets(
     state_rel: str = ISOLATED_STATE_REL,
     validate_cmd: str = "python .aief/scripts/validate.py --mode consumer",
     active_skill_names: Set[str] | None = None,
+    enabled_platforms: List[str] | None = None,
 ) -> List[str]:
     disabled_mechs: Set[str] = disabled["mechanisms"]  # type: ignore[assignment]
     disabled_phases: Set[int] = disabled["phases"]  # type: ignore[assignment]
@@ -981,6 +983,12 @@ def _render_inline_rules_bullets(
     disabled_agents: Set[str] = disabled.get("agents", set())  # type: ignore[assignment]
     fw_link_base = f"{prefix_rel}/{fw_prefix.rstrip('/')}" if fw_prefix else prefix_rel
     skills_set = active_skill_names or set()
+    plat_set = {p.lower() for p in (enabled_platforms or ALL_PLATFORMS)}
+    has_agy = "antigravity" in plat_set
+    has_copilot = "copilot" in plat_set
+    has_claude = "claude-code" in plat_set
+    has_codex = "codex" in plat_set
+    has_gemini = "gemini-cli" in plat_set
 
     bullets = [f"- **Workflow Profile:** `{profile}`"]
     if 2 not in disabled_phases and 3 not in disabled_phases:
@@ -1021,8 +1029,52 @@ def _render_inline_rules_bullets(
         and ("code-reviewer" not in disabled_agents)
     )
     qa_enabled = (11 not in disabled_phases) and ("qa-engineer" not in disabled_agents)
+
+    review_mechs: List[str] = []
+    layer_mechs: List[str] = []
+    if has_agy:
+        review_mechs.append(
+            f"`invoke_subagent` (`TypeName=\"self\"` or `\"research\"`, reading `{fw_prefix}agents/code-reviewer.md`)"
+        )
+        layer_mechs.append(
+            f"`invoke_subagent`/`define_subagent` (`TypeName=\"self\"`, reading `{fw_prefix}agents/<role>.md`)"
+        )
+    if has_claude:
+        review_mechs.append("`Agent` tool / `.claude/agents/framework-code-reviewer.md`")
+        layer_mechs.append("`Agent` tool / `.claude/agents/framework-<role>.md`")
+    if has_copilot:
+        review_mechs.append("Copilot `runSubagent` / `.github/agents/code-reviewer.agent.md`")
+        layer_mechs.append("Copilot `runSubagent` / `.github/agents/<role>.agent.md`")
+    if has_codex:
+        review_mechs.append("`spawn_agent` / `.codex/` role prompts")
+        layer_mechs.append("`spawn_agent` / `.codex/` role prompts")
+    if not review_mechs and has_gemini:
+        review_mechs.append("a fresh subagent / review session if supported")
+        layer_mechs.append("a fresh subagent / isolated session if supported")
+    if not review_mechs:
+        review_mechs.append(f"`{fw_prefix}agents/code-reviewer.md`")
+        layer_mechs.append(f"`{fw_prefix}agents/<role>.md`")
+
+    review_mech_clause = " or ".join(review_mechs)
+    layer_mech_clause = " or ".join(layer_mechs)
+    review_report_clause = (
+        "its `conversationId` and verdict" if has_agy else "the subagent verdict"
+    )
+    layer_report_clause = (
+        "each delegated subagent's `conversationId` and status"
+        if has_agy
+        else "each delegated subagent's verdict/status"
+    )
+
     if review_enabled:
-        bullets.append("- **Independent Code Review:** Evaluate git diff against specs and quality rubrics before release.")
+        qa_clause = " (plus `qa-engineer` for UI/behavior changes)" if qa_enabled else ""
+        bullets.append(
+            "- **Independent Code Review (HARD GATE):** "
+            "On EVERY code, UI, or configuration change (even 1-file changes, regardless of file count), "
+            f"BEFORE the final answer, MUST run an independent read-only `code-reviewer` subagent{qa_clause} "
+            f"via {review_mech_clause} to evaluate the git diff against specs and quality rubrics, "
+            f"and report {review_report_clause}."
+        )
     else:
         bullets.append(f"- **Independent Code Review:** Disabled by `{config_rel}` (`code-review` / Phase 10 / `code-reviewer`).")
 
@@ -1035,27 +1087,11 @@ def _render_inline_rules_bullets(
         if r not in disabled_agents
     ]
     roles_clause = ", ".join(f"`{r}`" for r in specialist_roles) or "`implementation-engineer`"
-    verify_parts: List[str] = []
-    if review_enabled:
-        verify_parts.append("an independent `code-reviewer` subagent (`TypeName=\"self\"` or `\"research\"`, read-only diff review)")
-    if qa_enabled:
-        verify_parts.append("`qa-engineer` (for UI/behavior changes)")
-    if verify_parts:
-        verify_clause = (
-            f"BEFORE final answer, MUST run {' + '.join(verify_parts)} "
-            "and report each subagent's `conversationId` and verdict."
-        )
-    else:
-        verify_clause = (
-            f"Independent `code-reviewer` gate disabled by `{config_rel}`; "
-            "report each delegated implementation subagent's `conversationId` and status."
-        )
 
     bullets.append(
         "- **Subagent-First Delegation (HARD GATE on `>=3` modified/created files or `>=2` layers):** "
-        "NEVER implement or self-review all files in one session. Delegate each disjoint layer "
-        f"({roles_clause}) via `invoke_subagent`/`define_subagent` (`TypeName=\"self\"`, reading `{fw_prefix}agents/<role>.md`) "
-        f"or `.claude/agents/` / `.github/agents/`; {verify_clause}"
+        "NEVER implement all disjoint layers in one session. Delegate each disjoint implementation layer "
+        f"({roles_clause}) via {layer_mech_clause}, and report {layer_report_clause}."
     )
 
     active_gates = _active_gates(disabled_gates)
@@ -1349,8 +1385,18 @@ def compose_consumer_artifacts(
             state_rel=state_rel,
             validate_cmd=validate_cmd,
             active_skill_names=active_skill_names,
+            enabled_platforms=platforms,
         )
     )
+    plat_set = {p.lower() for p in platforms}
+    never_edit_dirs: List[str] = []
+    if ".agents/skills" in root_to_platforms or (plat_set & {"antigravity", "copilot", "codex", "gemini-cli"}):
+        never_edit_dirs.append("`.agents/skills/`")
+    if "claude-code" in plat_set:
+        never_edit_dirs.extend(["`.claude/skills/`", "`.claude/agents/`"])
+    if "copilot" in plat_set:
+        never_edit_dirs.append("`.github/agents/`")
+    never_edit_str = ", ".join(never_edit_dirs) if never_edit_dirs else "`.agents/skills/`"
     agents_md_text = (
         f"<!-- AUTO-GENERATED CONSUMER ADAPTER | Canonical Digest: {resolved_digest} -->\n"
         "# AI Engineering Framework — Universal Agent Instructions (`AGENTS.md`)\n\n"
@@ -1358,7 +1404,7 @@ def compose_consumer_artifacts(
         "Follow these active instructions automatically without requiring per-turn file reminders.\n\n"
         "## 1. Active Engineering Rules & Gates\n"
         f"{root_rules}\n"
-        f"- **Self-Maintained Customizations:** Add project rules in `{overlay_rel_eff}/rules/*.md`, custom skills in `{overlay_rel_eff}/skills/<name>/SKILL.md`, custom/appended agents in `{overlay_rel_eff}/agents/`, slash prompts in `{overlay_rel_eff}/prompts/*.md`, and MCP servers in `{overlay_rel_eff}/mcp.json` (NEVER edit generated `.agents/skills/` or `.claude/skills/` directly); whenever `{overlay_rel_eff}/` or `{config_rel}` changes, "
+        f"- **Self-Maintained Customizations:** Add project rules in `{overlay_rel_eff}/rules/*.md`, custom skills in `{overlay_rel_eff}/skills/<name>/SKILL.md`, custom/appended agents in `{overlay_rel_eff}/agents/`, slash prompts in `{overlay_rel_eff}/prompts/*.md`, and MCP servers in `{overlay_rel_eff}/mcp.json` (NEVER edit generated {never_edit_str} directly); whenever `{overlay_rel_eff}/` or `{config_rel}` changes, "
         f"automatically run `{compose_cmd}` (which re-composes and validates consumer integrity in one step).\n\n"
         f"{overlay_section}{custom_extras_md}\n\n"
         f"## 2. Active Stage Runbooks (`{fw_prefix}workflows/`)\n"
@@ -1407,9 +1453,16 @@ def compose_consumer_artifacts(
         and ("code-reviewer" not in disabled_agents)
     )
     fw_rule_subagent_line = (
-        "- **Subagent Gate (`>=3` files / multi-layer):** MUST delegate layer work and run an independent `code-reviewer` subagent (report `conversationId` + verdict) before finishing.\n"
+        "- **Independent Code Review (HARD GATE):** On ANY code, UI, or configuration change (regardless of file count), run an independent read-only `code-reviewer` subagent (`conversationId` + verdict) before finishing.\n"
+        "- **Subagent Gate (`>=3` files / multi-layer):** MUST delegate disjoint layer work via `invoke_subagent` and report each subagent `conversationId`.\n"
         if fw_rule_review_enabled
-        else f"- **Subagent Gate (`>=3` files / multi-layer):** MUST delegate layer work and report each subagent `conversationId` (`code-reviewer` disabled by `{config_rel}`).\n"
+        else f"- **Independent Code Review:** `code-reviewer` disabled by `{config_rel}`.\n"
+        "- **Subagent Gate (`>=3` files / multi-layer):** MUST delegate disjoint layer work via `invoke_subagent` and report each subagent `conversationId`.\n"
+    )
+    copilot_review_line = (
+        "- **Independent Code Review (HARD GATE):** Before the final answer on any code, UI, or configuration change (regardless of file count), run an independent read-only `code-reviewer` subagent via `.github/agents/code-reviewer.agent.md` (`runSubagent`) and report its verdict.\n"
+        if fw_rule_review_enabled
+        else f"- **Independent Code Review:** Disabled by `{config_rel}` (`code-review` / Phase 10 / `code-reviewer`).\n"
     )
 
     # Build platform-specific entry files without duplicating AGENTS.md inline body on Antigravity/Gemini/Copilot
@@ -1445,6 +1498,7 @@ def compose_consumer_artifacts(
             f"<!-- AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest} -->\n"
             "# GitHub Copilot Workspace Instructions\n\n"
             "Follow [`AGENTS.md`](../AGENTS.md) for all active framework rules, gates, stage runbooks, and project customizations.\n\n"
+            f"{copilot_review_line}"
             f"- **Customizations & Compose:** Add project rules/skills/agents/prompts/MCP under `{overlay_rel_eff}/` (never edit `.agents/skills/` or `.github/agents/` directly); run `{compose_cmd}` after editing `{overlay_rel_eff}/` or `{config_rel}` (or `{validate_cmd}`).\n"
         ),
         ".github/instructions/framework.instructions.md": (

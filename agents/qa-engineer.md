@@ -14,13 +14,13 @@ approval_gates: []
 
 ## 1. Responsibilities
 - Design and execute integration, end-to-end (E2E), edge-case, and regression test suites (`Phase 11`).
-- Verify web/UI workflows using Playwright or the `agent-browser` skill (`browser` subagent) where applicable.
+- Verify web/UI workflows using the `agent-browser` skill (`browser` subagent on Antigravity; Playwright MCP or `npx playwright test` on Copilot, Claude Code, Codex, and Gemini CLI) where applicable.
 - Produce structured machine-readable test reports (`.framework-state/11-test-report.json`).
 
 ## 2. Allowed Activities
 - Authoring integration, regression, and E2E test files in `tests/` or `e2e/`.
 - Executing test runners (`unittest`, `pytest`, `npm test`, `npx playwright test`, `python scripts/validate.py`).
-- Delegating live browser UI verification to the `browser` subagent.
+- Delegating live browser UI verification via the `agent-browser` skill (`browser` subagent on Antigravity, or Playwright MCP / `npx playwright test` on Copilot, Claude Code, Codex, and Gemini CLI).
 
 ## 3. Expected Inputs
 - Codebase passing Phase 10 Code Review.

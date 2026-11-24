@@ -183,8 +183,10 @@ All instructions below derive from the canonical source of truth in `core/rules/
    - Pause for explicit human approval at `Gate-01a` (Clarifications), `Gate-01b` (Spec), `Gate-02` (Architecture/ADR), `Gate-03` (Plan), `Gate-Sec` (Active Security/Strix), `Gate-04` (Release/Push), and `Gate-05` (Rule Evolution).
 4. **Security Guardrails ([`core/rules/security-guardrails.md`](./core/rules/security-guardrails.md)):**
    - Never commit or echo secrets, tokens, or private keys. Never run active security scans without `Gate-Sec` approval.
-5. **Subagent-First Delegation (HARD GATE on `>=3` modified/created files or `>=2` layers):**
-   - NEVER implement or self-review all files in one session. Delegate each disjoint layer (`ui-ux-designer`, `data-engineer`, `backend-engineer`, `frontend-engineer`, `ai-engineer`, `devops-release-engineer`, `implementation-engineer`) via `invoke_subagent`/`define_subagent` (`TypeName="self"`, reading `agents/<role>.md`) or `.claude/agents/` / `.github/agents/`; BEFORE final answer, MUST run an independent `code-reviewer` subagent (`TypeName="self"` or `"research"`, read-only diff review; plus `qa-engineer` for UI/behavior changes) and report each subagent's `conversationId` and verdict.
+5. **Independent Code Review (HARD GATE):**
+   - On EVERY code, UI, or configuration change (even 1-file changes, regardless of file count), BEFORE final answer, MUST run an independent read-only `code-reviewer` subagent (plus `qa-engineer` for UI/behavior changes) via your platform's subagent tool (`invoke_subagent` with `TypeName="self"` or `"research"` reading `agents/code-reviewer.md` on Antigravity, `runSubagent` / `.github/agents/code-reviewer.agent.md` on Copilot, `Agent` / `.claude/agents/framework-code-reviewer.md` on Claude Code, or `spawn_agent` on Codex) and report its verdict (plus `conversationId` on Antigravity).
+6. **Subagent-First Delegation (HARD GATE on `>=3` modified/created files or `>=2` layers):**
+   - NEVER implement all disjoint layers in one session when `>=3` files or `>=2` layers are modified/created. Delegate each disjoint layer (`ui-ux-designer`, `data-engineer`, `backend-engineer`, `frontend-engineer`, `ai-engineer`, `devops-release-engineer`, `implementation-engineer`) via `invoke_subagent`/`define_subagent` (`TypeName="self"`, reading `agents/<role>.md`) on Antigravity, `runSubagent` / `.github/agents/<role>.agent.md` on Copilot, `Agent` / `.claude/agents/framework-<role>.md` on Claude Code, or `spawn_agent` on Codex, and report each delegated subagent's verdict (plus `conversationId` on Antigravity).
 
 ## 2. Canonical Stage Runbooks (`workflows/`)
 - **Stage 1 (Phases 1–3):** [`workflows/01-discovery-and-grill-me.md`](./workflows/01-discovery-and-grill-me.md)
@@ -250,7 +252,8 @@ Follow [`AGENTS.md`](../AGENTS.md) and [`core/rules/engineering-principles.md`](
 2. **TDD Cycle:** Write failing unit tests first (`Phase 9`), then minimal passing code, then refactor.
 3. **Human Gates:** Pause for user approval before adding dependencies (`Gate-02`), running active security scans (`Gate-Sec`), or publishing releases (`Gate-04`).
 4. **Zero Secrets:** Never emit hardcoded credentials, tokens, or private keys.
-5. **Validation:** Run `python scripts/validate.py` and `python -m unittest discover -s tests -v` before completing changes.
+5. **Independent Code Review:** Before the final answer on any code, UI, or configuration change (regardless of file count), run an independent read-only `code-reviewer` subagent (`adapters/copilot/code-reviewer.agent.md` / `.github/agents/code-reviewer.agent.md` via `runSubagent`) and report its verdict.
+6. **Validation:** Run `python scripts/validate.py` and `python -m unittest discover -s tests -v` before completing changes.
 """
 
     files["adapters/copilot/framework.instructions.md"] = f"""---
@@ -279,7 +282,8 @@ trigger: always_on
 Follow [`AGENTS.md`](../../../AGENTS.md) and [`core/rules/engineering-principles.md`](../../../core/rules/engineering-principles.md).
 - Enforce `Gate-01a`, `Gate-01b`, `Gate-02`, `Gate-03`, `Gate-Sec`, `Gate-04`, and `Gate-05` from [`core/rules/human-approval-gates.md`](../../../core/rules/human-approval-gates.md).
 - Write phase handoff packets to `.framework-state/handoffs/` per [`core/rules/context-handoff-protocol.md`](../../../core/rules/context-handoff-protocol.md).
-- **Subagent Gate (`>=3` files / multi-layer):** MUST delegate layer work and run an independent `code-reviewer` subagent (report `conversationId` + verdict) before finishing.
+- **Independent Code Review (HARD GATE):** On ANY code, UI, or configuration change (regardless of file count), run an independent read-only `code-reviewer` subagent (`conversationId` + verdict) before finishing.
+- **Subagent Gate (`>=3` files / multi-layer):** MUST delegate disjoint layer work via `invoke_subagent` and report each subagent `conversationId`.
 - Validate changes with `python scripts/validate.py`.
 """
     files["adapters/antigravity/rules/framework-core.md"] = agy_rule_content
@@ -432,7 +436,8 @@ Follow [`AGENTS.md`](../AGENTS.md) and [`core/rules/engineering-principles.md`](
 2. **TDD Cycle:** Write failing unit tests first (`Phase 9`), then minimal passing code, then refactor.
 3. **Human Gates:** Pause for user approval before adding dependencies (`Gate-02`), running active security scans (`Gate-Sec`), or publishing releases (`Gate-04`).
 4. **Zero Secrets:** Never emit hardcoded credentials, tokens, or private keys.
-5. **Validation:** Run `python scripts/validate.py --mode consumer` before completing changes.
+5. **Independent Code Review:** Before the final answer on any code, UI, or configuration change (regardless of file count), run `.github/agents/code-reviewer.agent.md` read-only via Copilot subagent (`runSubagent`) and report its verdict.
+6. **Validation:** Run `python scripts/validate.py --mode consumer` before completing changes.
 """
 
     files[".github/instructions/framework.instructions.md"] = f"""---
@@ -452,7 +457,8 @@ trigger: always_on
 Follow [`AGENTS.md`](../../AGENTS.md) and [`core/rules/engineering-principles.md`](../../core/rules/engineering-principles.md).
 - Enforce `Gate-01a`, `Gate-01b`, `Gate-02`, `Gate-03`, `Gate-Sec`, `Gate-04`, and `Gate-05` from [`core/rules/human-approval-gates.md`](../../core/rules/human-approval-gates.md).
 - Write phase handoff packets to `.framework-state/handoffs/` per [`core/rules/context-handoff-protocol.md`](../../core/rules/context-handoff-protocol.md).
-- **Subagent Gate (`>=3` files / multi-layer):** MUST delegate layer work and run an independent `code-reviewer` subagent (report `conversationId` + verdict) before finishing.
+- **Independent Code Review (HARD GATE):** On ANY code, UI, or configuration change (regardless of file count), run an independent read-only `code-reviewer` subagent (`conversationId` + verdict) before finishing.
+- **Subagent Gate (`>=3` files / multi-layer):** MUST delegate disjoint layer work via `invoke_subagent` and report each subagent `conversationId`.
 - Validate changes with `python scripts/validate.py --mode consumer`.
 """
 
