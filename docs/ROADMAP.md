@@ -1,6 +1,6 @@
 # Project Roadmap (`ROADMAP.md`)
 
-**Version:** `0.7.0`  
+**Version:** `0.7.1`  
 
 ---
 
@@ -45,8 +45,9 @@ flowchart LR
 - Interactive pre-flight discovery and legacy migration wizard in `aief init` (`copy` / `move` / `skip` / `delete` per legacy entry file, duplicate content detection, external skill/rule unification, plus `--yes`, `--interactive`, `--no-import`).
 - Pruned `os.walk` validation (`_iter_workspace_files`) for sub-second `pnpm` monorepo checks, nested `.vscode/*.json` JSONC support, `.aief/.gitignore` Python bytecode hygiene, and Windows sandbox-safe validation (`87/87` automated checks).
 
-### `v0.7.0` — .NET Backend & UI/Prompt Curated Skills *(Current)*
+### `v0.7.0` — .NET Backend & UI/Prompt Curated Skills *(Released)*
 - Added curated skills `prompt-master` (`communication`), `ui-styling` (`frontend-design`, `shadcn/ui` + Tailwind CSS with helper scripts), and the `backend-dotnet` *(alias `dotnet`)* optional pack (`dotnet-backend-patterns` + `dotnet-best-practices`), expanding the catalog to `37` skills across `6` optional packs.
+- **`v0.7.1` *(Current Patch)*:** Scoped consumer JSON / disabled-skill workflow validation (`test_19`), clarified `.aief/custom/` overlay paths (`test_20`), decoupled `Independent Code Review (HARD GATE)` from the multi-file threshold and removed Antigravity-only leaks from non-Antigravity workspaces (`test_21`), plus updated `pipx --force` / `uvx --refresh` and IDE reload documentation (`90/90` automated tests).
 
 ### `v0.8.0`+ — Ecosystem Distribution *(Planned)*
 - Optional PyPI Trusted Publishing activation (`PYPI_PUBLISH_ENABLED=true`) and thin `npx` / `dotnet tool` wrappers above the canonical Python engine.

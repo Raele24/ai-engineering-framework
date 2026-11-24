@@ -1,6 +1,6 @@
 # Documentation Index (`docs/README.md`)
 
-**Version:** `0.7.0`
+**Version:** `0.7.1`
 
 Active user guides and canonical specifications included in this repository.
 
@@ -28,5 +28,5 @@ Active user guides and canonical specifications included in this repository.
 | [`TOKEN_OPTIMIZATION.md`](./TOKEN_OPTIMIZATION.md) | Progressive disclosure principles and token optimization benchmarks |
 | [`SECURITY.md`](./SECURITY.md) | Supported versions, secret guardrails, and Strix authorization policy |
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Authoring rules, SemVer `2.0.0`, release checklist, and commit conventions |
-| [`ROADMAP.md`](./ROADMAP.md) | Release progression (`v0.1.0` through `v0.7.0+`) |
+| [`ROADMAP.md`](./ROADMAP.md) | Release progression (`v0.1.0` through `v0.7.1+`) |
 | [`adr/`](./adr/ADR-0001-open-source-license.md) | Architecture Decision Records (`ADR-0001`..`ADR-0003`) |

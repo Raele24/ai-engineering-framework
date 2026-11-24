@@ -1,6 +1,6 @@
 # Configuration Reference (`CONFIGURATION.md`)
 
-**Version:** `0.7.0`  
+**Version:** `0.7.1`  
 
 ---
 
@@ -18,7 +18,7 @@ The **AI Engineering Framework** isolates all consumer runtime metadata inside `
 ```json
 {
   "$schema": "./core/schemas/framework-config.schema.json",
-  "frameworkVersion": "0.7.0",
+  "frameworkVersion": "0.7.1",
   "projectName": "my-software-project",
   "workflowProfile": "standard",
   "enabledPlatforms": [
@@ -91,7 +91,7 @@ The **AI Engineering Framework** isolates all consumer runtime metadata inside `
 
 | Field | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `frameworkVersion` | `string` | `"0.7.0"` | SemVer version of the installed AI Engineering Framework |
+| `frameworkVersion` | `string` | `"0.7.1"` | SemVer version of the installed AI Engineering Framework |
 | `projectName` | `string` | Folder name | Identifier used in handoff manifests and reports |
 | `workflowProfile` | `"full"` \| `"standard"` \| `"hotfix"` | `"standard"` | Controls ceremony depth in `docs/WORKFLOW.md` |
 | `enabledPlatforms` | `string[]` | All 5 platforms | Platforms configured by `scripts/bootstrap.py` and verified by `.aief/scripts/validate.py --mode consumer` |

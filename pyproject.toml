@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-engineering-framework"
-version = "0.7.0"
+version = "0.7.1"
 description = "Platform-independent 15-phase SDLC, agent roles, skills, and multi-platform adapter composition engine (Antigravity, Copilot, Claude Code, Codex, Gemini CLI)"
 readme = "README.md"
 license = { file = "LICENSE" }

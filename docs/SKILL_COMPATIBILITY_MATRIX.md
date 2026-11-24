@@ -1,6 +1,6 @@
 # Skills Catalog, Installation & Compatibility Matrix (`SKILL_COMPATIBILITY_MATRIX.md`)
 
-**Version:** `0.7.0`
+**Version:** `0.7.1`
 
 ---
 
@@ -34,7 +34,7 @@ Canonical skills live under `skills/` (`37` skills across `core/` and `6` `optio
 
 ## 2. Platform Skill Discovery Paths
 
-| Platform | Support (`v0.7.0`) | Native Skill Discovery Path | Bundled Scripts & `references/` Support |
+| Platform | Support (`v0.7.1`) | Native Skill Discovery Path | Bundled Scripts & `references/` Support |
 | :--- | :---: | :--- | :--- |
 | **1. Google Antigravity** | **`SUPPORTED`** | `.agents/skills.json` + `.agents/skills/<name>/SKILL.md` (workspace); `~/.gemini/config/skills/` (host-global) | `read_file` for `references/*.md`; shell execution for `scripts/*.py` |
 | **2. OpenAI Codex CLI** | **`SUPPORTED`** | `.agents/skills/<name>/SKILL.md` (workspace) & `~/.codex/skills/` + `AGENTS.md` | Supported under `workspace-write` sandbox |

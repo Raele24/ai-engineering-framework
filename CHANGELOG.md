@@ -5,6 +5,18 @@ The format follows [Semantic Versioning 2.0.0](https://semver.org/) ([`docs/CONT
 
 ---
 
+## [0.7.1] - 2026-11-24
+
+### Fixed
+- **Decoupled Independent `code-reviewer` Gate & Copilot/Multi-Platform Subagent Alignment (`316962a`, `test_21`):** Separated `Independent Code Review (HARD GATE)` from the `>=3` files / `>=2` layers threshold in `AGENTS.md`, `.github/copilot-instructions.md`, `.agents/rules/framework-core.md`, and `workflows/05-review-qa-and-security.md` so review runs on every code, UI, or config change regardless of file count; scoped Antigravity-only runtime terms (`invoke_subagent`, `define_subagent`, `TypeName=`, `conversationId`) out of non-Antigravity consumer workspaces and generalized shared `workflows/` (`03`, `04`, `05`) and `agents/` (`qa-engineer`, `ui-ux-designer`, `software-architect`), bringing the suite to `90/90` automated tests.
+- **Clearer Consumer Custom-Overlay Path Guidance (`311d11d`, `test_20`):** Updated generated `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, and `_format_overlay_section` to state exact `.aief/custom/{rules,skills,agents,prompts,mcp.json}` paths, `python .aief/scripts/compose.py`, and the prohibition on editing generated `.agents/skills/` / `.claude/skills/` / `.github/agents/` (`89/89` automated tests passing).
+- **Consumer Validation for `.NET`/App JSON Configs & Disabled-Skill Workflow Links (`scripts/validate.py`, `704e00f`, `test_19`):** Scoped `check_json_files(..., mode="consumer")` to framework, platform, and root build/IDE configuration JSON files (with UTF-8 BOM `utf-8-sig` decoding), avoiding false positives on `.NET` `appsettings*.json` JSONC files or test fixtures; skipped broken-link errors in `.aief/workflows/` and `.aief/agents/` when targeting skills explicitly disabled in `disabled.skills` (`88/88` automated tests passing).
+
+### Documentation
+- **Upgraded Install & IDE Reload Documentation (`481d40f`, `ff1c8d3`):** Updated release installation guidance to `pipx install --force` / `uvx --refresh` and added IDE window reload / new-chat cache-refresh notes after `init`, `update`, and `compose`.
+
+---
+
 ## [0.7.0] - 2026-11-24
 
 ### Added
@@ -16,11 +28,7 @@ The format follows [Semantic Versioning 2.0.0](https://semver.org/) ([`docs/CONT
 ### Changed
 - **Backward-Compatible Schema, CLI, Composition & Sync Extensions:**
   - Extended `core/schemas/skill-frontmatter.schema.json` with `backend-engineering` (`category`) and `optional-backend` (`tier`), and added optional `backendDotnet` to `core/schemas/framework-config.schema.json` (preserving compatibility with `v0.3.x`–`v0.6.x` configs lacking `backendDotnet`).
-  - Updated `scripts/bootstrap.py` (`dotnet` alias and interactive TUI wizard pack index `6` for `backend-dotnet`), `scripts/compose.py`, `scripts/validate.py`, synced platform adapters (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.agents/skills.json`, etc.), and automated tests.
-
-### Fixed
-- **Consumer Validation for `.NET`/App JSON Configs & Disabled-Skill Workflow Links (`scripts/validate.py`, `test_19`):** Scoped `check_json_files(..., mode="consumer")` to framework, platform, and root build/IDE configuration JSON files (with UTF-8 BOM `utf-8-sig` decoding), avoiding false positives on `.NET` `appsettings*.json` JSONC files or test fixtures; skipped broken-link errors in `.aief/workflows/` and `.aief/agents/` when targeting skills explicitly disabled in `disabled.skills`.
-- **Clearer Consumer Custom-Overlay Path Guidance (`scripts/compose.py`, `test_20`):** Updated generated `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, and `_format_overlay_section` to state exact `.aief/custom/{rules,skills,agents,prompts,mcp.json}` paths (including `python .aief/scripts/compose.py`), prohibit direct edits to `.agents/skills/` / `.claude/skills/` / `.github/agents/`, and remove misleading `.framework-custom/` comment references (`89/89` automated tests passing).
+  - Updated `scripts/bootstrap.py` (`dotnet` alias and interactive TUI wizard pack index `6` for `backend-dotnet`), `scripts/compose.py`, `scripts/validate.py`, synced platform adapters (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.agents/skills.json`, etc.), and automated tests (`87/87` tests passing at tag `v0.7.0`).
 
 ---
 

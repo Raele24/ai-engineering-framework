@@ -1,6 +1,6 @@
 # Platform Compatibility Matrix (`compatibility-matrix.md`)
 
-**Version:** `0.7.0`  
+**Version:** `0.7.1`  
 **Source of Truth:** Canonical rules in `core/rules/`, roles in `agents/`, skills in `skills/`, [`scripts/compose.py`](../scripts/compose.py), and [`core/platform-capabilities.json`](../core/platform-capabilities.json)  
 
 ---
@@ -35,8 +35,8 @@
 4. **Consumer Skill Isolation & Host-Global Discovery:**
    - *Design Note:* Some CLI runtimes scan host-global directories (`$HOME/.agents/skills/`, `$HOME/.gemini/config/skills/`, `$HOME/.claude/skills/`, `$HOME/.codex/skills/`) alongside workspace skill directories.
    - *Boundary:* `scripts/validate.py --mode consumer` enforces lockfile-backed workspace boundaries inside `.agents/skills/` and `.claude/skills/` (`ERROR`/`WARNING`) and reports host-global skill folders as `INFO` only without touching user-global files.
-5. **Current Compatibility Summary (`v0.7.0`):**
-   - **All 5 Platforms (Adapter & Schema Level):** Full inline entry composition (`.aief/scripts/compose.py`), native skill projection (`.agents/skills/` and `.claude/skills/`), read-only reviewer enforcement, and schema contracts are **`SUPPORTED & CONTRACT_VALIDATED`** (`89/89` automated offline tests).
+5. **Current Compatibility Summary (`v0.7.1`):**
+   - **All 5 Platforms (Adapter & Schema Level):** Full inline entry composition (`.aief/scripts/compose.py`), native skill projection (`.agents/skills/` and `.claude/skills/`), read-only reviewer enforcement, and schema contracts are **`SUPPORTED & CONTRACT_VALIDATED`** (`90/90` automated offline tests).
 
 ---
 

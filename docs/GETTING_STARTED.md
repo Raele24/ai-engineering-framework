@@ -1,6 +1,6 @@
 # Getting Started & Consumer Usage (`GETTING_STARTED.md`)
 
-**Version:** `0.7.0`
+**Version:** `0.7.1`
 
 End-to-end guide for installing **AI Engineering Framework** into a project and operating it day-to-day.
 
@@ -57,7 +57,7 @@ python /path/to/my-app/.aief/scripts/preflight.py --stacks dotnet,node-angular
    If `graphify-out/graph.json` is missing on repos with $\ge 15$ files, Phase 1 builds it with `graphify .` (or notifies you if the CLI is missing; if `graphify` CLI is blocked in a host sandbox, agents read `graphify-out/GRAPH_REPORT.md` / `graphify-out/graph.json` directly). Confirm the batched `(Recommended)` answers at **`Gate-01a`**.
 2. **Specification & ADR (Phases 3–5):** Lock `docs/specs/03-specification.md` (`Given / When / Then` criteria `AC-01..N`) at **`Gate-01b`**, and record architecture decisions (`docs/adr/ADR-xxxx-*.md`) at **`Gate-02`**.
 3. **Plan & TDD Implementation (Phases 6–9):** Approve `docs/plans/06-implementation-plan.md` (**`Gate-03`**). Implementation runs **RED → GREEN → REFACTOR** ([`skills/core/tdd-cycle/SKILL.md`](../skills/core/tdd-cycle/SKILL.md)). Under the **Subagent-First `HARD GATE`**, tasks touching `>= 3` modified/created files or `>= 2` layers must delegate disjoint layers to specialist subagents rather than implementing all files in a single session.
-4. **Review, QA & Security (Phases 10–12):** In a fresh session (or via independent subagent before finishing `>= 3`-file / multi-layer changes), follow [`workflows/05-review-qa-and-security.md`](../workflows/05-review-qa-and-security.md): read-only `code-reviewer` (reporting each subagent's `conversationId` and verdict), project tests + `.aief/scripts/readiness.py` for E2E checks, and `.aief/scripts/validate.py --mode consumer` (**`Gate-Sec`** if active security scans are requested).
+4. **Review, QA & Security (Phases 10–12):** In a fresh session (or via an independent subagent before your final answer on any code, UI, or config change regardless of file count), follow [`workflows/05-review-qa-and-security.md`](../workflows/05-review-qa-and-security.md): read-only `code-reviewer` (reporting its verdict, plus subagent ID/`conversationId` where supported), project tests + `.aief/scripts/readiness.py` for E2E checks, and `.aief/scripts/validate.py --mode consumer` (**`Gate-Sec`** if active security scans are requested).
 5. **Release & Upgrade (Phases 13–15):** Refresh `graphify update .`, run `python .aief/scripts/validate.py --mode consumer`, and pause at **`Gate-04`** before tagging or pushing.
 
 ---

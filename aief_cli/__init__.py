@@ -9,7 +9,7 @@ import shutil
 import tempfile
 import zipfile
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 
 def _default_cache_root() -> Path:

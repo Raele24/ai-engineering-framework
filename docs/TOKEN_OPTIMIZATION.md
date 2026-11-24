@@ -1,9 +1,9 @@
 # Token Efficiency & Context Optimization Guide (`TOKEN_OPTIMIZATION.md`)
 
 **Project:** AI Engineering Framework (`ai-engineering-framework`)  
-**Version:** `0.7.0`  
+**Version:** `0.7.1`  
 **Date:** `2026-11-24`  
-*(Empirical byte/token measurements below were captured on the `v0.2.0` 30-skill baseline corpus; the current `v0.7.0` catalog ships `37` skills using the same progressive-disclosure index and native projections in `.agents/skills/` and `.claude/skills/` so startup prompt overhead remains minimal unless skills are explicitly loaded via `read_file`.)*
+*(Empirical byte/token measurements below were captured on the `v0.2.0` 30-skill baseline corpus; the current `v0.7.1` catalog ships `37` skills using the same progressive-disclosure index and native projections in `.agents/skills/` and `.claude/skills/` so startup prompt overhead remains minimal unless skills are explicitly loaded via `read_file`.)*
 
 ---
 

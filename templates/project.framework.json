@@ -1,6 +1,6 @@
 {
   "$schema": "./core/schemas/framework-config.schema.json",
-  "frameworkVersion": "0.7.0",
+  "frameworkVersion": "0.7.1",
   "projectName": "ai-engineering-framework",
   "workflowProfile": "full",
   "enabledPlatforms": [

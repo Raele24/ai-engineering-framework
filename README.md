@@ -1,7 +1,7 @@
 # AI Engineering Framework
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-0.7.0-success.svg)](./docs/CONTRIBUTING.md#3-semantic-versioning-semver-200--stability)
+[![Version](https://img.shields.io/badge/version-0.7.1-success.svg)](./docs/CONTRIBUTING.md#3-semantic-versioning-semver-200--stability)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./docs/CONTRIBUTING.md)
 
 **A vendor-neutral engineering workflow, role system, and skill library for AI coding agents.**
@@ -60,7 +60,7 @@ flowchart TB
 
 ## Supported Platforms
 
-All **5 platforms** ship complete inline entry files, adapters, native skill projections, custom prompts/MCP support, and schema contracts (`89/89` automated checks green):
+All **5 platforms** ship complete inline entry files, adapters, native skill projections, custom prompts/MCP support, and schema contracts (`90/90` automated checks green):
 
 | Platform | Entry Point | Adapter & Projection Layout | Status |
 | :--- | :--- | :--- | :---: |
@@ -135,7 +135,7 @@ python scripts/sync_adapters.py --check
 | [`aief_cli/`](./aief_cli/) | Tier 1 | Packaged `aief` CLI entrypoint (`init`, `update`, `compose`, `validate`, `preflight`, `check-sync`) and bundled assets |
 | [`scripts/`](./scripts/) | Tier 1 | Pure-stdlib Python CLIs (`bootstrap.py`, `compose.py`, `validate.py`, `sync_adapters.py`, `preflight.py`, `platform_capabilities.py`, `readiness.py`, `run_tests.py`) |
 | [`docs/`](./docs/) | Tier 1 | Complete documentation suite (Architecture, Workflow, Getting Started, Consumer Usage Guide, Installation, Security, Roadmap) |
-| [`tests/`](./tests/) | Tier 1 | Automated 6-tier offline regression suite (`89` stdlib tests via `scripts/run_tests.py`) |
+| [`tests/`](./tests/) | Tier 1 | Automated 6-tier offline regression suite (`90` stdlib tests via `scripts/run_tests.py`) |
 
 ---
 
@@ -146,7 +146,7 @@ Start from **[`docs/README.md`](./docs/README.md)** for the full structured docu
 - **[Project Charter](./PROJECT_CHARTER.md)** — Vision, scope, non-goals, principles, and milestones.
 - **[Canonical Workflow (`docs/WORKFLOW.md`)](./docs/WORKFLOW.md)** — Complete 15-phase operational SDLC specification.
 - **[Architecture Guide (`docs/ARCHITECTURE.md`)](./docs/ARCHITECTURE.md)** — 4-tier architecture, state handoffs, and Graphify integration.
-- **[Getting Started & Consumer Usage (`docs/GETTING_STARTED.md`)](./docs/GETTING_STARTED.md)** — Install, first feature walkthrough, session handoffs, and bounded readiness (`v0.7.0`).
+- **[Getting Started & Consumer Usage (`docs/GETTING_STARTED.md`)](./docs/GETTING_STARTED.md)** — Install, first feature walkthrough, session handoffs, and bounded readiness (`v0.7.1`).
 - **[Customization & Auto-Loading Guide (`docs/CUSTOMIZATION_GUIDE.md`)](./docs/CUSTOMIZATION_GUIDE.md)** — Recipe guide for `.aief/custom/` (rules, skills, agents, prompts, MCP), `disabled.*` toggles, and `.aief/scripts/compose.py`.
 - **[Platform Compatibility Matrix (`adapters/compatibility-matrix.md`)](./adapters/compatibility-matrix.md)** — Configuration mapping and platform support across all 5 platforms.
 - **[Installation Guide (`docs/INSTALLATION.md`)](./docs/INSTALLATION.md)** — Prerequisites, `aief` CLI / `bootstrap.py` modes, and non-destructive updates.
@@ -154,9 +154,9 @@ Start from **[`docs/README.md`](./docs/README.md)** for the full structured docu
 - **[Security Policy (`docs/SECURITY.md`)](./docs/SECURITY.md)** — Vulnerability reporting, secret prevention, and authorized security testing (Strix).
 - **[Skills Catalog & Matrix (`docs/SKILL_COMPATIBILITY_MATRIX.md`)](./docs/SKILL_COMPATIBILITY_MATRIX.md)** — Packs, Policy A/B/C, external CLIs (`rtk`, `graphify`), and compatibility matrix for all 37 skills.
 - **[Token Optimization Guide (`docs/TOKEN_OPTIMIZATION.md`)](./docs/TOKEN_OPTIMIZATION.md)** — Progressive disclosure principles, Ponytail, Caveman, RTK, and filesystem context offloading.
-- **[Changelog (`CHANGELOG.md`)](./CHANGELOG.md)** — Release history from `v0.1.0` through `v0.7.0`.
+- **[Changelog (`CHANGELOG.md`)](./CHANGELOG.md)** — Release history from `v0.1.0` through `v0.7.1`.
 - **[Contributing, Versioning & Release (`docs/CONTRIBUTING.md`)](./docs/CONTRIBUTING.md)** — Authoring rules, SemVer `2.0.0`, release checklist, and commit conventions.
-- **[Roadmap (`docs/ROADMAP.md`)](./docs/ROADMAP.md)** — Release progression from `v0.1.0` through `v0.7.0+`.
+- **[Roadmap (`docs/ROADMAP.md`)](./docs/ROADMAP.md)** — Release progression from `v0.1.0` through `v0.7.1+`.
 
 ---
 

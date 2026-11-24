@@ -35,7 +35,7 @@ import preflight  # noqa: E402
 import sync_adapters  # noqa: E402
 
 FRAMEWORK_ROOT = SCRIPT_DIR.parent
-FRAMEWORK_VERSION = "0.7.0"
+FRAMEWORK_VERSION = "0.7.1"
 LOCKFILE_NAME = ".aief/lock.json"
 LOCKFILE_SCHEMA_VERSION = "2.0.0"
 LOCKFILE_BACKUP_REL = ".aief/state/lock-backups/framework-lock-v0.3.0.json"
