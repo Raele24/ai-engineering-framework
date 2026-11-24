@@ -1,6 +1,6 @@
 # Consumer Customization & Auto-Loading Guide (`CUSTOMIZATION_GUIDE.md`)
 
-**Version:** `0.5.0`  
+**Version:** `0.6.0`  
 
 ---
 
@@ -105,7 +105,7 @@ Result:
 ---
 
 ### Recipe 2 — Add a Project-Specific Custom Skill
-Create `.framework-custom/skills/<skill-name>/SKILL.md` (folder names must be single-segment, without `/`, `..`, or symlinks):
+Create `.aief/custom/skills/<skill-name>/SKILL.md` (folder names must be single-segment, without `/`, `..`, or symlinks):
 
 ```markdown
 ---
@@ -120,9 +120,9 @@ description: Enforces decimal ledger rounding, idempotency keys, and audit log i
 - See [checklist](./checklist.md).
 ```
 
-Run `python scripts/compose.py`:
-- Copies `.framework-custom/skills/billing-invariants/` into `.agents/skills/billing-invariants/` and `.claude/skills/billing-invariants/`.
-- Tracks files in `.framework-lock.json` under `"ownership": "consumer_custom_skill"` (zero warnings from `validate.py`).
+Run `python .aief/scripts/compose.py` (or `aief compose .`):
+- Copies `.aief/custom/skills/billing-invariants/` into `.agents/skills/billing-invariants/` and `.claude/skills/billing-invariants/`.
+- Tracks files in `.aief/lock.json` under `"ownership": "consumer_custom_skill"` (zero warnings from `validate.py`).
 - Registers `billing-invariants` inside `AGENTS.md` Section 4 (`Active Skills`).
 - Removing the folder or adding `"billing-invariants"` to `disabled.skills` prunes projections automatically.
 
@@ -131,18 +131,18 @@ Run `python scripts/compose.py`:
 ### Recipe 3 — Extend Canonical Agents or Define Custom Agents
 
 #### Option A: Append rules to an existing framework role (`*.append.md`)
-Create `.framework-custom/agents/implementation-engineer.append.md` or `.framework-custom/agents/code-reviewer.append.md`:
+Create `.aief/custom/agents/implementation-engineer.append.md` or `.aief/custom/agents/code-reviewer.append.md`:
 
 ```markdown
 - Always validate EF Core migration down-scripts for reversibility.
 - Reject endpoints missing authorization attributes or rate-limit policies.
 ```
 
-- `implementation-engineer.append.md` appends to `agents/implementation-engineer.md`.
-- `code-reviewer.append.md` appends to `agents/code-reviewer.md`, `.claude/agents/framework-code-reviewer.md`, and `.github/agents/code-reviewer.agent.md`.
+- `implementation-engineer.append.md` appends to `.aief/agents/implementation-engineer.md`, `.claude/agents/implementation-engineer.md`, and `.github/agents/implementation-engineer.agent.md`.
+- `code-reviewer.append.md` appends to `.aief/agents/code-reviewer.md`, `.claude/agents/framework-code-reviewer.md` (canonical `code-reviewer` uses the `framework-code-reviewer.md` prefix on Claude Code, whereas other canonical roles project to `.claude/agents/<role>.md`), and `.github/agents/code-reviewer.agent.md`.
 
 #### Option B: Override an existing role or create a new custom subagent (`<name>.md`)
-Create `.framework-custom/agents/db-migrator.md`:
+Create `.aief/custom/agents/db-migrator.md`:
 
 ```markdown
 ---
@@ -157,14 +157,15 @@ required_skills: [tdd-cycle]
 Follow safe expand-and-contract zero-downtime migrations.
 ```
 
-Tool mapping behavior in `scripts/compose.py`:
+Tool mapping and projection behavior in `.aief/scripts/compose.py`:
 - Canonical `read_file`, `write_file`, `edit_file`, `run_command` are automatically translated to Claude Code tools (`Read, Glob, Grep`, `Write`, `Edit`, `Bash`) in `.claude/agents/db-migrator.md` and Copilot tools (`read`, `search`, `edit`, `terminal`) in `.github/agents/db-migrator.agent.md`.
+- Custom `<name>.md` agents project to `.claude/agents/<name>.md` and `.github/agents/<name>.agent.md` (canonical roles also project to `.claude/agents/<role>.md`, except `code-reviewer` which projects to `.claude/agents/framework-code-reviewer.md`).
 - Any custom agent whose name contains **`reviewer`** (e.g. `sql-reviewer`) is **forced read-only** in generated Claude/Copilot configs (`tools: Read, Glob, Grep` + `disallowedTools: Write, Edit, Bash` / `["read", "search"]`).
 
 ---
 
 ### Recipe 4 — Disable Any Unwanted Skills, Agents, Phases, Gates, or Mechanisms
-Edit `project.framework.json`:
+Edit `.aief/config.json` (or legacy `project.framework.json`):
 
 ```json
 {
@@ -179,8 +180,8 @@ Edit `project.framework.json`:
 ```
 
 Valid keys and behavior ([`core/schemas/framework-config.schema.json`](../core/schemas/framework-config.schema.json)):
-- **`disabled.skills`:** Removes listed framework/custom skills from `.agents/skills/`, `.claude/skills/`, and `AGENTS.md`, marking `"enabled": false` in `skills/registry.json`. **Original files remain on disk under `skills/`** so you can re-enable them offline anytime by removing their name and running `python scripts/compose.py`.
-- **`disabled.agents`:** Omits listed roles from `AGENTS.md` and prunes generated subagents (`.claude/agents/framework-code-reviewer.md`, `.github/agents/code-reviewer.agent.md`, etc.) while keeping `agents/<role>.md` intact on disk for offline re-enabling and intact `workflows/` links.
+- **`disabled.skills`:** Removes listed framework/custom skills from `.agents/skills/`, `.claude/skills/`, and `AGENTS.md`, marking `"enabled": false` in `.aief/skills/registry.json`. Custom skill sources stay intact under `.aief/custom/skills/` and framework skills can be re-enabled offline from the `aief` bundle cache (`~/.cache/aief/`) by removing their name and running `python .aief/scripts/compose.py` (or `aief compose .`).
+- **`disabled.agents`:** Omits listed roles from `AGENTS.md` and prunes generated subagents (`.claude/agents/framework-code-reviewer.md`, `.claude/agents/<role>.md`, `.github/agents/<role>.agent.md`, etc.) while keeping `.aief/agents/<role>.md` intact on disk for offline re-enabling and intact `.aief/workflows/` links.
 - **`disabled.phases` (`1..15`):** Excludes those phases from inline stage runbook bullets and rules (disabling `2`/`3` omits Spec-First bullets; disabling `9` disables TDD rule injection; disabling `10` disables code-reviewer subagent generation).
 - **`disabled.gates` (`Gate-01a`, `Gate-01b`, `Gate-02`, `Gate-03`, `Gate-Sec`, `Gate-04`, `Gate-05`):** Omits specified human approval gates from inline gate lists.
 - **`disabled.mechanisms` (`"tdd"`, `"handoffs"`, `"graphify"`, `"code-review"`):** Disables core workflow behaviors cleanly (`qualityGates` booleans `requireTddRedGreen: false`, `requireIndependentCodeReview: false`, `requireGraphifyCheck: false` also toggle the matching mechanism if set to `false`).

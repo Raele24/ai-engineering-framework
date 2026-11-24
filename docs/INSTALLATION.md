@@ -70,24 +70,29 @@ python scripts/bootstrap.py \
   --target <PATH_TO_TARGET_PROJECT> \
   [--platforms antigravity,copilot,claude-code,codex,gemini-cli] \
   [--profile full|standard|hotfix] \
-  [--optional-packs all|none|communication,context-engineering,agent-architecture,design-ui,growth-media] \
+  [--optional-packs all|none|communication,context-engineering,agent-architecture,frontend-design,growth-media] \
   [--stacks auto|none|dotnet,node/angular,python] \
   [--update] \
-  [--dry-run]
+  [--dry-run] \
+  [--yes] \
+  [--interactive] \
+  [--no-import]
 ```
+
+*(Note: `--optional-packs` accepts `frontend-design` or its legacy alias `design-ui`; `-y`/`--yes` skips the interactive TTY wizard and accepts defaults, `-i`/`--interactive` forces wizard prompts, and `--no-import` skips auto-importing legacy root AI instructions.)*
 
 ### 4.2 Optional Skill Pack Filtering
 
 `bootstrap.py` always installs the 8 mandatory core skills (`grill-me`, `tdd-cycle`, `ponytail`, `adr-writer`, `graphify`, `agent-browser`, `find-skills`, `anti-slop`) and filters all generated consumer files to match the `--optional-packs` selection:
 1. **Consumer `skills/registry.json`:** Contains only the 8 core skills plus the skills belonging to the selected optional packs (preserving 100% of upstream attribution, license, source URL, and SHA-256 metadata).
-2. **Consumer `AGENTS.md`:** Generates Section 4 (`Registered Skills`) with only the installed skills — zero dangling references to uninstalled packs.
+2. **Consumer `AGENTS.md`:** Generates Section 4 (`Active Skills`) with only the installed skills — zero dangling references to uninstalled packs.
 3. **Consumer `agents/*.md`:** Filters `required_skills` in YAML frontmatter so agents only reference installed skills.
 4. **Consumer `.agents/skills.json`:** Registers only `skills/core` and the installed `skills/optional/<pack>` directories.
 5. **Native Platform Skill Projections:** Derived dynamically from `core/platform-capabilities.json`, `bootstrap.py` projects physical copies of installed skills into `.agents/skills/<skill-name>/` (when any `.agents/skills`-consuming platform is enabled) and `.claude/skills/<skill-name>/` (when `claude-code` is enabled), excluding `UPSTREAM_SKILL.md` and `__pycache__/` while keeping attribution in `skills/`.
 
 *Supported pack names:* `all` *(default — all `33` skills)*, `communication`, `context-engineering`, `agent-architecture`, `frontend-design` (alias `design-ui`), `growth-media`, or `none` (core-only `8` skills).  
-*CLI Defaults (when flags are omitted):* positional target or `--target`, all `5` platforms (`antigravity,copilot,claude-code,codex,gemini-cli`), `--profile standard`, `--optional-packs all` (`33` skills; disable unwanted items via `disabled.*` in `project.framework.json`), `--stacks auto` (auto-detects `dotnet`, `node-angular`, `python`).  
-*Stack Naming Note:* `bootstrap.py --stacks` accepts `node/angular` (normalizing it automatically to `node-angular`), whereas `scripts/preflight.py --stacks` and `project.framework.json` use `node-angular`.
+*CLI Defaults (when flags are omitted):* positional target or `--target`, all `5` platforms (`antigravity,copilot,claude-code,codex,gemini-cli`), `--profile standard`, `--optional-packs all` (`33` skills; disable unwanted items via `disabled.*` in `.aief/config.json` or legacy `project.framework.json`), `--stacks auto` (auto-detects `dotnet`, `node-angular`, `python`).  
+*Stack Naming Note:* `bootstrap.py --stacks` accepts `node/angular` (normalizing it automatically to `node-angular`), whereas `scripts/preflight.py --stacks` and `.aief/config.json` (or legacy `project.framework.json`) use `node-angular`.
 
 ### 4.3 Adapter & Projected Skill Link Rewriting
 
@@ -99,7 +104,7 @@ Passing `--stacks dotnet,node/angular,python` performs two non-destructive actio
 1. **Stack `.gitignore` Generation:**
    - If the consumer project has no `.gitignore`, creates `.gitignore` from `templates/stacks/{dotnet,node-angular,python}.gitignore`.
    - If the consumer project **already has a `.gitignore`**, the existing `.gitignore` is **never overwritten**; instead, `bootstrap.py` writes `.gitignore.framework-recommended` for manual review/merge.
-2. **Environment Preflight & Windows `DOTNET_ROOT` Detection (`scripts/preflight.py` & `docs/ENVIRONMENT_PREFLIGHT.md`):**
+2. **Environment Preflight & Windows `DOTNET_ROOT` Detection (`.aief/scripts/preflight.py` & `.aief/ENVIRONMENT_PREFLIGHT.md`; legacy: `docs/ENVIRONMENT_PREFLIGHT.md`):**
    - Inspects `PATH`, `DOTNET_ROOT`, and Windows user-space `$HOME\.dotnet` without installing software automatically.
    - If `C:\Program Files\dotnet` contains only a runtime (`0` SDKs) while `$HOME\.dotnet` contains the `.NET SDK`, `preflight.py` reports `AVAILABLE_USER_SPACE` and prints the exact PowerShell session configuration:
      ```powershell
@@ -118,7 +123,7 @@ python /path/to/ai-engineering-framework/scripts/bootstrap.py \
   --update
 ```
 
-- **Isolated Consumer Layout (`.aief/`):** New consumer installations place framework rules/agents/workflows/config/state (`core/`, `agents/`, `skills/registry.json`, `workflows/`, `templates/`, `quality/`, `security/`, `scripts/`, `adapters/antigravity/`, `config.json`, `lock.json`, `state/`, `custom/`, `.gitignore`, `ENVIRONMENT_PREFLIGHT.md`, `gitignore.recommended`) inside `.aief/`. Skill files live only once in native platform folders (`.agents/skills/` and `.claude/skills/` when enabled) without duplicating them inside `.aief/skills/`. Legacy `0.3.x`/`0.4.x` consumer layouts (`project.framework.json`, `.framework-lock.json`, `.framework-state/`) continue to be auto-detected and supported seamlessly on `--update` and validation.
+- **Isolated Consumer Layout (`.aief/`):** New consumer installations place framework rules/agents/workflows/config/state (`core/`, `agents/`, `skills/registry.json`, `workflows/`, `templates/`, `quality/`, `security/`, `scripts/`, `adapters/antigravity/`, `config.json`, `lock.json`, `state/`, `custom/`, `.gitignore`, `ENVIRONMENT_PREFLIGHT.md`, `gitignore.recommended`) inside `.aief/`. Skill files live only once in native platform folders (`.agents/skills/` and `.claude/skills/` when enabled) without duplicating them inside `.aief/skills/`. Legacy `0.3.x`/`0.4.x` consumer layouts (`project.framework.json`, `.framework-lock.json`, `.framework-state/`) continue to be auto-detected and supported automatically on `--update` and validation.
 - **Tier 3 Consumer-Owned Files (`.aief/config.json`, `.aief/custom/`, `.aief/state/manifest.json`, `.gitignore`, `README.md`, `docs/`, host `skills/`):** Created if missing inside `.aief/` (never creating empty `docs/*` directories at root in isolated mode); **never overwritten** on subsequent runs or `--update`.
 - **Brownfield Auto-Import on First Bootstrap:** If a brownfield project already contains non-framework root instruction files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`) before the first bootstrap (no `.aief/lock.json`), `bootstrap.py` backs up their contents into `.aief/custom/imported/` and composes them inline into the new entry points so nothing is lost. Pre-existing project skills (`skills/<project>/SKILL.md`) and `.agents/rules/*.md` are preserved untouched outside `.aief/`.
 - **Tier 1 & 2 Framework-Managed Files & Native Projections (Lockfile `v2.0.0`):** Tracked by explicit ownership class (`framework_managed`, `platform_projected_skill`, `consumer_custom_skill`, `consumer_custom_agent`), source path, active platform owners, and SHA-256 hash inside `.aief/lock.json`. Unmodified files are updated safely via two-phase atomic writes while preserving and re-composing `.aief/custom/` + `disabled.*` settings automatically; locally modified files are preserved (`skipped_modified`).

@@ -1,7 +1,7 @@
 # Canonical Software Development Workflow (`WORKFLOW.md`)
 
 **Status:** Canonical Source of Truth  
-**Version:** `0.4.0`  
+**Version:** `0.6.0`  
 **Applies To:** All supported AI coding agents and platform adapters  
 
 ---
@@ -12,7 +12,7 @@ This document defines the **15-phase canonical software development workflow** o
 
 1. **Operational, Not Theoretical:** Every phase specifies deterministic inputs, concrete file outputs, responsible agent roles, required skills, entry/exit criteria, quality gates, human approval checkpoints, and failure recovery procedures.
 2. **Platform-Independent Source of Truth:** Platform adapters (`.github/`, `.agents/`, `.claude/`, `.codex/`, `.gemini/`) implement and route to this workflow; they never redefine it.
-3. **Filesystem State Machine (`.framework-state/`):** Agents never rely on multi-turn chat paraphrasing to hand off work across stages. Every phase writes its primary deliverable to `docs/` or `src/` and emits a validated JSON handoff packet in `.framework-state/handoffs/`.
+3. **Filesystem State Machine (`.aief/state/` / `.framework-state/`):** Agents never rely on multi-turn chat paraphrasing to hand off work across stages. Every phase writes its primary deliverable to `docs/` or `src/` and emits a validated JSON handoff packet in `.aief/state/handoffs/` (isolated consumer projects) or `.framework-state/handoffs/` (legacy `v0.3.x`/`v0.4.x` consumer repos and the upstream framework repository).
 
 ---
 
@@ -22,14 +22,14 @@ This document defines the **15-phase canonical software development workflow** o
 When Agent A summarizes its work in chat for Agent B, repeated paraphrasing causes the **Telephone Game Problem** (loss of edge-case constraints, exact file paths, and negative requirements). To prevent context degradation:
 
 1. **Artifact Persistence:** Each phase writes its deliverable to a canonical repository path (e.g., `docs/specs/03-specification.md`).
-2. **Handoff Packet Generation:** At phase completion, the active agent writes `.framework-state/handoffs/phase-<NN>-handoff.json` conforming to [`core/schemas/handoff-packet.schema.json`](../core/schemas/handoff-packet.schema.json) and updates `.framework-state/manifest.json`.
-3. **Clean-Context Ingestion:** The next agent starts with a clean context window, reads `.framework-state/manifest.json` and the upstream artifact files directly from disk, and verifies upstream exit criteria before executing.
+2. **Handoff Packet Generation:** At phase completion, the active agent writes `.aief/state/handoffs/phase-<NN>-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-<NN>-handoff.json`) conforming to [`core/schemas/handoff-packet.schema.json`](../core/schemas/handoff-packet.schema.json) and updates `.aief/state/manifest.json` (legacy/upstream: `.framework-state/manifest.json`).
+3. **Clean-Context Ingestion:** The next agent starts with a clean context window, reads `.aief/state/manifest.json` (or `.framework-state/manifest.json`) and the upstream artifact files directly from disk, and verifies upstream exit criteria before executing.
 
 ```mermaid
 sequenceDiagram
     participant Human as Human Stakeholder
     participant PA as Product Analyst
-    participant FS as Filesystem (.framework-state/ & docs/)
+    participant FS as Filesystem (.aief/state/ & docs/)
     participant SA as Software Architect
     participant IE as Implementation Engineer
     participant CR as Code Reviewer & QA
@@ -48,7 +48,7 @@ sequenceDiagram
 ```
 
 ### 2.2 Canonical Handoff Packet Structure
-Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json` must conform strictly to [`core/schemas/handoff-packet.schema.json`](../core/schemas/handoff-packet.schema.json) and [`templates/HANDOFF_PACKET.template.json`](../templates/HANDOFF_PACKET.template.json), containing:
+Every phase handoff packet in `.aief/state/handoffs/phase-<NN>-handoff.json` (legacy/upstream: `.framework-state/handoffs/`) must conform strictly to [`core/schemas/handoff-packet.schema.json`](../core/schemas/handoff-packet.schema.json) and [`templates/HANDOFF_PACKET.template.json`](../templates/HANDOFF_PACKET.template.json), containing:
 - `schema_version`: String constant (`"1.0.0"`).
 - `phase_number`: Integer (`1` through `15`) and `phase_slug`: string (e.g., `"03-specification"`).
 - `status`: `"completed"` | `"blocked"` | `"awaiting_human_approval"`.
@@ -70,18 +70,20 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 | **Stage 1: Discovery & Specification** | **01** | Discovery & Requirements Gathering | `product-analyst` | `docs/specs/01-discovery-brief.md` | None |
 | | **02** | Requirement Clarification (`Grill Me`) | `product-analyst` | `docs/specs/02-clarified-requirements.md` | **Gate-01a (Clarification Sign-Off)** |
 | | **03** | Specification Creation | `product-analyst` | `docs/specs/03-specification.md` | **Gate-01b (Spec Approval)** |
-| **Stage 2: Architecture & Research** | **04** | Technical Research | `software-architect` | `docs/architecture/04-research-spike.md` | None |
-| | **05** | Architecture & ADR Creation | `software-architect` | `docs/architecture/ARCHITECTURE.md`, `docs/adr/ADR-xxxx.md` | **Gate-02 (Architecture Approval)** |
+| **Stage 2: Architecture & Research** | **04** | Technical Research | `software-architect` (`ui-ux-designer`, `data-engineer` as applicable) | `docs/architecture/04-research-spike.md` | None |
+| | **05** | Architecture & ADR Creation | `software-architect` (`ui-ux-designer`, `data-engineer` as applicable) | `docs/ARCHITECTURE.md`, `docs/adr/ADR-xxxx.md` | **Gate-02 (Architecture Approval)** |
 | **Stage 3: Planning & Delegation** | **06** | Project Planning | `planner-orchestrator` | `docs/plans/06-implementation-plan.md` | **Gate-03 (Plan Approval)** |
 | | **07** | Build Phases & Task Decomposition | `planner-orchestrator` | `docs/plans/07-task-backlog.json` | None |
-| | **08** | Agent Assignment & Delegation | `planner-orchestrator` | `.framework-state/08-assignments.json` | None |
-| **Stage 4: TDD Implementation** | **09** | TDD & Implementation | `implementation-engineer` | Source code + Unit tests + `.framework-state/handoffs/phase-09-handoff.json` | Category B ops only |
-| **Stage 5: Verification & Security** | **10** | Code Review | `code-reviewer` | `.framework-state/10-review-report.md` | Escalation only |
-| | **11** | Automated Testing | `qa-engineer` | `.framework-state/11-test-report.json` | None |
-| | **12** | Security Validation | `security-engineer` | `.framework-state/12-security-report.md` | **Gate-Sec (Before active DAST/Strix)** |
+| | **08** | Agent Assignment & Delegation | `planner-orchestrator` | `.aief/state/08-assignments.json` | None |
+| **Stage 4: TDD Implementation** | **09** | TDD & Implementation | `implementation-engineer`, `backend-engineer`, `frontend-engineer`, `data-engineer`, `ai-engineer`, `devops-release-engineer` | Source code + Unit tests + `.aief/state/handoffs/phase-09-handoff.json` | Category B ops only |
+| **Stage 5: Verification & Security** | **10** | Code Review | `code-reviewer` | `.aief/state/10-review-report.md` | Escalation only |
+| | **11** | Automated Testing | `qa-engineer` (`ui-ux-designer` for UI checks) | `.aief/state/11-test-report.json` | None |
+| | **12** | Security Validation | `security-engineer` | `.aief/state/12-security-report.md` | **Gate-Sec (Before active DAST/Strix)** |
 | **Stage 6: Release & Evolution** | **13** | CI/CD & Release | `devops-release-engineer` | Release tag, CI run, `CHANGELOG.md` | **Gate-04 (Release Approval)** |
-| | **14** | Documentation Updates | `implementation-engineer` | Updated `README.md`, `docs/`, `graphify-out/` | None |
+| | **14** | Documentation Updates | `implementation-engineer`, `software-architect`, `backend-engineer`, `frontend-engineer`, `data-engineer`, `ai-engineer` | Updated `README.md`, `docs/`, `graphify-out/` | None |
 | | **15** | Retrospectives & Continuous Improvement | `planner-orchestrator` | `docs/retrospectives/RETRO-xxxx.md` | **Gate-05 (Rule/Skill Mutation Approval)** |
+
+> **State Path Note:** Consumer repositories store runtime state under `.aief/state/`; legacy `v0.3.x`/`v0.4.x` consumer layouts and the upstream framework repository use `.framework-state/`. **Subagent-First HARD GATE:** Changes touching `>=3` files or `>=2` layers must delegate specialist layers to subagents (`agents/*.md`) and pass an independent `code-reviewer` subagent (`conversationId` + verdict) before completion.
 
 ---
 
@@ -95,9 +97,9 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Required Inputs:** User request/prompt, existing repository files (if brownfield), and `graphify-out/GRAPH_REPORT.md` (if existing codebase).
 - **Expected Outputs:**
   - `docs/specs/01-discovery-brief.md` (based on `templates/PRD.template.md`).
-  - `.framework-state/handoffs/phase-01-handoff.json`.
+  - `.aief/state/handoffs/phase-01-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-01-handoff.json`).
 - **Responsible Agent Role:** `product-analyst`.
-- **Tools and Skills:** `read_file`, `search_web` (if market/domain lookup required), `graphify` skill (for brownfield context discovery).
+- **Tools and Skills:** `read_file`, `search_web` (if market/domain lookup required), `graphify` skill (query `graphify-out/graph.json`, or read `graphify-out/GRAPH_REPORT.md` / `graph.json` directly when CLI execution is blocked in a sandbox).
 - **Entry Criteria:** User initiates a new project, feature, or architectural change request.
 - **Exit Criteria:** Problem statement, user personas, known constraints, and candidate ambiguities are documented in `01-discovery-brief.md`.
 - **Quality Gates:** Brief contains zero implementation code; distinguishes verified facts from assumptions; lists all unresolved questions for Phase 2.
@@ -114,7 +116,7 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Required Inputs:** `docs/specs/01-discovery-brief.md`.
 - **Expected Outputs:**
   - `docs/specs/02-clarified-requirements.md` containing every question asked, options presented, user decisions, and locked invariants.
-  - `.framework-state/handoffs/phase-02-handoff.json`.
+  - `.aief/state/handoffs/phase-02-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-02-handoff.json`).
 - **Responsible Agent Role:** `product-analyst`.
 - **Tools and Skills:** `grill-me` core skill (`skills/core/grill-me/SKILL.md`), `ask_question` tool (or structured multiple-choice questions with recommended defaults).
 - **Entry Criteria:** `01-discovery-brief.md` exists and contains at least one open design question or assumption.
@@ -135,7 +137,7 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Required Inputs:** `docs/specs/01-discovery-brief.md`, `docs/specs/02-clarified-requirements.md`.
 - **Expected Outputs:**
   - `docs/specs/03-specification.md` (based on `templates/SPEC.template.md`).
-  - `.framework-state/handoffs/phase-03-handoff.json`.
+  - `.aief/state/handoffs/phase-03-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-03-handoff.json`).
 - **Responsible Agent Role:** `product-analyst`.
 - **Tools and Skills:** `write_file`, `anti-slop` core skill (`skills/core/anti-slop/SKILL.md`).
 - **Entry Criteria:** Phase 2 `Gate-01a` approved with zero `[AMBIGUOUS]` tags.
@@ -156,9 +158,9 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Required Inputs:** `docs/specs/03-specification.md`.
 - **Expected Outputs:**
   - `docs/architecture/04-research-spike.md`.
-  - `.framework-state/handoffs/phase-04-handoff.json`.
-- **Responsible Agent Role:** `software-architect` (delegating to `research` subagent where supported).
-- **Tools and Skills:** `search_web`, `read_file`, `run_command` (for isolated prototype checks), `find-skills` (`skills/core/find-skills/SKILL.md`), `agent-browser` (if inspecting live docs/web apps), `graphify` (`graphify query`).
+  - `.aief/state/handoffs/phase-04-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-04-handoff.json`).
+- **Responsible Agent Role:** `software-architect` (plus `ui-ux-designer` for UI/design-system research and `data-engineer` for storage/data-pipeline spikes; delegating to `research` subagent where supported).
+- **Tools and Skills:** `search_web`, `read_file`, `run_command` (for isolated prototype checks), `find-skills` (`skills/core/find-skills/SKILL.md`), `agent-browser` (if inspecting live docs/web apps), `graphify` (`graphify query`, or reading `graphify-out/GRAPH_REPORT.md` / `graph.json` directly if CLI is sandbox-blocked).
 - **Entry Criteria:** `03-specification.md` is approved.
 - **Exit Criteria:** Candidate technical approaches are evaluated across maintenance health, license compatibility, security posture, and complexity.
 - **Quality Gates:** At least two viable alternatives (including "minimal/stdlib approach") are compared with explicit pros, cons, and rejection rationale.
@@ -176,9 +178,9 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Expected Outputs:**
   - Updated `docs/ARCHITECTURE.md` (or feature architecture doc).
   - One or more `docs/adr/ADR-xxxx-<slug>.md` files (based on `templates/ADR.template.md`).
-  - `.framework-state/handoffs/phase-05-handoff.json`.
-- **Responsible Agent Role:** `software-architect`.
-- **Tools and Skills:** `adr-writer` core skill (`skills/core/adr-writer/SKILL.md`), `graphify` (`graphify path` / `graphify explain`), `project-development` principles (architectural reduction).
+  - `.aief/state/handoffs/phase-05-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-05-handoff.json`).
+- **Responsible Agent Role:** `software-architect` (with `ui-ux-designer` for component/accessibility architecture and `data-engineer` for schema/storage ADRs).
+- **Tools and Skills:** `adr-writer` core skill (`skills/core/adr-writer/SKILL.md`), `graphify` (`graphify path` / `graphify explain`, or direct `graphify-out/GRAPH_REPORT.md` / `graph.json` fallback when CLI is sandbox-blocked), `project-development` principles (architectural reduction).
 - **Entry Criteria:** Phase 4 research spike complete.
 - **Exit Criteria:** Interfaces, data flow diagrams (Mermaid), module boundaries, and ADRs are written to disk.
 - **Quality Gates:**
@@ -197,7 +199,7 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Required Inputs:** `docs/specs/03-specification.md`, `docs/ARCHITECTURE.md`, `docs/adr/ADR-*.md`.
 - **Expected Outputs:**
   - `docs/plans/06-implementation-plan.md`.
-  - `.framework-state/handoffs/phase-06-handoff.json`.
+  - `.aief/state/handoffs/phase-06-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-06-handoff.json`).
 - **Responsible Agent Role:** `planner-orchestrator`.
 - **Tools and Skills:** `read_file`, `write_file`.
 - **Entry Criteria:** Architecture and ADRs approved (`Gate-02`).
@@ -206,7 +208,7 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Human Approval Requirements:** **Mandatory (`Gate-03: Implementation Plan Approval`)** before executing multi-phase builds.
 - **Failure and Recovery Procedures:**
   - *Failure:* Plan contains circular dependencies or unverified environment assumptions.
-  - *Recovery:* Cross-check plan against `docs/ENVIRONMENT_PREFLIGHT.md` / `scripts/preflight.py` and reorder phases so prerequisites are built and tested first.
+  - *Recovery:* Cross-check plan against `.aief/ENVIRONMENT_PREFLIGHT.md` (consumer) / `scripts/preflight.py` and reorder phases so prerequisites are built and tested first.
 
 ---
 
@@ -216,7 +218,7 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Required Inputs:** `docs/plans/06-implementation-plan.md`, `docs/specs/03-specification.md`.
 - **Expected Outputs:**
   - `docs/plans/07-task-backlog.json` (and human-readable section in `06-implementation-plan.md`).
-  - `.framework-state/handoffs/phase-07-handoff.json`.
+  - `.aief/state/handoffs/phase-07-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-07-handoff.json`).
 - **Responsible Agent Role:** `planner-orchestrator`.
 - **Tools and Skills:** `write_file`.
 - **Entry Criteria:** `06-implementation-plan.md` approved (`Gate-03`).
@@ -236,31 +238,31 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Purpose:** Route each decomposed task to the appropriate execution mode (single-agent sequential, isolated subagent, or parallel swarm worker) with minimal required tool permissions and skills.
 - **Required Inputs:** `docs/plans/07-task-backlog.json`, `skills/registry.json`.
 - **Expected Outputs:**
-  - `.framework-state/08-assignments.json`.
-  - `.framework-state/handoffs/phase-08-handoff.json`.
+  - `.aief/state/08-assignments.json` (legacy/upstream: `.framework-state/08-assignments.json`).
+  - `.aief/state/handoffs/phase-08-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-08-handoff.json`).
 - **Responsible Agent Role:** `planner-orchestrator`.
-- **Tools and Skills:** `invoke_subagent` / `run_workflow` / `swarm` (when parallel execution is warranted), `find-skills`.
+- **Tools and Skills:** `invoke_subagent` / `define_subagent` / `run_workflow` / `swarm` (or `.claude/agents/` / `.github/agents/`), `find-skills`.
 - **Entry Criteria:** Task backlog validated in Phase 7.
-- **Exit Criteria:** Every task is assigned a role (`implementation-engineer`, `qa-engineer`, etc.), an explicit list of `SKILL.md` files to load, and an isolation mode (`inherit`, `share`, or `branch`).
+- **Exit Criteria:** Every task is assigned to one of the 13 canonical specialist roles (`implementation-engineer`, `backend-engineer`, `frontend-engineer`, `data-engineer`, `ai-engineer`, `devops-release-engineer`, `ui-ux-designer`, `qa-engineer`, etc.), an explicit list of `SKILL.md` files to load, and an isolation mode (`inherit`, `share`, or `branch`).
 - **Quality Gates:**
-  - **Subagent-First Rule (HARD GATE on `>=3` files or `>=2` layers):** Delegate each disjoint layer to a specialist subagent (`implementation-engineer`, `backend-engineer`, `frontend-engineer`, etc.) and reserve Phase 10 for an independent `code-reviewer` subagent (`conversationId` distinct from Phase 9); keep single-agent sequential execution strictly for trivial `<3`-file single-layer edits.
+  - **Subagent-First Rule (HARD GATE on `>=3` modified/created files or `>=2` layers):** Delegate each disjoint layer to a specialist subagent (`invoke_subagent` / `define_subagent`, or `.claude/agents/` / `.github/agents/`) and reserve Phase 10 for an independent `code-reviewer` subagent reporting `conversationId` + verdict; keep single-agent sequential execution strictly for trivial `<3`-file single-layer edits.
   - **Supervisor Cap:** Never assign more than 3–5 concurrent subagents to a single supervisor turn.
 - **Human Approval Requirements:** Required only if installing a new external skill from a third-party repository (**Category B**).
 - **Failure and Recovery Procedures:**
   - *Failure:* Subagent fails, stalls, or exceeds context budget.
-  - *Recovery:* Read last valid checkpoint in `.framework-state/`, narrow the task scope, and re-invoke with a fresh context window.
+  - *Recovery:* Read last valid checkpoint in `.aief/state/` (or `.framework-state/`), narrow the task scope, and re-invoke with a fresh context window.
 
 ---
 
 ### Phase 9 — Test-Driven Development (TDD) and Implementation
 
 - **Purpose:** Implement features and fixes strictly following the **Red $\rightarrow$ Green $\rightarrow$ Refactor** cycle against approved specification acceptance criteria.
-- **Required Inputs:** `docs/specs/03-specification.md`, `docs/adr/ADR-*.md`, `docs/plans/07-task-backlog.json`, `.framework-state/08-assignments.json`.
+- **Required Inputs:** `docs/specs/03-specification.md`, `docs/adr/ADR-*.md`, `docs/plans/07-task-backlog.json`, `.aief/state/08-assignments.json` (legacy/upstream: `.framework-state/08-assignments.json`).
 - **Expected Outputs:**
   - Unit/component test files proving each `AC-xx`.
   - Production implementation files satisfying the tests.
-  - `.framework-state/handoffs/phase-09-handoff.json`.
-- **Responsible Agent Role:** `implementation-engineer`.
+  - `.aief/state/handoffs/phase-09-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-09-handoff.json`).
+- **Responsible Agent Role:** `implementation-engineer`, `backend-engineer`, `frontend-engineer`, `data-engineer`, `ai-engineer`, and `devops-release-engineer` (delegated per disjoint layer under the Phase 8 Subagent-First `HARD GATE` when `>=3` files or `>=2` layers).
 - **Tools and Skills:** `tdd-cycle` core skill (`skills/core/tdd-cycle/SKILL.md`), stack-specific skills (e.g., `dotnet-backend-patterns`, `angular-developer`, `web-design-guidelines`), `read_file`, `write_file`, `edit_file`, `run_command`.
 - **Entry Criteria:** Task assignment and upstream spec/ADR artifacts verified.
 - **Exit Criteria:**
@@ -274,7 +276,7 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Human Approval Requirements:** Autonomous (**Category A**) for workspace code/tests; **Category B approval required** before adding external packages, running database migrations against shared instances, or deleting persistent data.
 - **Failure and Recovery Procedures:**
   - *Failure:* Implementation enters a 3x fix-and-fail loop on the same test.
-  - *Recovery:* **Circuit Breaker Triggered** — Stop mutating code, revert uncommitted broken edits (`git checkout -- <file>`), document the root cause in `.framework-state/`, and escalate to `software-architect` or human user.
+  - *Recovery:* **Circuit Breaker Triggered** — Stop mutating code, revert uncommitted broken edits (`git checkout -- <file>`), document the root cause in `.aief/state/` (or `.framework-state/`), and escalate to `software-architect` or human user.
 
 ---
 
@@ -283,20 +285,20 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Purpose:** Perform an independent, adversarial review of the implementation diff against the specification, ADRs, security rules, and architectural graph.
 - **Required Inputs:** Git diff (`git diff`), `docs/specs/03-specification.md`, `docs/adr/ADR-*.md`, `quality/code-review-rubric.md`.
 - **Expected Outputs:**
-  - `.framework-state/10-review-report.md` (Pass / Changes Requested with file:line citations).
-  - `.framework-state/handoffs/phase-10-handoff.json`.
-- **Responsible Agent Role:** `code-reviewer` (**Must not be the same agent context that authored the code in Phase 9**).
-- **Tools and Skills:** `read_file`, `run_command` (`git diff`, `git status`), `graphify` (`graphify update .`), `anti-slop` skill.
+  - `.aief/state/10-review-report.md` (legacy/upstream: `.framework-state/10-review-report.md`) (Pass / Changes Requested with file:line citations).
+  - `.aief/state/handoffs/phase-10-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-10-handoff.json`).
+- **Responsible Agent Role:** `code-reviewer` (**Must be an independent subagent context distinct from Phase 9, reporting `conversationId` + verdict**).
+- **Tools and Skills:** `read_file`, `run_command` (`git diff`, `git status`), `graphify` (`graphify update .`, or direct `graphify-out/GRAPH_REPORT.md` / `graph.json` read when CLI is sandbox-blocked), `anti-slop` skill.
 - **Entry Criteria:** Phase 9 TDD implementation complete and local unit tests passing.
 - **Exit Criteria:** Review report classifies findings into `BLOCKER`, `MAJOR`, `MINOR`, or `NIT`. Zero `BLOCKER` or `MAJOR` findings remain unresolved.
 - **Quality Gates:**
   - Every `AC-xx` in `03-specification.md` is traced to a concrete implementation and test assertion.
-  - `graphify update .` confirms no unintended circular dependencies or architectural boundary violations.
+  - `graphify update .` (or direct `graph.json` inspection when sandboxed) confirms no unintended circular dependencies or architectural boundary violations.
   - No hardcoded secrets, debug print leftovers, or swallowed exceptions.
 - **Human Approval Requirements:** Escalates to human if the reviewer and implementation engineer disagree after 2 review rounds, or if the diff alters public contracts.
 - **Failure and Recovery Procedures:**
   - *Failure:* `BLOCKER` or `MAJOR` defects identified.
-  - *Recovery:* Transition state back to **Phase 9 (`implementation-engineer`)** with `.framework-state/10-review-report.md` attached as required input.
+  - *Recovery:* Transition state back to **Phase 9** with `.aief/state/10-review-report.md` (or `.framework-state/10-review-report.md`) attached as required input.
 
 ---
 
@@ -306,9 +308,9 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Required Inputs:** Passing Phase 9–10 codebase, `docs/specs/03-specification.md`, `templates/TEST_PLAN.template.md`.
 - **Expected Outputs:**
   - Integration and E2E test suites.
-  - `.framework-state/11-test-report.json` recording total tests, passed, failed, duration, and coverage metrics.
-  - `.framework-state/handoffs/phase-11-handoff.json`.
-- **Responsible Agent Role:** `qa-engineer`.
+  - `.aief/state/11-test-report.json` (legacy/upstream: `.framework-state/11-test-report.json`) recording total tests, passed, failed, duration, and coverage metrics.
+  - `.aief/state/handoffs/phase-11-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-11-handoff.json`).
+- **Responsible Agent Role:** `qa-engineer` (with `ui-ux-designer` for UI/accessibility verification).
 - **Tools and Skills:** `run_command` (`pytest`, `unittest`, `npm test`, `npx playwright test`), `agent-browser` skill (`skills/core/agent-browser/SKILL.md`), `browser` subagent (for live UI verification).
 - **Entry Criteria:** Phase 10 Code Review passed with zero blockers.
 - **Exit Criteria:** Full unit, integration, regression, and (where applicable) E2E Playwright suites pass with zero flaky or failing tests.
@@ -318,7 +320,7 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Human Approval Requirements:** None for running local test suites; Category B approval required before installing heavy browser binaries (`npx playwright install`).
 - **Failure and Recovery Procedures:**
   - *Failure:* Integration or E2E test fails.
-  - *Recovery:* Capture exact failure log/screenshot in `.framework-state/11-test-report.json`, isolate reproduction in a minimal regression test, and return to **Phase 9**.
+  - *Recovery:* Capture exact failure log/screenshot in `.aief/state/11-test-report.json` (or `.framework-state/11-test-report.json`), isolate reproduction in a minimal regression test, and return to **Phase 9**.
 
 ---
 
@@ -327,8 +329,8 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Purpose:** Audit the codebase and dependencies for leaked credentials, insecure coding patterns (OWASP Top 10), vulnerable packages, and (when explicitly authorized) dynamic security vulnerabilities.
 - **Required Inputs:** Codebase, dependency manifests, `security/authorization-policy.md`, `security/pre-commit-secrets.md`.
 - **Expected Outputs:**
-  - `.framework-state/12-security-report.md`.
-  - `.framework-state/handoffs/phase-12-handoff.json`.
+  - `.aief/state/12-security-report.md` (legacy/upstream: `.framework-state/12-security-report.md`).
+  - `.aief/state/handoffs/phase-12-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-12-handoff.json`).
 - **Responsible Agent Role:** `security-engineer`.
 - **Tools and Skills:** Static secret/pattern scanner (`scripts/validate.py` + `npm audit` / `pip-audit`), and conditional **Strix** (`security/strix-profile.yaml`) for authorized dynamic testing.
 - **Entry Criteria:** Phase 11 Automated Testing passed.
@@ -353,19 +355,19 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
   - Updated `CHANGELOG.md` and version metadata.
   - Local Git commit and SemVer tag (`vX.Y.Z`).
   - Remote GitHub push, Pull Request, or Release (after approval).
-  - `.framework-state/handoffs/phase-13-handoff.json`.
-- **Responsible Agent Role:** `devops-release-engineer`.
+  - `.aief/state/handoffs/phase-13-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-13-handoff.json`).
+- **Responsible Agent Role:** `devops-release-engineer` (also executes Phase 9 CI/CD and infrastructure tasks).
 - **Tools and Skills:** `git`, `gh` CLI, `python scripts/validate.py --mode consumer` (or `--mode framework` + `python scripts/run_tests.py --fail-on-skip` in the upstream framework repo), GitHub Actions workflows.
 - **Entry Criteria:** Phases 10, 11, and 12 all report `PASS` (no `CRITICAL` or `HIGH` findings, and no `NOT_RUN`/`BLOCKED` checks mislabeled as `PASS`).
 - **Exit Criteria:** Local validation script (`python scripts/validate.py --mode auto`) exits `0`, Git working tree is clean, and approved release artifacts are published.
 - **Quality Gates:**
-  - Inside consumer projects: `python scripts/validate.py --mode consumer` exits `0`. Inside the upstream framework repo: `python scripts/sync_adapters.py --check`, `python scripts/validate.py --mode framework`, and `python scripts/run_tests.py --fail-on-skip` pass with 0 errors.
+  - Inside consumer projects: `python scripts/validate.py --mode consumer` exits `0`. Inside the upstream framework repo: `python scripts/sync_adapters.py --check`, `python scripts/validate.py --mode framework`, and `python scripts/run_tests.py --fail-on-skip` pass (`87/87` tests, 0 errors).
   - Note: Phase 11 live E2E startup verification should derive endpoints from config and poll via `scripts/readiness.py` under PowerShell `5.1`-safe commands (see [`workflows/05-review-qa-and-security.md`](../workflows/05-review-qa-and-security.md)).
   - Rollback procedure is documented before deployment executes.
 - **Human Approval Requirements:** **Mandatory (`Gate-04: Release & Publish Approval`)** before pushing commits/tags to remote GitHub repositories, creating public releases, or deploying to staging/production environments.
 - **Failure and Recovery Procedures:**
   - *Failure:* CI pipeline fails or post-deployment smoke check fails.
-  - *Recovery:* Execute documented rollback (`git revert` or previous release tag restoration), record failure in `.framework-state/`, and return to Phase 9/11.
+  - *Recovery:* Execute documented rollback (`git revert` or previous release tag restoration), record failure in `.aief/state/` (or `.framework-state/`), and return to Phase 9/11.
 
 ---
 
@@ -375,9 +377,9 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 - **Required Inputs:** Shipped code changes, `docs/specs/03-specification.md`, `docs/adr/ADR-*.md`.
 - **Expected Outputs:**
   - Updated `README.md`, `docs/*.md`, inline API docstrings.
-  - Updated `graphify-out/graph.json` and `graphify-out/GRAPH_REPORT.md` via `graphify update .`.
-  - `.framework-state/handoffs/phase-14-handoff.json`.
-- **Responsible Agent Role:** `implementation-engineer` / `software-architect`.
+  - Updated `graphify-out/graph.json` and `graphify-out/GRAPH_REPORT.md` via `graphify update .` (or verified directly when `graphify` CLI is blocked in a sandbox).
+  - `.aief/state/handoffs/phase-14-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-14-handoff.json`).
+- **Responsible Agent Role:** `implementation-engineer` / `software-architect` (plus `backend-engineer`, `frontend-engineer`, `data-engineer`, and `ai-engineer` for module-specific docs).
 - **Tools and Skills:** `write_file`, `edit_file`, `graphify` skill, `anti-slop` skill, `scripts/validate.py`.
 - **Entry Criteria:** Implementation and verification complete.
 - **Exit Criteria:** All markdown links resolve, CLI usage examples match actual flags, and `graphify-out/` reflects current repository structure.
@@ -392,11 +394,11 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 ### Phase 15 — Retrospectives and Continuous Improvement
 
 - **Purpose:** Analyze execution metrics, review failures, circuit-breaker activations, and human corrections from the completed cycle to propose bounded improvements to framework rules, skills, or templates.
-- **Required Inputs:** `.framework-state/handoffs/phase-01..14-handoff.json`, review/test/security reports.
+- **Required Inputs:** `.aief/state/handoffs/phase-01..14-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-01..14-handoff.json`), review/test/security reports.
 - **Expected Outputs:**
   - `docs/retrospectives/RETRO-xxxx-<slug>.md`.
   - Proposed diff (if any) to `core/rules/`, `skills/`, or `templates/`.
-  - `.framework-state/handoffs/phase-15-handoff.json`.
+  - `.aief/state/handoffs/phase-15-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-15-handoff.json`).
 - **Responsible Agent Role:** `planner-orchestrator`.
 - **Tools and Skills:** `self-improvement-loops` and `evaluation` principles.
 - **Entry Criteria:** Phases 1–14 complete for the milestone or feature cycle.
@@ -413,7 +415,7 @@ Every phase handoff packet in `.framework-state/handoffs/phase-<NN>-handoff.json
 
 ## 5. Fast-Track Profiles (Scaling the Workflow to Task Size)
 
-Not every engineering change requires 15 separate ceremony turns. The canonical workflow supports **three execution profiles** configured in `project.framework.json`, while preserving all quality and security invariants:
+Not every engineering change requires 15 separate ceremony turns. The canonical workflow supports **three execution profiles** configured in `.aief/config.json` (legacy `project.framework.json`), while preserving all quality and security invariants:
 
 | Profile | Target Use Case | Phase Execution Path | Required Human Gates |
 | :--- | :--- | :--- | :--- |

@@ -1,7 +1,7 @@
 # Architecture Guide (`ARCHITECTURE.md`)
 
 **Status:** Canonical Architecture Specification  
-**Version:** `0.5.0`  
+**Version:** `0.6.0`  
 
 ---
 
@@ -19,7 +19,7 @@ flowchart TD
         CR["core/rules/ (Engineering & Security Laws)"]
         CS["core/schemas/ & core/platform-capabilities.json"]
         WF["docs/WORKFLOW.md & workflows/ (15-Phase SDLC)"]
-        AG["agents/ (8 Vendor-Neutral Role Specs)"]
+        AG["agents/ (13 Canonical Role Specs)"]
         SK["skills/core/ & skills/optional/ (SKILL.md + registry.json)"]
         QL["quality/ & security/ (Rubrics, TDD, Strix Profiles)"]
         SC["scripts/ (bootstrap, validate, sync_adapters, preflight, readiness, run_tests)"]
@@ -55,8 +55,8 @@ flowchart TD
 
 ### 2.1 Why Four Tiers?
 1. **Zero Config Drift (Tier 1 $\rightarrow$ Tier 2):** Editing a rule in `core/rules/`, capability metadata in `core/platform-capabilities.json`, a role in `agents/`, or `workflows/` requires running `python scripts/sync_adapters.py` in the upstream framework repo. When installing into a consumer repo, `scripts/bootstrap.py` projects consumer-safe adapter templates (pointing to `validate.py --mode consumer`, never `sync_adapters.py`) and native skill folders (`.agents/skills/<name>/` and, when `claude-code` is enabled, `.claude/skills/<name>/`).
-2. **Safe Downstream Upgrades & Six-Class Ownership (Tier 1/2 vs. Tier 3):** When a consumer project upgrades (including automatic migration from legacy `v0.3.0` lockfiles with backup to `.framework-state/lock-backups/framework-lock-v0.3.0.json`) via `python scripts/bootstrap.py --update`, `.framework-lock.json` (`schema_version: "2.0.0"`) tracks ownership across `framework_managed`, `platform_projected_skill`, `consumer_owned`, `consumer_customized_generated`, `obsolete_framework_managed`, and `unknown_untracked`. Unmodified managed/projected files update cleanly via two-phase atomic writes; locally modified files are preserved; deselected packs or removed exclusive platforms are pruned safely only with verified provenance and reparse/traversal guards.
-3. **Clean Version Control (Tier 3 vs. Tier 4):** Ephemeral orchestration checkpoints in `.framework-state/` (including `.framework-state/scratch/`) are git-ignored by default while permanent engineering decisions (`docs/specs/`, `docs/adr/`) and `project.framework.json` remain under project Git control.
+2. **Safe Downstream Upgrades & Six-Class Ownership (Tier 1/2 vs. Tier 3):** When a consumer project upgrades (including automatic migration from legacy `v0.3.0` lockfiles with backup to `.aief/state/lock-backups/framework-lock-v0.3.0.json`, or `.framework-state/lock-backups/` in legacy root layouts) via `aief update` / `python scripts/bootstrap.py --update`, `.aief/lock.json` (legacy `.framework-lock.json`, `schema_version: "2.0.0"`) tracks ownership across `framework_managed`, `platform_projected_skill`, `consumer_owned`, `consumer_customized_generated`, `obsolete_framework_managed`, and `unknown_untracked`. Unmodified managed/projected files update cleanly via two-phase atomic writes; locally modified files are preserved; deselected packs or removed exclusive platforms are pruned safely only with verified provenance and reparse/traversal guards.
+3. **Clean Version Control (Tier 3 vs. Tier 4):** Ephemeral orchestration checkpoints in `.aief/state/` (including `.aief/state/scratch/`, or `.framework-state/` in legacy root and upstream framework layouts) are git-ignored by default while permanent engineering decisions (`docs/specs/`, `docs/adr/`) and `.aief/config.json` (legacy `project.framework.json`) remain under project Git control.
 
 ---
 
@@ -82,13 +82,13 @@ The framework incorporates modern context engineering principles (`context-funda
 
 ### 4.1 Context Isolation Over Anthropomorphism
 Multiple agents exist in this framework **to isolate context windows**, not to simulate corporate bureaucracy:
-- **Single-Agent Sequential Mode:** On platforms or tasks where a single agent executes the workflow, the agent transitions across phases by writing the phase handoff file to `.framework-state/handoffs/` and compacting/clearing prior conversational noise before starting the next stage.
+- **Single-Agent Sequential Mode:** On platforms or tasks where a single agent executes the workflow, the agent transitions across phases by writing the phase handoff file to `.aief/state/handoffs/` (or `.framework-state/handoffs/` in legacy consumer and upstream framework layouts) and compacting/clearing prior conversational noise before starting the next stage.
 - **Supervisor / Subagent Mode:** On platforms supporting subagents (Google Antigravity `invoke_subagent` / `run_workflow` / `swarm`, Claude Code subagents), `planner-orchestrator` dispatches fresh subagent instances with only the specific input files (`input_artifacts`) required for that task.
 - **Hard Worker Cap:** A supervisor turn never spawns more than **3 to 5 concurrent workers**, preventing supervisor context saturation.
 
 ### 4.2 Progressive Skill Disclosure & Domain Isolation
 Loading every guideline into the global system prompt causes the **Lost-in-the-Middle Effect** and wastes token budget.
-- **Always-On Context (`AGENTS.md` / `CLAUDE.md` / `GEMINI.md`):** Kept concise. Contains only core workflow routing, safety/approval gates, and a compact metadata index (`9,098 bytes` / `~2,274 tokens` in total for `AGENTS.md` across all 33 registered skills — keeping full `SKILL.md` bodies out of startup context).
+- **Always-On Context (`AGENTS.md` / `CLAUDE.md` / `GEMINI.md`):** Kept concise. Contains only core workflow routing, safety/approval gates, and a compact metadata index (`10,708 bytes` / `~2,677 tokens` in total for `AGENTS.md` across all 33 registered skills — keeping full `SKILL.md` bodies out of startup context).
 - **On-Demand Context (`skills/`):** Organized into `skills/core/` (8 core SDLC, YAGNI `ponytail`, and `graphify` skills) and 5 isolated optional domain packs (`communication`, `context-engineering`, `agent-architecture`, `frontend-design`, `growth-media`). See [`docs/SKILL_COMPATIBILITY_MATRIX.md`](./SKILL_COMPATIBILITY_MATRIX.md) and [`docs/TOKEN_OPTIMIZATION.md`](./TOKEN_OPTIMIZATION.md).
 - **Offline Script & Database Execution:** Heavy reference assets (such as the 28 CSV databases in `ui-ux-pro-max` or the 36 Angular guides in `angular-developer`) remain on disk and are queried via standard-library Python scripts (`search.py`) or targeted `read_file` calls.
 

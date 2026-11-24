@@ -1,6 +1,6 @@
 # Platform Compatibility Matrix (`compatibility-matrix.md`)
 
-**Version:** `0.5.0`  
+**Version:** `0.6.0`  
 **Source of Truth:** Canonical rules in `core/rules/`, roles in `agents/`, skills in `skills/`, [`scripts/compose.py`](../scripts/compose.py), and [`core/platform-capabilities.json`](../core/platform-capabilities.json)  
 
 ---
@@ -25,18 +25,18 @@
 
 1. **OpenAI Codex Custom Agent Files:**
    - *Limitation:* Codex CLI uses `AGENTS.md` and `.agents/skills/*/SKILL.md` rather than a dedicated `.codex/agents/*.md` subagent directory.
-   - *Fallback:* `scripts/sync_adapters.py` maps all 8 canonical roles into `AGENTS.md` role-routing instructions and exposes stage workflows via skills.
+   - *Fallback:* `scripts/sync_adapters.py` maps all 13 canonical roles into `AGENTS.md` role-routing instructions and exposes stage workflows via skills.
 2. **Gemini CLI Subagent Spawning:**
    - *Limitation:* Gemini CLI executes primarily as a single-session agent with custom TOML slash commands (`.gemini/commands/*.toml`).
-   - *Fallback:* `adapters/gemini-cli/commands/` provides stage-transition TOML commands (`/workflow:stage1` through `/workflow:stage6`) that read/write `.framework-state/` sequentially.
+   - *Fallback:* `adapters/gemini-cli/commands/` provides stage-transition TOML commands (`/workflow:stage1` through `/workflow:stage6`) that read/write `.aief/state/` (legacy `.framework-state/`) sequentially.
 3. **Hook Syntax Differences:**
    - *Limitation:* Claude Code `settings.json` hooks (`PreToolUse`/`PostToolUse` matching `Bash`/`Edit`), Antigravity `hooks.json` (`<hook-name>.{SessionStart,PreToolUse,PostToolUse,PreInvocation,PostInvocation,Stop}`), and GitHub Copilot have incompatible hook schemas.
    - *Fallback:* `adapters/antigravity/hooks.json` ships a schema-valid `"enabled": false` opt-in reminder template, while **universal Git/CLI validation (`python scripts/validate.py`)** provides a 100% platform-independent enforcement layer.
 4. **Consumer Skill Isolation & Host-Global Discovery:**
    - *Design Note:* Some CLI runtimes scan host-global directories (`$HOME/.agents/skills/`, `$HOME/.gemini/config/skills/`, `$HOME/.claude/skills/`, `$HOME/.codex/skills/`) alongside workspace skill directories.
    - *Boundary:* `scripts/validate.py --mode consumer` enforces lockfile-backed workspace boundaries inside `.agents/skills/` and `.claude/skills/` (`ERROR`/`WARNING`) and reports host-global skill folders as `INFO` only without touching user-global files.
-5. **Current Compatibility Summary (`v0.5.0`):**
-   - **All 5 Platforms (Adapter & Schema Level):** Full inline entry composition (`.aief/scripts/compose.py`), native skill projection (`.agents/skills/` and `.claude/skills/`), read-only reviewer enforcement, and schema contracts are **`SUPPORTED & CONTRACT_VALIDATED`** (`85/85` automated offline tests).
+5. **Current Compatibility Summary (`v0.6.0`):**
+   - **All 5 Platforms (Adapter & Schema Level):** Full inline entry composition (`.aief/scripts/compose.py`), native skill projection (`.agents/skills/` and `.claude/skills/`), read-only reviewer enforcement, and schema contracts are **`SUPPORTED & CONTRACT_VALIDATED`** (`87/87` automated offline tests).
 
 ---
 

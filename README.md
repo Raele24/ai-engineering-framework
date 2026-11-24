@@ -91,14 +91,16 @@ python -m unittest discover -s tests -v
 Install via standard Python packaging (`uvx` / `pipx`) or directly from source checkout without overwriting existing project files:
 
 ```bash
-# Option A: One-command install via uvx / pipx (all 5 platforms, all 33 skills, auto-detected stacks)
+# Option A: One-command install via uvx / pipx (interactive TUI wizard on TTY; --yes for defaults)
 uvx --from git+https://github.com/Raele24/ai-engineering-framework.git aief init /path/to/your-project
 # Or install once via pipx install git+https://github.com/Raele24/ai-engineering-framework.git
-aief init /path/to/your-project
+aief init /path/to/your-project --yes --no-import   # Zero-prompt bootstrap without legacy auto-import
+aief init /path/to/your-project --interactive       # Force interactive discovery & legacy migration TUI
 aief compose /path/to/your-project
 
 # Option B: Direct invocation from local framework clone
 python scripts/bootstrap.py /path/to/your-project
+python scripts/bootstrap.py /path/to/your-project --yes --no-import
 python scripts/bootstrap.py /path/to/your-project --dry-run
 python /path/to/your-project/.aief/scripts/compose.py
 python /path/to/your-project/.aief/scripts/preflight.py --stacks dotnet,node/angular
@@ -117,7 +119,7 @@ python scripts/sync_adapters.py --check
 | Path | Tier | Purpose |
 | :--- | :--- | :--- |
 | [`core/`](./core/) | Tier 1 | Canonical engineering rules (`core/rules/`), JSON schemas (`core/schemas/`), and `platform-capabilities.json` |
-| [`agents/`](./agents/) | Tier 1 | 8 vendor-neutral agent role specifications (`product-analyst` through `devops-release-engineer`) |
+| [`agents/`](./agents/) | Tier 1 | 13 canonical agent role specifications (`ai-engineer` through `ui-ux-designer`) |
 | [`skills/`](./skills/) | Tier 1 | Modular `SKILL.md` packages (`skills/core/` + opt-in `skills/optional/` packs) and `skills/registry.json` |
 | [`workflows/`](./workflows/) | Tier 1 | Step-by-step stage runbooks implementing the 15-phase canonical SDLC |
 | [`templates/`](./templates/) | Tier 3 | Artifact templates (`PRD`, `SPEC`, `ADR`, `TEST_PLAN`, `HANDOFF_PACKET`, `project.framework.json`, stack `.gitignore` presets) |
@@ -125,6 +127,7 @@ python scripts/sync_adapters.py --check
 | [`quality/`](./quality/) | Tier 1 | TDD protocol, code review rubric, Definition of Done, and tool classification matrix |
 | [`security/`](./security/) | Tier 1 | Security authorization policy, secret prevention rules, and conditional Strix profile template |
 | [`integrations/`](./integrations/) | Tier 1 | MCP server templates, Graphify knowledge graph runner, and optional orchestrator specs |
+| [`aief_cli/`](./aief_cli/) | Tier 1 | Packaged `aief` CLI entrypoint (`init`, `update`, `compose`, `validate`, `preflight`, `check-sync`) and bundled assets |
 | [`scripts/`](./scripts/) | Tier 1 | Pure-stdlib Python CLIs (`bootstrap.py`, `compose.py`, `validate.py`, `sync_adapters.py`, `preflight.py`, `platform_capabilities.py`, `readiness.py`, `run_tests.py`) |
 | [`docs/`](./docs/) | Tier 1 | Complete documentation suite (Architecture, Workflow, Getting Started, Consumer Usage Guide, Installation, Security, Roadmap) |
 | [`tests/`](./tests/) | Tier 1 | Automated 6-tier offline regression suite (`87` stdlib tests via `scripts/run_tests.py`) |

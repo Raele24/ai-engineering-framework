@@ -1,6 +1,6 @@
 # Skills Catalog, Installation & Compatibility Matrix (`SKILL_COMPATIBILITY_MATRIX.md`)
 
-**Version:** `0.5.0`
+**Version:** `0.6.0`
 
 ---
 
@@ -33,7 +33,7 @@ Canonical skills live under `skills/` (`33` skills across `core/` and `5` `optio
 
 ## 2. Platform Skill Discovery Paths
 
-| Platform | Support (`v0.5.0`) | Native Skill Discovery Path | Bundled Scripts & `references/` Support |
+| Platform | Support (`v0.6.0`) | Native Skill Discovery Path | Bundled Scripts & `references/` Support |
 | :--- | :---: | :--- | :--- |
 | **1. Google Antigravity** | **`SUPPORTED`** | `.agents/skills.json` + `.agents/skills/<name>/SKILL.md` (workspace); `~/.gemini/config/skills/` (host-global) | `read_file` for `references/*.md`; shell execution for `scripts/*.py` |
 | **2. OpenAI Codex CLI** | **`SUPPORTED`** | `.agents/skills/<name>/SKILL.md` (workspace) & `~/.codex/skills/` + `AGENTS.md` | Supported under `workspace-write` sandbox |
@@ -63,7 +63,7 @@ Canonical skills live under `skills/` (`33` skills across `core/` and `5` `optio
 | **14** | `context-compression` | `optional-context` | P0 | Vendored (`muratcankoylan`) | MIT | Yes | `AGENTS.md`; long trajectories / handoffs | `scripts/compression_evaluator.py`, `references/` | **Policy A** |
 | **15** | `filesystem-context` | `optional-context` | P1 | Vendored (`muratcankoylan`) | MIT | Yes | `AGENTS.md`; outputs $>2000$ chars | `scripts/context_scratchpad.py`, `references/` | **Policy A** |
 | **16** | `memory-systems` | `optional-context` | P1 | Vendored (`muratcankoylan`) | MIT | Yes | `AGENTS.md`; cross-session entity memory | `scripts/memory_store.py`, `references/` | **Policy A** |
-| **17** | `session-handoff` | `optional-context` | P0 | Vendored (`softaworks/agent-toolkit`) | MIT | Yes | `AGENTS.md`; chat switches (`.framework-state/session-handoffs/`) | `scripts/*.py` (stdlib), `references/` | **Policy A** |
+| **17** | `session-handoff` | `optional-context` | P0 | Vendored (`softaworks/agent-toolkit`) | MIT | Yes | `AGENTS.md`; chat switches (`.aief/state/session-handoffs/`, legacy `.framework-state/session-handoffs/`) | `scripts/*.py` (stdlib), `references/` | **Policy A** |
 | **18** | `multi-agent-patterns` | `optional-agent-architecture` | P1 | Vendored (`muratcankoylan`) | MIT | Yes | `AGENTS.md`; Phase 8 (`planner-orchestrator`) | `scripts/coordination.py`, `references/` | **Policy A** |
 | **19** | `tool-design` | `optional-agent-architecture` | P1 | Vendored (`muratcankoylan`) | MIT | Yes | `AGENTS.md`; CLI/MCP design | `scripts/description_generator.py`, `references/` | **Policy A** |
 | **20** | `evaluation` | `optional-agent-architecture` | P1 | Vendored (`muratcankoylan`) | MIT | Yes | `AGENTS.md`; Phase 10 & 11 | `scripts/evaluator.py`, `references/` | **Policy A** |

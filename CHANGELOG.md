@@ -5,10 +5,10 @@ The format follows [Semantic Versioning 2.0.0](https://semver.org/) ([`docs/CONT
 
 ---
 
-## [0.6.0] - 2026-11-22 (Pending `Gate-04`)
+## [0.6.0] - 2026-11-22
 
 ### Added
-- **Interactive Arrow-Key TUI Discovery & Migration Wizard (`scripts/bootstrap.py`, `aief_cli/cli.py`):** On interactive TTY fresh installs (`aief init`), performs read-only discovery before writing files, detects identical/duplicate legacy entry files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`), provides a `↑`/`↓`/`Space`/`a`/`Enter`/`Esc` multi-select/select TUI (with clean `Ctrl+C`/`Esc` abort and ASCII fallback on non-TTY pipes) for target platforms, optional skill packs, per-file legacy migration actions (`copy`, `move` to `.aief/custom/rules/` with optional custom rule filename & old-file cleanup, `skip`, or `delete`), and external skill/rule unification, then outputs an explicit action receipt. Added `--yes` (`-y`), `--interactive` (`-i`), and `--no-import` CLI flags (`test_18_interactive_wizard_discovery_duplicates_and_actions`).
+- **Interactive Arrow-Key TUI Discovery & Migration Wizard (`scripts/bootstrap.py`, `aief_cli/cli.py`):** On interactive TTY fresh installs (`aief init`), performs read-only discovery before writing files, detects identical/duplicate legacy entry files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`), provides a `↑`/`↓`/`Space`/`a`/`Enter`/`Esc` multi-select/select TUI (with clean `Ctrl+C`/`Esc` abort and ASCII fallback on non-TTY pipes) for target platforms, optional skill packs, per-file legacy migration actions (`copy`, `move` to `.aief/custom/rules/` with optional custom rule filename & old-file cleanup, `skip`, or `delete`), and external skill/rule unification, then outputs an explicit action receipt. Added `--yes` (`-y`), `--interactive` (`-i`), and `--no-import` CLI flags (`test_18_interactive_wizard_discovery_duplicates_and_actions`, bringing suite coverage to `87/87` automated checks).
 
 ### Fixed
 - **Sub-Second Monorepo `pnpm` Validation (`scripts/validate.py`):** Replaced full-tree `Path.rglob()` scans in `check_json_files` and `check_secrets` with `_iter_workspace_files()` using `os.walk` directory pruning (`node_modules/`, `.git/`, `.angular/`, `dist/`, `.venv/`), cutting validation on large `pnpm` / Angular workspaces from minutes to `<1s`.

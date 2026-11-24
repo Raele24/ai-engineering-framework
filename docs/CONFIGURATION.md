@@ -1,6 +1,6 @@
 # Configuration Reference (`CONFIGURATION.md`)
 
-**Version:** `0.5.0`  
+**Version:** `0.6.0`  
 
 ---
 
@@ -18,7 +18,7 @@ The **AI Engineering Framework** isolates all consumer runtime metadata inside `
 ```json
 {
   "$schema": "./core/schemas/framework-config.schema.json",
-  "frameworkVersion": "0.5.0",
+  "frameworkVersion": "0.6.0",
   "projectName": "my-software-project",
   "workflowProfile": "standard",
   "enabledPlatforms": [
@@ -86,7 +86,7 @@ The **AI Engineering Framework** isolates all consumer runtime metadata inside `
 
 | Field | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `frameworkVersion` | `string` | `"0.5.0"` | SemVer version of the installed AI Engineering Framework |
+| `frameworkVersion` | `string` | `"0.6.0"` | SemVer version of the installed AI Engineering Framework |
 | `projectName` | `string` | Folder name | Identifier used in handoff manifests and reports |
 | `workflowProfile` | `"full"` \| `"standard"` \| `"hotfix"` | `"standard"` | Controls ceremony depth in `docs/WORKFLOW.md` |
 | `enabledPlatforms` | `string[]` | All 5 platforms | Platforms configured by `scripts/bootstrap.py` and verified by `.aief/scripts/validate.py --mode consumer` |
@@ -118,10 +118,11 @@ The **AI Engineering Framework** isolates all consumer runtime metadata inside `
 5. **`unknown_untracked`:** Untracked files inside `.agents/skills/` or `.claude/skills/` with no lockfile entry — preserved on `--update` and reported as warnings.
 6. **Host-Global External Directories (`INFO` Scope Only):** `~/.agents/skills`, `~/.claude/skills`, `~/.gemini/config/skills`, and `~/.codex/skills` belong to host runtimes, **not** the consumer workspace.
 
-After changing `.aief/config.json` (`disabled.*` / `customizations.*`) or `.aief/custom/`, run `python .aief/scripts/compose.py` (or `aief compose .`) locally inside the consumer repo to re-compose inline entry files, projections, and validation in one step. Full customization recipes: [`docs/CUSTOMIZATION_GUIDE.md`](./CUSTOMIZATION_GUIDE.md).
+After changing `.aief/config.json` (`disabled.*` / `customizations.*`) or `.aief/custom/`, run `python .aief/scripts/compose.py` (or `aief compose .`) locally inside the consumer repo to re-compose inline entry files, projections, and validation in one step. `.aief/.gitignore` ignores runtime state (`state/`), scratch outputs, and Python bytecode (`__pycache__/`, `*.py[cod]`). Full customization recipes: [`docs/CUSTOMIZATION_GUIDE.md`](./CUSTOMIZATION_GUIDE.md).
 
 ### 3.2 Actionable Validation Severity Tiers (`scripts/validate.py`)
-- **`ERROR` (Exits `1`):** Invalid ownership class, unknown/disabled platform ownership metadata, projected skills absent from consumer `skills/registry.json`, missing required skill projections (`SKILL.md`), stale lockfile/platform projection entries, duplicate or case-insensitive skill/path collisions, unsafe paths (`..`, symlinks/reparse points), corrupted or interrupted (`in_progress`) lockfiles, or broken links/secrets.
+`validate.py` prunes heavy build/dependency trees (`node_modules/`, `.git/`, `.angular/`, `dist/`, `.venv/`) during workspace scans and supports JSONC (comments and trailing commas) in root and nested `.vscode/*.json` / `.devcontainer/*.json` monorepo configs (e.g., `apps/web/.vscode/*.json`).
+- **`ERROR` (Exits `1`):** Invalid ownership class, unknown/disabled platform ownership metadata, projected skills absent from consumer `skills/registry.json`, missing required skill projections (`SKILL.md`), stale lockfile/platform projection entries, duplicate or case-insensitive skill/path collisions, unsafe paths (`..`, symlinks/reparse points), corrupted or interrupted (`in_progress`) lockfiles, invalid JSON/JSONC, or broken links/secrets.
 - **`WARNING` (Exits `0`):** Unexpected untracked files inside `.agents/skills/` or `.claude/skills/` preserved by `--update`, locally modified managed/projected files differing from locked hashes, or legacy `v0.3.0` lockfile migration advisories.
 - **`INFO` (Exits `0`):** Observed host-global skill directory visibility outside consumer workspace isolation boundaries.
 
@@ -133,5 +134,5 @@ After changing `.aief/config.json` (`disabled.*` / `customizations.*`) or `.aief
 
 ## 4. Environment Variables & Secrets Policy
 
-1. **Zero Secrets in Git:** Never place API keys, OAuth tokens, JWT signing keys, database passwords, or private URLs in `project.framework.json`, `appsettings.json`, or any tracked file.
+1. **Zero Secrets in Git:** Never place API keys, OAuth tokens, JWT signing keys, database passwords, or private URLs in `.aief/config.json` (or legacy `project.framework.json`), `appsettings.json`, or any tracked file.
 2. **Variable Placeholders:** Always reference secrets via environment variables (`APP_JWT_SIGNING_KEY`, `${GITHUB_PERSONAL_ACCESS_TOKEN}`, `${STRIX_LLM_API_KEY}`).

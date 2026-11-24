@@ -1,9 +1,9 @@
 # Token Efficiency & Context Optimization Guide (`TOKEN_OPTIMIZATION.md`)
 
 **Project:** AI Engineering Framework (`ai-engineering-framework`)  
-**Version:** `0.5.0`  
-**Date:** `2026-11-20`  
-*(Empirical byte/token measurements below were captured on the M2 baseline corpus; M9 native projections in `.agents/skills/` and `.claude/skills/` follow the exact same progressive-disclosure index so startup prompt overhead remains unchanged unless skills are explicitly loaded via `read_file`.)*
+**Version:** `0.6.0`  
+**Date:** `2026-11-24`  
+*(Empirical byte/token measurements below were captured on the `v0.2.0` 30-skill baseline corpus; the current `v0.6.0` catalog ships `33` skills using the same progressive-disclosure index and native projections in `.agents/skills/` and `.claude/skills/` so startup prompt overhead remains minimal unless skills are explicitly loaded via `read_file`.)*
 
 ---
 
@@ -17,7 +17,7 @@ Every optimization layer (`ponytail`, `caveman`, `rtk-cli`, `context-optimizatio
 2. **Security Warnings & Guardrails:** `Gate-Sec` checks, CVE identifiers, auth/permission boundaries, and input validation.
 3. **Acceptance Criteria:** Testable `Given / When / Then` predicates (`AC-01..N`) in `docs/specs/03-specification.md`.
 4. **Required Automated Tests:** Red-Green-Refactor unit, integration, and regression tests (`Phase 9` & `Phase 11`).
-5. **Architectural Decisions:** Locked constraints in `docs/adr/ADR-*.md` and `.framework-state/handoffs/`.
+5. **Architectural Decisions:** Locked constraints in `docs/adr/ADR-*.md` and `.aief/state/handoffs/` (legacy/upstream `.framework-state/handoffs/`).
 6. **Exact Technical Payload:** File paths, CLI flags, code identifiers, version numbers, and negations (`not`, `never`, `no`, `only`, `except`).
 
 ---
@@ -36,7 +36,7 @@ flowchart LR
 
 ## 3. Empirical Benchmarks Across 7 Measurable Scenarios
 
-All baseline measurements below were captured on the `v0.2.0` (`30`-skill) repository corpus (`1 token ≈ 4 UTF-8 bytes`); `v0.4.0` adds `3` optional skills (`i-have-adhd`, `humanizer`, `session-handoff`) using the exact same metadata-index progressive disclosure mechanism.
+All baseline measurements below were captured on the `v0.2.0` (`30`-skill) repository corpus (`1 token ≈ 4 UTF-8 bytes`); the current `v0.6.0` catalog ships `33` skills (`v0.4.0` added `i-have-adhd`, `humanizer`, `session-handoff`) using the exact same metadata-index progressive disclosure mechanism.
 
 ### Scenario 1: Skill Metadata Loaded per Session vs. Eager Loading
 - **Baseline (Naive Eager Loading of All 30 Skill Directories):** `2,634,858 bytes` (`~658,714 tokens`) across all 30 skills, 36 Angular reference guides, and 28 UI/UX Pro Max CSV databases.
@@ -70,15 +70,15 @@ All baseline measurements below were captured on the `v0.2.0` (`30`-skill) repos
 ### Scenario 5: Context Size During Long-Running Tasks (`context-optimization` + `filesystem-context`)
 - **Unbounded Trajectory (Baseline):** 25 tool calls returning average `6,000 bytes` (`~1,500 tokens`) each accumulate `150,000 bytes` (`~37,500 tokens`) of stale observations in message history, triggering mid-context attention degradation (*lost-in-the-middle*).
 - **Optimized Trajectory:**
-  1. **Tool Output Offloading (`filesystem-context`):** Any tool output `>2,000 chars` is written to `.framework-state/scratch/<tool>_<ts>.log` and replaced in context with a `<200 token` summary + file path.
-  2. **Observation Masking (`context-optimization`):** Resolved tool outputs older than 3 turns are masked to `[Obs elided -> .framework-state/scratch/...]`.
+  1. **Tool Output Offloading (`filesystem-context`):** Any tool output `>2,000 chars` is written to `.aief/state/scratch/<tool>_<ts>.log` (legacy `.framework-state/scratch/`) and replaced in context with a `<200 token` summary + file path.
+  2. **Observation Masking (`context-optimization`):** Resolved tool outputs older than 3 turns are masked to `[Obs elided -> .aief/state/scratch/...]`.
   3. **70% Compaction Trigger:** When window utilization crosses 70%, old turns are compacted while keeping system prompt and active task files pinned.
 - **Measured Savings:** **65% to 80% reduction** in cumulative trajectory context growth across 20+ step tasks.
 
-### Scenario 6: Context Handoff Quality Across Agents (`context-compression` + `.framework-state/`)
+### Scenario 6: Context Handoff Quality Across Agents (`context-compression` + `.aief/state/` / `.framework-state/`)
 - **Conversational Paraphrasing (Baseline):** Multi-hop chat summarization loses ~50% of edge cases and file paths across 3 agent handoffs, forcing downstream agents to re-discover files.
 - **Filesystem Handoff + Anchored Iterative Summary:**
-  - `.framework-state/handoffs/phase-NN-handoff.json` (`~950 bytes` / `~237 tokens`) records exact file paths, SHA-256 hashes, `decisions_locked`, and `open_risks`.
+  - `.aief/state/handoffs/phase-NN-handoff.json` (legacy `.framework-state/handoffs/phase-NN-handoff.json`, `~950 bytes` / `~237 tokens`) records exact file paths, SHA-256 hashes, `decisions_locked`, and `open_risks`.
   - Downstream agent starts with a clean context window and reads the exact upstream artifact files from disk, achieving **100% artifact-trail retention** (`6/6` probe recall score in `compression_evaluator.py`).
 
 ### Scenario 7: Code Changes and Regression Results with `ponytail`
@@ -95,6 +95,6 @@ All baseline measurements below were captured on the `v0.2.0` (`30`-skill) repos
 | **`ui-ux-pro-max` (`search.py`)** | Design system CSV context bloat | **99.94%** (`281` vs `455,828` tokens) | Returns exact BM25-ranked style, palette, and stack rules |
 | **`graphify query`** | Blind codebase `grep`/file scanning | **75% – 90%** on repos $\ge 15$ files | Traverses deterministic AST/concept edges in `graphify-out/` |
 | **`rtk-cli` + Native Fallbacks** | Verbose shell/test stdout noise | **60% – 93%** | Preserves exit codes, failing assertions, and stack traces |
-| **`filesystem-context` + Masking** | Multi-turn trajectory accumulation | **65% – 80%** | Full raw logs remain retrievable on disk in `.framework-state/scratch/` |
+| **`filesystem-context` + Masking** | Multi-turn trajectory accumulation | **65% – 80%** | Full raw logs remain retrievable on disk in `.aief/state/scratch/` (legacy `.framework-state/scratch/`) |
 | **`caveman`** | Conversational chat filler | **65% – 75%** output tokens | Reverts to full prose for security warnings, questions, and docs |
 | **`ponytail`** | Over-engineered code diffs | **30% – 70%** fewer generated LOC | Preserves 100% of security, auth, error-handling, and TDD checks |

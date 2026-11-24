@@ -1,6 +1,6 @@
 # Project Roadmap (`ROADMAP.md`)
 
-**Version:** `0.5.0`  
+**Version:** `0.6.0`  
 
 ---
 
@@ -12,7 +12,8 @@ flowchart LR
     V03 --> V031["v0.3.1: Lockfile v2 & Platform Parity"]
     V031 --> V04["v0.4.0: Inline Overlay, Custom Prompts/MCP & `aief` CLI"]
     V04 --> V05["v0.5.0: Isolated `.aief/` Layout & Zero-Collision Discovery"]
-    V05 --> V06["v0.6.0: Optional Registry Ecosystems (PyPI / npm / dotnet tool)"]
+    V05 --> V06["v0.6.0: Interactive Setup Wizard, Monorepo Speed & Sandbox Hardening"]
+    V06 --> V07["v0.7.0+: Optional Registry Ecosystems (PyPI / npm / dotnet tool)"]
 ```
 
 ---
@@ -37,7 +38,7 @@ flowchart LR
 
 ### `v0.5.0` — Isolated `.aief/` Layout & Brownfield Safety *(Released)*
 - Isolated consumer runtime under `.aief/` (`config.json`, `lock.json`, `state/`, `custom/`, `core/`, `agents/`, `skills/`, `workflows/`, `scripts/`) keeping consumer roots limited to native platform touchpoints.
-- Zero-collision brownfield validation scoped to `core/` and `optional/`, preserving pre-existing `skills/` and `.agents/rules/*.md`, plus Windows `MAX_PATH`-safe `bundle.zip` short-cache extraction (`86/86` automated checks).
+- Zero-collision brownfield validation scoped to `core/` and `optional/`, preserving pre-existing `skills/` and `.agents/rules/*.md`, `13` canonical specialist roles in `agents/`, plus Windows `MAX_PATH`-safe `bundle.zip` short-cache extraction (`86/86` automated checks).
 
 ### `v0.6.0` — Interactive Setup Wizard, Monorepo Speed & Sandbox Hardening *(Current)*
 - Interactive pre-flight discovery and legacy migration wizard in `aief init` (`copy` / `move` / `skip` / `delete` per legacy entry file, duplicate content detection, external skill/rule unification, plus `--yes`, `--interactive`, `--no-import`).
