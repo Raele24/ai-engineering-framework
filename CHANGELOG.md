@@ -19,7 +19,8 @@ The format follows [Semantic Versioning 2.0.0](https://semver.org/) ([`docs/CONT
   - Updated `scripts/bootstrap.py` (`dotnet` alias and interactive TUI wizard pack index `6` for `backend-dotnet`), `scripts/compose.py`, `scripts/validate.py`, synced platform adapters (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.agents/skills.json`, etc.), and automated tests.
 
 ### Fixed
-- **Consumer Validation for `.NET`/App JSON Configs & Disabled-Skill Workflow Links (`scripts/validate.py`, `test_19`):** Scoped `check_json_files(..., mode="consumer")` to framework, platform, and root build/IDE configuration JSON files (with UTF-8 BOM `utf-8-sig` decoding), avoiding false positives on `.NET` `appsettings*.json` JSONC files or test fixtures; skipped broken-link errors in `.aief/workflows/` and `.aief/agents/` when targeting skills explicitly disabled in `disabled.skills` (`88/88` automated tests passing).
+- **Consumer Validation for `.NET`/App JSON Configs & Disabled-Skill Workflow Links (`scripts/validate.py`, `test_19`):** Scoped `check_json_files(..., mode="consumer")` to framework, platform, and root build/IDE configuration JSON files (with UTF-8 BOM `utf-8-sig` decoding), avoiding false positives on `.NET` `appsettings*.json` JSONC files or test fixtures; skipped broken-link errors in `.aief/workflows/` and `.aief/agents/` when targeting skills explicitly disabled in `disabled.skills`.
+- **Clearer Consumer Custom-Overlay Path Guidance (`scripts/compose.py`, `test_20`):** Updated generated `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, and `_format_overlay_section` to state exact `.aief/custom/{rules,skills,agents,prompts,mcp.json}` paths (including `python .aief/scripts/compose.py`), prohibit direct edits to `.agents/skills/` / `.claude/skills/` / `.github/agents/`, and remove misleading `.framework-custom/` comment references (`89/89` automated tests passing).
 
 ---
 

@@ -1077,6 +1077,26 @@ class TestM10CustomComposition(unittest.TestCase):
                 report_bad["markdown_links"],
             )
 
+    def test_20_consumer_entrypoints_document_custom_skill_overlay_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "overlay-hint-app"
+            bootstrap.bootstrap_project(
+                target_dir=target,
+                platforms=ALL_PLATFORMS,
+                optional_packs=[],
+            )
+            agents_txt = (target / "AGENTS.md").read_text(encoding="utf-8")
+            claude_txt = (target / "CLAUDE.md").read_text(encoding="utf-8")
+            copilot_txt = (target / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
+
+            self.assertIn(".aief/custom/skills/<name>/SKILL.md", agents_txt)
+            self.assertIn(".agents/skills/", agents_txt)
+            self.assertIn("python .aief/scripts/compose.py", agents_txt)
+            self.assertNotIn("python scripts/compose.py", agents_txt)
+            self.assertIn(".aief/custom/", claude_txt)
+            self.assertIn(".aief/custom/", copilot_txt)
+            self.assertIn("never edit `.agents/skills/`", copilot_txt.lower())
+
 
 if __name__ == "__main__":
     unittest.main()

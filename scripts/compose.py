@@ -2,10 +2,10 @@
 """Consumer composition engine for AI Engineering Framework.
 
 Composes active framework rules, granular feature toggles (disabled skills, agents,
-phases, gates, mechanisms), and project-owned customizations (.framework-custom/)
+phases, gates, mechanisms), and project-owned customizations (.aief/custom/, or legacy .framework-custom/)
 into platform-native inline instructions and skill projections across all 5 platforms.
 
-Can be executed standalone inside any bootstrapped consumer repository (`python scripts/compose.py`)
+Can be executed standalone inside any bootstrapped consumer repository (`python .aief/scripts/compose.py`)
 or imported directly by `scripts/bootstrap.py`. Pure Python standard library.
 """
 
@@ -762,14 +762,19 @@ def load_project_overlay(target_dir: Path, overlay_rel: str) -> Dict[str, object
     }
 
 
-def _format_overlay_section(overlay: Dict[str, object], mode: str, inline_max_bytes: int) -> str:
+def _format_overlay_section(
+    overlay: Dict[str, object],
+    mode: str,
+    inline_max_bytes: int,
+    compose_cmd: str = "python .aief/scripts/compose.py",
+) -> str:
     sections: List[Tuple[str, str]] = overlay["instruction_sections"]  # type: ignore[assignment]
     overlay_rel = str(overlay["overlay_rel"])
     if not sections:
         return (
             f"## Project Custom Instructions (`{overlay_rel}/`)\n"
             f"- No project-specific instructions added yet. Edit `{overlay_rel}/instructions.md` "
-            f"or add `{overlay_rel}/rules/*.md`, then run `python scripts/compose.py`."
+            f"or add `{overlay_rel}/rules/*.md`, then run `{compose_cmd}`."
         )
 
     if mode == "reference":
@@ -1309,7 +1314,7 @@ def compose_consumer_artifacts(
     inj_mode = str(customizations["promptInjectionMode"])
     max_bytes = int(customizations["inlineMaxBytes"])
     overlay_rel_eff = str(customizations["overlayDir"])
-    overlay_section = _format_overlay_section(overlay, inj_mode, max_bytes)
+    overlay_section = _format_overlay_section(overlay, inj_mode, max_bytes, compose_cmd=compose_cmd)
     stage_lines = _active_stage_lines(disabled_phases, fw_prefix=fw_prefix)
     stages_md = "\n".join(f"- **{lbl}:** [`{p}`](./{p})" for lbl, p in stage_lines) or f"- *All workflow stages disabled in `{config_rel}`.*"
 
@@ -1353,7 +1358,7 @@ def compose_consumer_artifacts(
         "Follow these active instructions automatically without requiring per-turn file reminders.\n\n"
         "## 1. Active Engineering Rules & Gates\n"
         f"{root_rules}\n"
-        f"- **Self-Maintained Customizations:** Whenever you or the user modify `{overlay_rel_eff}/` or `{config_rel}`, "
+        f"- **Self-Maintained Customizations:** Add project rules in `{overlay_rel_eff}/rules/*.md`, custom skills in `{overlay_rel_eff}/skills/<name>/SKILL.md`, custom/appended agents in `{overlay_rel_eff}/agents/`, slash prompts in `{overlay_rel_eff}/prompts/*.md`, and MCP servers in `{overlay_rel_eff}/mcp.json` (NEVER edit generated `.agents/skills/` or `.claude/skills/` directly); whenever `{overlay_rel_eff}/` or `{config_rel}` changes, "
         f"automatically run `{compose_cmd}` (which re-composes and validates consumer integrity in one step).\n\n"
         f"{overlay_section}{custom_extras_md}\n\n"
         f"## 2. Active Stage Runbooks (`{fw_prefix}workflows/`)\n"
@@ -1424,7 +1429,7 @@ def compose_consumer_artifacts(
             "- **Subagents:** `.claude/agents/`\n"
             "- **Slash Commands:** `.claude/commands/`\n"
             "- **Full Index:** [`AGENTS.md`](./AGENTS.md)\n"
-            f"- **Auto-Sync Rule:** Run `{compose_cmd}` automatically after editing `{overlay_rel_eff}/` or `{config_rel}` (composes + validates in one command).\n"
+            f"- **Auto-Sync Rule:** Add project rules/skills/agents/prompts/MCP inside `{overlay_rel_eff}/` (never edit `.claude/skills/` or `.agents/skills/` directly); run `{compose_cmd}` automatically after editing `{overlay_rel_eff}/` or `{config_rel}` (composes + validates in one command).\n"
         ),
         "GEMINI.md": (
             f"<!-- AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest} -->\n"
@@ -1434,13 +1439,13 @@ def compose_consumer_artifacts(
             "- **Google Antigravity:** Skills indexed in `.agents/skills.json` and projected into `.agents/skills/`; "
             "delegate isolated research to `research` and UI checks to `browser` (`Model=\"flash\"`).\n"
             "- **Gemini CLI:** Stage commands in `.gemini/commands/workflow.toml` and skills in `.agents/skills/`.\n"
-            f"- **Auto-Sync Rule:** Run `{compose_cmd}` automatically after editing `{overlay_rel_eff}/` or `{config_rel}`.\n"
+            f"- **Auto-Sync Rule:** Add project customizations under `{overlay_rel_eff}/` (never edit `.agents/skills/` directly); run `{compose_cmd}` automatically after editing `{overlay_rel_eff}/` or `{config_rel}`.\n"
         ),
         ".github/copilot-instructions.md": (
             f"<!-- AUTO-GENERATED CONSUMER ADAPTER (AI Engineering Framework) | Canonical Digest: {resolved_digest} -->\n"
             "# GitHub Copilot Workspace Instructions\n\n"
             "Follow [`AGENTS.md`](../AGENTS.md) for all active framework rules, gates, stage runbooks, and project customizations.\n\n"
-            f"- **Validation & Compose:** Run `{validate_cmd}` (or `{compose_cmd}` after editing `{overlay_rel_eff}/` or `{config_rel}`).\n"
+            f"- **Customizations & Compose:** Add project rules/skills/agents/prompts/MCP under `{overlay_rel_eff}/` (never edit `.agents/skills/` or `.github/agents/` directly); run `{compose_cmd}` after editing `{overlay_rel_eff}/` or `{config_rel}` (or `{validate_cmd}`).\n"
         ),
         ".github/instructions/framework.instructions.md": (
             "---\n"
@@ -1522,7 +1527,7 @@ def compose_consumer_artifacts(
         ),
     }
 
-    # Custom prompts (.framework-custom/prompts/*.md) -> Copilot, Claude Code, Gemini CLI
+    # Custom prompts (<overlayDir>/prompts/*.md) -> Copilot, Claude Code, Gemini CLI
     copilot_prompt_entries: Dict[str, Tuple[bytes, str]] = {}
     claude_prompt_entries: Dict[str, Tuple[bytes, str]] = {}
     gemini_prompt_entries: Dict[str, Tuple[bytes, str]] = {}
@@ -1547,7 +1552,7 @@ def compose_consumer_artifacts(
             "consumer_custom_prompt",
         )
 
-    # Custom MCP servers (.framework-custom/mcp.json) -> Claude Code, Copilot, Antigravity (+ .codex/config.toml & .gemini/settings.json above)
+    # Custom MCP servers (<overlayDir>/mcp.json) -> Claude Code, Copilot, Antigravity (+ .codex/config.toml & .gemini/settings.json above)
     mcp_entries: Dict[str, Tuple[bytes, str, List[str]]] = {}
     if custom_mcp_map:
         mcp_entries[".mcp.json"] = (
@@ -1702,7 +1707,7 @@ def compose_consumer_artifacts(
                     "platforms": sorted(owner_pids),
                 }
 
-        # Consumer custom skills (.framework-custom/skills/<name>/)
+        # Consumer custom skills (<overlayDir>/skills/<name>/)
         for cname in sorted(custom_skills_map.keys()):
             if cname in disabled_skills:
                 continue

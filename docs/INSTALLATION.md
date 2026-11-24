@@ -54,7 +54,7 @@ aief validate . --mode consumer
 uvx ai-engineering-framework init .
 ```
 
-**Automated Release Workflow:** [`.github/workflows/release-on-version-bump.yml`](../.github/workflows/release-on-version-bump.yml) runs on every push to `main`: whenever `pyproject.toml`'s `project.version` produces a new `v<version>` tag not yet on GitHub, CI validates `88` tests + version parity, builds & smoke-tests the wheel, creates the annotated GitHub Release + SHA-256 checksums, and publishes to PyPI if OIDC Trusted Publishing (`PYPI_PUBLISH_ENABLED=true`) is enabled.
+**Automated Release Workflow:** [`.github/workflows/release-on-version-bump.yml`](../.github/workflows/release-on-version-bump.yml) runs on every push to `main`: whenever `pyproject.toml`'s `project.version` produces a new `v<version>` tag not yet on GitHub, CI validates `89` tests + version parity, builds & smoke-tests the wheel, creates the annotated GitHub Release + SHA-256 checksums, and publishes to PyPI if OIDC Trusted Publishing (`PYPI_PUBLISH_ENABLED=true`) is enabled.
 
 ---
 

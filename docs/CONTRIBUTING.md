@@ -46,7 +46,7 @@ Contributions to **AI Engineering Framework** follow the same rules enforced by 
 Before pushing a new version bump to `main` (handled automatically by [`.github/workflows/release-on-version-bump.yml`](../.github/workflows/release-on-version-bump.yml)):
 1. Update the version across all 5 files checked by CI: `pyproject.toml`, `aief_cli/__init__.py`, `scripts/bootstrap.py`, `templates/project.framework.json`, and `skills/registry.json` (plus `CHANGELOG.md`).
 2. Run `python scripts/sync_adapters.py` and confirm `python scripts/sync_adapters.py --check` passes.
-3. Run `python scripts/validate.py --mode framework` and `python scripts/run_tests.py --fail-on-skip` (`88/88` tests passing, 0 errors, 0 skipped).
+3. Run `python scripts/validate.py --mode framework` and `python scripts/run_tests.py --fail-on-skip` (`89/89` tests passing, 0 errors, 0 skipped).
 4. Obtain explicit human approval (**`Gate-04`**) before committing or pushing to `main`.
 
 ---
