@@ -108,6 +108,9 @@ python /path/to/your-project/.aief/scripts/compose.py
 python /path/to/your-project/.aief/scripts/preflight.py --stacks dotnet,node/angular
 ```
 
+> [!NOTE]
+> **Reload IDE / New Chat After Changes:** IDE AI extensions (VS Code Copilot, Cursor, Antigravity, Claude Code) cache workspace instructions and skill paths per window or active session. After running `aief init`, `aief update`, or `aief compose`, open a **new chat** or reload/restart your IDE window (e.g., `Developer: Reload Window` in VS Code) so agents read the refreshed files.
+
 ### 3. Synchronize Platform Adapters After Editing Canonical Rules
 ```bash
 python scripts/sync_adapters.py

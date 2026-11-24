@@ -23,7 +23,7 @@ Then **`.aief/scripts/compose.py`** (`aief compose .`) acts as a zero-dependency
 3. Validates the resulting consumer workspace automatically in the same command.
 
 > [!TIP]
-> **Minimal Daily Friction:** Generated entry files instruct AI agents to run `python .aief/scripts/compose.py` automatically whenever they edit `.aief/custom/` or `.aief/config.json`. Run it manually only after editing those files directly.
+> **Minimal Daily Friction:** Generated entry files instruct AI agents to run `python .aief/scripts/compose.py` automatically whenever they edit `.aief/custom/` or `.aief/config.json`. Run it manually only after editing those files directly. Afterward, open a **new chat** or reload your IDE window (`Developer: Reload Window` in VS Code) so cached agent instructions refresh.
 
 ---
 
@@ -54,6 +54,7 @@ aief update /path/to/my-project
 - Preserves `.aief/custom/` and `.aief/config.json` (`disabled.*`, `customizations.*`).
 - Preserves your saved `enabledPlatforms`, `workflowProfile`, `optionalSkillPacks`, and `stacks` automatically when flags are omitted.
 - Updates unmodified framework files (`.aief/core/`, `.aief/workflows/`, `.aief/skills/`, `.aief/scripts/`) and **re-composes** all inline entry files with your latest `.aief/custom/` content.
+- **IDE Cache Refresh:** After `aief update` or `aief compose`, open a **new chat** or reload/restart your IDE (`Developer: Reload Window` in VS Code) if an active session still follows cached instructions.
 
 ---
 

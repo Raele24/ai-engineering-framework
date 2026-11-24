@@ -54,6 +54,9 @@ aief validate . --mode consumer
 uvx ai-engineering-framework init .
 ```
 
+> [!NOTE]
+> **Reload IDE / New Chat After Bootstrap or Update:** IDE extensions cache generated instructions (`AGENTS.md`, `.github/copilot-instructions.md`, `.agents/skills/`, `.github/agents/`) per window or chat session. After `aief init`, `aief update`, or `aief compose`, open a **new chat** or reload/restart the IDE (`Developer: Reload Window` in VS Code) so active agents pick up the updated files.
+
 **Automated Release Workflow:** [`.github/workflows/release-on-version-bump.yml`](../.github/workflows/release-on-version-bump.yml) runs on every push to `main`: whenever `pyproject.toml`'s `project.version` produces a new `v<version>` tag not yet on GitHub, CI validates `89` tests + version parity, builds & smoke-tests the wheel, creates the annotated GitHub Release + SHA-256 checksums, and publishes to PyPI if OIDC Trusted Publishing (`PYPI_PUBLISH_ENABLED=true`) is enabled.
 
 ---

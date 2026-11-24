@@ -39,6 +39,9 @@ python /path/to/ai-engineering-framework/scripts/bootstrap.py /path/to/my-app
 python /path/to/my-app/.aief/scripts/preflight.py --stacks dotnet,node-angular
 ```
 
+> [!NOTE]
+> **Reload IDE / New Chat:** AI extensions (VS Code Copilot, Cursor, Antigravity, Claude Code) cache workspace instructions per window or chat session. After running `aief init`, `aief update`, or `aief compose`, start a **new chat** or reload/restart your IDE window (`Developer: Reload Window` in VS Code) before testing agent behavior.
+
 *(Install flags, `--update` semantics, and Lockfile `v2.0.0` details are in [`docs/INSTALLATION.md`](./INSTALLATION.md). Customization recipes live in [`docs/CUSTOMIZATION_GUIDE.md`](./CUSTOMIZATION_GUIDE.md).)*
 
 ---
