@@ -91,11 +91,13 @@ python -m unittest discover -s tests -v
 Install via standard Python packaging (`uvx` / `pipx`) or directly from source checkout without overwriting existing project files:
 
 ```bash
-# Option A: One-command install via uvx / pipx (interactive TUI wizard on TTY; --yes for defaults)
-uvx --from git+https://github.com/Raele24/ai-engineering-framework.git aief init /path/to/your-project
-# Or install once via pipx install git+https://github.com/Raele24/ai-engineering-framework.git
+# Option A: Always-latest install/upgrade via uvx / pipx (interactive TUI wizard on TTY; --yes for defaults)
+uvx --refresh --from git+https://github.com/Raele24/ai-engineering-framework.git aief init /path/to/your-project
+# Or install / force-upgrade global `aief` CLI to latest `main`:
+pipx install --force git+https://github.com/Raele24/ai-engineering-framework.git
 aief init /path/to/your-project --yes --no-import   # Zero-prompt bootstrap without legacy auto-import
 aief init /path/to/your-project --interactive       # Force interactive discovery & legacy migration TUI
+aief update /path/to/your-project                   # Upgrade an existing project non-destructively
 aief compose /path/to/your-project
 
 # Option B: Direct invocation from local framework clone

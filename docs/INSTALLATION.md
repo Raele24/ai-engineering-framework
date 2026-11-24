@@ -36,16 +36,19 @@ python -m unittest discover -s tests -v
 The framework ships standard PEP 517 metadata ([`pyproject.toml`](../pyproject.toml), [`setup.py`](../setup.py)) exposing the zero-dependency **`aief`** CLI ([`aief_cli/cli.py`](../aief_cli/cli.py)):
 
 ```bash
-# Zero-install run directly from GitHub release tag (with uvx)
-uvx --from git+https://github.com/Raele24/ai-engineering-framework.git aief init .
+# Zero-install run directly from latest GitHub `main` (with uvx --refresh)
+uvx --refresh --from git+https://github.com/Raele24/ai-engineering-framework.git aief init .
 
-# Or install globally in isolation once via pipx
-pipx install git+https://github.com/Raele24/ai-engineering-framework.git
+# Or install / upgrade globally in isolation to latest `main` via pipx (--force refreshes same-version builds)
+pipx install --force git+https://github.com/Raele24/ai-engineering-framework.git
 aief init .                  # Interactive wizard on TTY (or --yes / non-TTY for zero-flag defaults)
 aief init . --yes --no-import # Non-interactive bootstrap without legacy instruction auto-import
 aief compose .               # Re-compose after editing .aief/custom/ or .aief/config.json
-aief update .                # Non-destructively upgrade framework files
+aief update .                # Non-destructively upgrade consumer framework files
 aief validate . --mode consumer
+
+# Pin a specific release tag if needed:
+# pipx install --force git+https://github.com/Raele24/ai-engineering-framework.git@v0.7.0
 
 # Or from PyPI once published (when vars.PYPI_PUBLISH_ENABLED == 'true')
 uvx ai-engineering-framework init .

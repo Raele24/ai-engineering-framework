@@ -27,9 +27,11 @@ End-to-end guide for installing **AI Engineering Framework** into a project and 
 Run against a new or existing project (`--dry-run` previews without writing). On an interactive TTY fresh install, `aief init` (and `bootstrap.py`) launches the **discovery & legacy migration TUI wizard** (`↑`/`↓`/`Space`/`a`/`Enter`/`Esc`, with ASCII fallback on non-TTY) to select platforms and optional packs, resolve duplicate legacy entry files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md` via `copy`, `move` to `.aief/custom/rules/`, `skip`, or `delete`), and unify external skills/rules. Pass `--yes` (`-y`) to accept defaults non-interactively, `--no-import` to skip legacy auto-import, or `--interactive` (`-i`) to force wizard prompts. New installs isolate framework runtime assets under `.aief/` (all 5 platforms, all `37` skills, stack auto-detection for `dotnet`, `node-angular`, `python`).
 
 ```powershell
-# With packaged CLI (`pipx` / `uvx`):
+# With packaged CLI (`pipx` / `uvx` — `--force` / `--refresh` pulls latest `main`):
+pipx install --force git+https://github.com/Raele24/ai-engineering-framework.git
 aief init /path/to/my-app
 aief init /path/to/my-app --yes --no-import
+aief update /path/to/my-app
 aief preflight /path/to/my-app --stacks dotnet,node-angular
 
 # Or from a local framework clone:

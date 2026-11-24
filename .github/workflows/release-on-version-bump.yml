@@ -134,7 +134,7 @@ jobs:
           sha256sum dist/* > dist/SHA256SUMS.txt
           gh release create "$TAG" dist/* \
             --title "AI Engineering Framework ${TAG}" \
-            --notes "Automated release triggered by version bump to \`${VERSION}\` on \`main\`. Install directly via \`uvx --from git+https://github.com/${GITHUB_REPOSITORY}@${TAG} aief init .\` or \`pipx install git+https://github.com/${GITHUB_REPOSITORY}@${TAG}\`."
+            --notes "Automated release triggered by version bump to \`${VERSION}\` on \`main\`. Run this release via \`uvx --refresh --from git+https://github.com/${GITHUB_REPOSITORY}.git@${TAG} aief init .\` (or \`aief update .\`), or install/upgrade globally to latest \`main\` via \`pipx install --force git+https://github.com/${GITHUB_REPOSITORY}.git\` (pin \`@${TAG}\` for this exact tag)."
 
   publish-pypi:
     name: Publish to PyPI (OIDC Trusted Publisher)

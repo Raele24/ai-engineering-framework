@@ -47,7 +47,9 @@ Defaults applied automatically when flags are omitted:
 ### Updating Later Without Losing Customizations
 ```powershell
 python /path/to/ai-engineering-framework/scripts/bootstrap.py /path/to/my-project --update
-# Or with packaged CLI: aief update /path/to/my-project
+# Or refresh global `aief` CLI to latest `main` and update:
+pipx install --force git+https://github.com/Raele24/ai-engineering-framework.git
+aief update /path/to/my-project
 ```
 - Preserves `.aief/custom/` and `.aief/config.json` (`disabled.*`, `customizations.*`).
 - Preserves your saved `enabledPlatforms`, `workflowProfile`, `optionalSkillPacks`, and `stacks` automatically when flags are omitted.
