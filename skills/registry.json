@@ -1,8 +1,8 @@
 {
   "schema_version": "2.0.0",
-  "framework_version": "0.6.0",
+  "framework_version": "0.7.0",
   "description": "Central registry of First-Party, Vendored Third-Party, and External Tool Bridge skills in the AI Engineering Framework",
-  "total_skills": 33,
+  "total_skills": 37,
   "skills": [
     {
       "name": "grill-me",
@@ -1173,6 +1173,156 @@
         15
       ],
       "sha256": "bdbf71baee082a3e03527a9559386ef4fbcae9cd77e3d85fa1723994ff2e5b51"
+    },
+    {
+      "name": "prompt-master",
+      "description": "Generates or refines prompts for specific AI tools (LLMs, coding agents, Midjourney, image/video/3D AI) using intent extraction and templates. Activates only on explicit prompt-engineering requests.",
+      "version": "1.8.2",
+      "source": "https://github.com/nidhinjs/prompt-master",
+      "license": "MIT",
+      "category": "token-optimization",
+      "tier": "optional-communication",
+      "origin_type": "vendored-third-party",
+      "priority": "P1",
+      "path": "skills/optional/communication/prompt-master/SKILL.md",
+      "upstream_preserved_path": "skills/optional/communication/prompt-master/UPSTREAM_SKILL.md",
+      "platforms": [
+        "antigravity",
+        "copilot",
+        "claude-code",
+        "codex",
+        "gemini-cli"
+      ],
+      "requires_tools": [
+        "read_file",
+        "ask_question"
+      ],
+      "dependencies": [],
+      "security_scope": "read-only",
+      "default_enabled": false,
+      "workflow_phases": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "sha256": "ffb9bdb70888e42e2fd9d073ad3b90a8a042ae844a091645a601a31247f02282"
+    },
+    {
+      "name": "ui-styling",
+      "description": "Build accessible UIs with shadcn/ui (Radix UI + Tailwind CSS), utility-first styling, responsive layouts, dark mode, and design tokens, with helper scripts for component setup and Tailwind config.",
+      "version": "1.0.0",
+      "source": "claudekit",
+      "license": "MIT",
+      "category": "ui-ux-design",
+      "tier": "optional-frontend",
+      "origin_type": "vendored-third-party",
+      "priority": "P1",
+      "path": "skills/optional/frontend-design/ui-styling/SKILL.md",
+      "upstream_preserved_path": "skills/optional/frontend-design/ui-styling/UPSTREAM_SKILL.md",
+      "platforms": [
+        "antigravity",
+        "copilot",
+        "claude-code",
+        "codex",
+        "gemini-cli"
+      ],
+      "requires_tools": [
+        "read_file",
+        "write_file",
+        "edit_file",
+        "run_command"
+      ],
+      "dependencies": [
+        "node>=20 (optional for npx shadcn)"
+      ],
+      "security_scope": "workspace-write",
+      "default_enabled": false,
+      "workflow_phases": [
+        5,
+        9,
+        10,
+        11
+      ],
+      "sha256": "fc51785fc051dac9606bd709fb95b840a223c50c37cbaa383897d5f622ae24ee"
+    },
+    {
+      "name": "dotnet-backend-patterns",
+      "description": "Master C#/.NET backend development patterns for building APIs, MCP servers, and enterprise applications. Covers async/await, dependency injection, Entity Framework Core, Dapper, configuration, caching, and xUnit testing.",
+      "version": "1.0.0",
+      "source": "https://github.com/wshobson/agents",
+      "license": "MIT",
+      "category": "backend-engineering",
+      "tier": "optional-backend",
+      "origin_type": "vendored-third-party",
+      "priority": "P1",
+      "path": "skills/optional/backend-dotnet/dotnet-backend-patterns/SKILL.md",
+      "upstream_preserved_path": "skills/optional/backend-dotnet/dotnet-backend-patterns/UPSTREAM_SKILL.md",
+      "platforms": [
+        "antigravity",
+        "copilot",
+        "claude-code",
+        "codex",
+        "gemini-cli"
+      ],
+      "requires_tools": [
+        "read_file",
+        "write_file",
+        "edit_file"
+      ],
+      "dependencies": [],
+      "security_scope": "workspace-write",
+      "default_enabled": false,
+      "workflow_phases": [
+        5,
+        9,
+        10
+      ],
+      "sha256": "608ee43964fff3b3951d131054157efc5d81e75974f8a723a128f7565d067a5b"
+    },
+    {
+      "name": "dotnet-best-practices",
+      "description": "Enforces C#/.NET best practices covering XML documentation, primary constructors, dependency injection, ResourceManager localization, async/await, MSTest/Moq testing, and security.",
+      "version": "1.0.0",
+      "source": "https://github.com/github/awesome-copilot",
+      "license": "MIT",
+      "category": "backend-engineering",
+      "tier": "optional-backend",
+      "origin_type": "vendored-third-party",
+      "priority": "P1",
+      "path": "skills/optional/backend-dotnet/dotnet-best-practices/SKILL.md",
+      "upstream_preserved_path": "skills/optional/backend-dotnet/dotnet-best-practices/UPSTREAM_SKILL.md",
+      "platforms": [
+        "antigravity",
+        "copilot",
+        "claude-code",
+        "codex",
+        "gemini-cli"
+      ],
+      "requires_tools": [
+        "read_file",
+        "write_file",
+        "edit_file"
+      ],
+      "dependencies": [],
+      "security_scope": "workspace-write",
+      "default_enabled": false,
+      "workflow_phases": [
+        9,
+        10
+      ],
+      "sha256": "485829f0641994e26835fd997ee9df19ce716f20077ba40fcdac470091881ec3"
     }
   ]
 }

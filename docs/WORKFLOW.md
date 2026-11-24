@@ -1,7 +1,7 @@
 # Canonical Software Development Workflow (`WORKFLOW.md`)
 
 **Status:** Canonical Source of Truth  
-**Version:** `0.6.0`  
+**Version:** `0.7.0`  
 **Applies To:** All supported AI coding agents and platform adapters  
 
 ---
@@ -263,7 +263,7 @@ Every phase handoff packet in `.aief/state/handoffs/phase-<NN>-handoff.json` (le
   - Production implementation files satisfying the tests.
   - `.aief/state/handoffs/phase-09-handoff.json` (legacy/upstream: `.framework-state/handoffs/phase-09-handoff.json`).
 - **Responsible Agent Role:** `implementation-engineer`, `backend-engineer`, `frontend-engineer`, `data-engineer`, `ai-engineer`, and `devops-release-engineer` (delegated per disjoint layer under the Phase 8 Subagent-First `HARD GATE` when `>=3` files or `>=2` layers).
-- **Tools and Skills:** `tdd-cycle` core skill (`skills/core/tdd-cycle/SKILL.md`), stack-specific skills (e.g., `dotnet-backend-patterns`, `angular-developer`, `web-design-guidelines`), `read_file`, `write_file`, `edit_file`, `run_command`.
+- **Tools and Skills:** `tdd-cycle` core skill (`skills/core/tdd-cycle/SKILL.md`), stack-specific skills (e.g., `dotnet-backend-patterns`, `dotnet-best-practices`, `angular-developer`, `ui-styling`, `web-design-guidelines`), `read_file`, `write_file`, `edit_file`, `run_command`.
 - **Entry Criteria:** Task assignment and upstream spec/ADR artifacts verified.
 - **Exit Criteria:**
   1. **RED:** Test written first and verified to fail for the expected reason.

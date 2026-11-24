@@ -195,6 +195,7 @@ VALID_SKILL_TIERS = {
     "optional-agent-architecture",
     "optional-frontend",
     "optional-growth",
+    "optional-backend",
 }
 
 VALID_SKILL_CATEGORIES = {
@@ -205,6 +206,7 @@ VALID_SKILL_CATEGORIES = {
     "agent-architecture",
     "codebase-intelligence",
     "seo-growth",
+    "backend-engineering",
 }
 
 VALID_LICENSES = {

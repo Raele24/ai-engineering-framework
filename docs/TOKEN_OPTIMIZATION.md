@@ -1,9 +1,9 @@
 # Token Efficiency & Context Optimization Guide (`TOKEN_OPTIMIZATION.md`)
 
 **Project:** AI Engineering Framework (`ai-engineering-framework`)  
-**Version:** `0.6.0`  
+**Version:** `0.7.0`  
 **Date:** `2026-11-24`  
-*(Empirical byte/token measurements below were captured on the `v0.2.0` 30-skill baseline corpus; the current `v0.6.0` catalog ships `33` skills using the same progressive-disclosure index and native projections in `.agents/skills/` and `.claude/skills/` so startup prompt overhead remains minimal unless skills are explicitly loaded via `read_file`.)*
+*(Empirical byte/token measurements below were captured on the `v0.2.0` 30-skill baseline corpus; the current `v0.7.0` catalog ships `37` skills using the same progressive-disclosure index and native projections in `.agents/skills/` and `.claude/skills/` so startup prompt overhead remains minimal unless skills are explicitly loaded via `read_file`.)*
 
 ---
 
@@ -36,7 +36,7 @@ flowchart LR
 
 ## 3. Empirical Benchmarks Across 7 Measurable Scenarios
 
-All baseline measurements below were captured on the `v0.2.0` (`30`-skill) repository corpus (`1 token ≈ 4 UTF-8 bytes`); the current `v0.6.0` catalog ships `33` skills (`v0.4.0` added `i-have-adhd`, `humanizer`, `session-handoff`) using the exact same metadata-index progressive disclosure mechanism.
+All baseline measurements below were captured on the `v0.2.0` (`30`-skill) repository corpus (`1 token ≈ 4 UTF-8 bytes`); subsequent additions (`i-have-adhd`, `humanizer`, `session-handoff`, `prompt-master`, `ui-styling`, `dotnet-backend-patterns`, `dotnet-best-practices`) bring the catalog to `37` skills using the exact same metadata-index progressive disclosure mechanism.
 
 ### Scenario 1: Skill Metadata Loaded per Session vs. Eager Loading
 - **Baseline (Naive Eager Loading of All 30 Skill Directories):** `2,634,858 bytes` (`~658,714 tokens`) across all 30 skills, 36 Angular reference guides, and 28 UI/UX Pro Max CSV databases.

@@ -106,6 +106,7 @@ class TestM9PlatformCapabilities(unittest.TestCase):
                 "skills/optional/agent-architecture",
                 "skills/optional/frontend-design",
                 "skills/optional/growth-media",
+                "skills/optional/backend-dotnet",
             ],
         )
 
@@ -169,8 +170,8 @@ class TestM9PlatformCapabilities(unittest.TestCase):
     def test_m9_09_canonical_registry_hashes_uniqueness_and_contract_level(self) -> None:
         registry = json.loads((REPO_ROOT / "skills" / "registry.json").read_text(encoding="utf-8"))
         skills = registry.get("skills", [])
-        self.assertEqual(len(skills), 33)
-        self.assertEqual(registry.get("total_skills"), 33)
+        self.assertEqual(len(skills), 37)
+        self.assertEqual(registry.get("total_skills"), 37)
 
         names = [str(item["name"]) for item in skills]
         self.assertEqual(len(names), len(set(names)), "Duplicate skill entries in canonical skills/registry.json")

@@ -68,7 +68,7 @@ class TestAIEngineeringFramework(unittest.TestCase):
         ]:
             self.assertIn(expected_role, agent_names, f"Missing canonical agent '{expected_role}'")
         skills = registry.get("skills", [])
-        self.assertEqual(len(skills), 33, "Expected 33 curated skills in skills/registry.json")
+        self.assertEqual(len(skills), 37, "Expected 37 curated skills in skills/registry.json")
 
         skill_names = {s["name"] for s in skills}
         for must_have in [
@@ -76,6 +76,7 @@ class TestAIEngineeringFramework(unittest.TestCase):
             "caveman",
             "i-have-adhd",
             "humanizer",
+            "prompt-master",
             "rtk-cli",
             "graphify",
             "context-optimization",
@@ -90,10 +91,13 @@ class TestAIEngineeringFramework(unittest.TestCase):
             "ui-ux-pro-max",
             "angular-developer",
             "angular-new-app",
+            "ui-styling",
             "seo-audit",
             "ai-seo",
             "video-lens",
             "video-use",
+            "dotnet-backend-patterns",
+            "dotnet-best-practices",
         ]:
             self.assertIn(must_have, skill_names, f"Missing required skill '{must_have}' in registry")
 

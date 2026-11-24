@@ -17,6 +17,9 @@
     },
     {
       "path": "skills/optional/growth-media"
+    },
+    {
+      "path": "skills/optional/backend-dotnet"
     }
   ]
 }

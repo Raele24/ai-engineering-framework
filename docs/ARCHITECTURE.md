@@ -1,7 +1,7 @@
 # Architecture Guide (`ARCHITECTURE.md`)
 
 **Status:** Canonical Architecture Specification  
-**Version:** `0.6.0`  
+**Version:** `0.7.0`  
 
 ---
 
@@ -88,8 +88,8 @@ Multiple agents exist in this framework **to isolate context windows**, not to s
 
 ### 4.2 Progressive Skill Disclosure & Domain Isolation
 Loading every guideline into the global system prompt causes the **Lost-in-the-Middle Effect** and wastes token budget.
-- **Always-On Context (`AGENTS.md` / `CLAUDE.md` / `GEMINI.md`):** Kept concise. Contains only core workflow routing, safety/approval gates, and a compact metadata index (`10,708 bytes` / `~2,677 tokens` in total for `AGENTS.md` across all 33 registered skills — keeping full `SKILL.md` bodies out of startup context).
-- **On-Demand Context (`skills/`):** Organized into `skills/core/` (8 core SDLC, YAGNI `ponytail`, and `graphify` skills) and 5 isolated optional domain packs (`communication`, `context-engineering`, `agent-architecture`, `frontend-design`, `growth-media`). See [`docs/SKILL_COMPATIBILITY_MATRIX.md`](./SKILL_COMPATIBILITY_MATRIX.md) and [`docs/TOKEN_OPTIMIZATION.md`](./TOKEN_OPTIMIZATION.md).
+- **Always-On Context (`AGENTS.md` / `CLAUDE.md` / `GEMINI.md`):** Kept concise. Contains only core workflow routing, safety/approval gates, and a compact metadata index (`11,432 bytes` / `~2,858 tokens` in total for `AGENTS.md` across all 37 registered skills — keeping full `SKILL.md` bodies out of startup context).
+- **On-Demand Context (`skills/`):** Organized into `skills/core/` (8 core SDLC, YAGNI `ponytail`, and `graphify` skills) and 6 isolated optional domain packs (`communication`, `context-engineering`, `agent-architecture`, `frontend-design`, `growth-media`, `backend-dotnet`). See [`docs/SKILL_COMPATIBILITY_MATRIX.md`](./SKILL_COMPATIBILITY_MATRIX.md) and [`docs/TOKEN_OPTIMIZATION.md`](./TOKEN_OPTIMIZATION.md).
 - **Offline Script & Database Execution:** Heavy reference assets (such as the 28 CSV databases in `ui-ux-pro-max` or the 36 Angular guides in `angular-developer`) remain on disk and are queried via standard-library Python scripts (`search.py`) or targeted `read_file` calls.
 
 ---

@@ -89,7 +89,7 @@ class TestM7FrameworkHardening(unittest.TestCase):
     def test_m7_02_optional_pack_filtering_four_scenarios(self) -> None:
         scenarios = [
             ("core-only", [], 8, {"ponytail", "grill-me", "tdd-cycle", "graphify"}, {"caveman", "ui-ux-pro-max", "evaluation", "seo-audit"}),
-            ("core-plus-design-ui", ["design-ui"], 13, {"ponytail", "ui-ux-pro-max", "angular-developer"}, {"caveman", "evaluation", "seo-audit"}),
+            ("core-plus-design-ui", ["design-ui"], 14, {"ponytail", "ui-ux-pro-max", "angular-developer", "ui-styling"}, {"caveman", "evaluation", "seo-audit"}),
             (
                 "core-plus-context-and-agent",
                 ["context-engineering", "agent-architecture"],
@@ -99,9 +99,23 @@ class TestM7FrameworkHardening(unittest.TestCase):
             ),
             (
                 "all-packs",
-                ["communication", "context-engineering", "agent-architecture", "frontend-design", "growth-media"],
-                33,
-                {"ponytail", "caveman", "i-have-adhd", "humanizer", "context-optimization", "session-handoff", "evaluation", "ui-ux-pro-max", "seo-audit"},
+                ["communication", "context-engineering", "agent-architecture", "frontend-design", "growth-media", "backend-dotnet"],
+                37,
+                {
+                    "ponytail",
+                    "caveman",
+                    "i-have-adhd",
+                    "humanizer",
+                    "prompt-master",
+                    "context-optimization",
+                    "session-handoff",
+                    "evaluation",
+                    "ui-ux-pro-max",
+                    "ui-styling",
+                    "seo-audit",
+                    "dotnet-backend-patterns",
+                    "dotnet-best-practices",
+                },
                 set(),
             ),
         ]

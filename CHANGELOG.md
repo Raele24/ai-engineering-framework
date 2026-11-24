@@ -5,6 +5,21 @@ The format follows [Semantic Versioning 2.0.0](https://semver.org/) ([`docs/CONT
 
 ---
 
+## [0.7.0] - 2026-11-24
+
+### Added
+- **Curated Skill Additions (`33 -> 37` Skills across `6` Optional Packs):**
+  - Integrated MIT-licensed `prompt-master` (`nidhinjs/prompt-master` `v1.8.2`, with `UPSTREAM_SKILL.md`, `LICENSE`, `references/patterns.md`, and `references/templates.md`) under `skills/optional/communication/prompt-master/` (`default_enabled: false`, `security_scope: "read-only"`).
+  - Integrated MIT / Apache-2.0 (`LICENSE.txt`) `ui-styling` (`claudekit`) under `skills/optional/frontend-design/ui-styling/` (`default_enabled: false`).
+  - Added the new `backend-dotnet` optional pack (CLI alias `dotnet`) with MIT-licensed `dotnet-backend-patterns` (`wshobson/agents`) and `dotnet-best-practices` (`github/awesome-copilot`) under `skills/optional/backend-dotnet/` (`default_enabled: false`).
+
+### Changed
+- **Backward-Compatible Schema, CLI, Composition & Sync Extensions:**
+  - Extended `core/schemas/skill-frontmatter.schema.json` with `backend-engineering` (`category`) and `optional-backend` (`tier`), and added optional `backendDotnet` to `core/schemas/framework-config.schema.json` (preserving compatibility with `v0.3.x`–`v0.6.x` configs lacking `backendDotnet`).
+  - Updated `scripts/bootstrap.py` (`dotnet` alias and interactive TUI wizard pack index `6` for `backend-dotnet`), `scripts/compose.py`, `scripts/validate.py`, synced platform adapters (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.agents/skills.json`, etc.), and automated tests.
+
+---
+
 ## [0.6.0] - 2026-11-22
 
 ### Added

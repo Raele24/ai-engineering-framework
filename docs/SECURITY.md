@@ -1,6 +1,6 @@
 # Security Policy & Guardrails (`SECURITY.md`)
 
-**Version:** `0.6.0`  
+**Version:** `0.7.0`  
 
 ---
 
@@ -8,7 +8,8 @@
 
 | Version | Supported | Notes |
 | :--- | :--- | :--- |
-| `0.6.x` | Yes | Current series (`v0.6.0`: interactive `aief init` migration wizard, pruned `os.walk` validation, sandbox-safe `PermissionError` handling, `87/87` automated tests) |
+| `0.7.x` | Yes | Current series (`v0.7.0`: `37` skills across `6` optional packs including `backend-dotnet`, `ui-styling`, and `prompt-master`) |
+| `0.6.x` | Yes | Maintained series (`v0.6.0`: interactive `aief init` migration wizard, pruned `os.walk` validation, sandbox-safe `PermissionError` handling, `87/87` automated tests) |
 | `0.5.x` | Yes | Maintained series (`v0.5.0`: `.aief/` isolated consumer layout, scoped zero-collision validation, `bundle.zip` safe extraction) |
 | `0.4.x` | Yes | Maintained series (`v0.4.0`: inline composition, traversal/reparse guards, Lockfile `v2.0.0`, JSONC validation) |
 | `0.3.x` | Yes | Maintained RC series (`v0.3.1`, Lockfile `v2.0.0`) |

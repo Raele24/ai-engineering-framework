@@ -50,7 +50,8 @@
         "ui-ux-design",
         "agent-architecture",
         "codebase-intelligence",
-        "seo-growth"
+        "seo-growth",
+        "backend-engineering"
       ]
     },
     "tier": {
@@ -61,7 +62,8 @@
         "optional-context",
         "optional-agent-architecture",
         "optional-frontend",
-        "optional-growth"
+        "optional-growth",
+        "optional-backend"
       ]
     },
     "platforms": {

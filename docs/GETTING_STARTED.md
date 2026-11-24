@@ -1,6 +1,6 @@
 # Getting Started & Consumer Usage (`GETTING_STARTED.md`)
 
-**Version:** `0.6.0`
+**Version:** `0.7.0`
 
 End-to-end guide for installing **AI Engineering Framework** into a project and operating it day-to-day.
 
@@ -24,7 +24,7 @@ End-to-end guide for installing **AI Engineering Framework** into a project and 
 - **Windows PowerShell `5.1+`:** Scripts avoid Bash `&&` chaining; propagate exit codes with `; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }` and quote paths containing spaces.
 - **Supported Platforms:** Google Antigravity, GitHub Copilot, Claude Code, OpenAI Codex, Gemini CLI ([`adapters/compatibility-matrix.md`](../adapters/compatibility-matrix.md)).
 
-Run against a new or existing project (`--dry-run` previews without writing). On an interactive TTY fresh install, `aief init` (and `bootstrap.py`) launches the **discovery & legacy migration TUI wizard** (`↑`/`↓`/`Space`/`a`/`Enter`/`Esc`, with ASCII fallback on non-TTY) to select platforms and optional packs, resolve duplicate legacy entry files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md` via `copy`, `move` to `.aief/custom/rules/`, `skip`, or `delete`), and unify external skills/rules. Pass `--yes` (`-y`) to accept defaults non-interactively, `--no-import` to skip legacy auto-import, or `--interactive` (`-i`) to force wizard prompts. New installs isolate framework runtime assets under `.aief/` (all 5 platforms, all `33` skills, stack auto-detection for `dotnet`, `node-angular`, `python`).
+Run against a new or existing project (`--dry-run` previews without writing). On an interactive TTY fresh install, `aief init` (and `bootstrap.py`) launches the **discovery & legacy migration TUI wizard** (`↑`/`↓`/`Space`/`a`/`Enter`/`Esc`, with ASCII fallback on non-TTY) to select platforms and optional packs, resolve duplicate legacy entry files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md` via `copy`, `move` to `.aief/custom/rules/`, `skip`, or `delete`), and unify external skills/rules. Pass `--yes` (`-y`) to accept defaults non-interactively, `--no-import` to skip legacy auto-import, or `--interactive` (`-i`) to force wizard prompts. New installs isolate framework runtime assets under `.aief/` (all 5 platforms, all `37` skills, stack auto-detection for `dotnet`, `node-angular`, `python`).
 
 ```powershell
 # With packaged CLI (`pipx` / `uvx`):

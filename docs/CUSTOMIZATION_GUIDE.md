@@ -1,6 +1,6 @@
 # Consumer Customization & Auto-Loading Guide (`CUSTOMIZATION_GUIDE.md`)
 
-**Version:** `0.6.0`  
+**Version:** `0.7.0`  
 
 ---
 
@@ -39,7 +39,7 @@ python /path/to/ai-engineering-framework/scripts/bootstrap.py /path/to/my-projec
 
 Defaults applied automatically when flags are omitted:
 - **Platforms:** all `5` (`antigravity`, `copilot`, `claude-code`, `codex`, `gemini-cli`).
-- **Skills:** `all` (`33/33` skills installed under `.aief/skills/` and projected; disable unwanted ones in `.aief/config.json`).
+- **Skills:** `all` (`37/37` skills installed under `.aief/skills/` and projected; disable unwanted ones in `.aief/config.json`).
 - **Profile:** `standard`.
 - **Stacks (`auto`):** detects `dotnet` (`*.sln`/`*.csproj`/`*.fsproj`), `node-angular` (`angular.json`/`package.json`), and `python` (`pyproject.toml`/`requirements.txt`/`setup.py`) automatically.
 - **Brownfield Auto-Import:** if the repository has no `.aief/lock.json` yet and already contains pre-existing `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, or `.github/copilot-instructions.md` (without `AUTO-GENERATED`), `bootstrap.py` backs them up under `.aief/custom/imported/` and composes their rules inline into every platform entry point so nothing is lost. Existing host `skills/` and custom `.agents/rules/*.md` stay untouched.
@@ -259,4 +259,4 @@ Because entry files include the self-maintenance rule (`run python .aief/scripts
 
 1. **Path & Symlink Fail-Closed Guards:** `bootstrap.py`, `compose.py`, and `validate.py` reject `..` traversal, drive/absolute paths, Windows case-insensitive collisions (e.g., `my-skill` vs `My-Skill`), and symlinks or NTFS reparse points inside `overlayDir` or custom skills/agents.
 2. **Untracked Protection:** Keep customizations inside `.aief/custom/`; direct edits to generated root files are preserved (`skipped_modified`) on `--update` and skip future automatic framework rule updates on those files until reconciled.
-3. **Platform Coverage (`v0.6.0`):** Inline composition, schemas, custom prompts/MCP, isolated `.aief/` layout, interactive brownfield wizard, and native skill projections pass for all **5 platforms** (`87/87` automated checks). See [`adapters/compatibility-matrix.md`](../adapters/compatibility-matrix.md) for per-platform asset layouts and prerequisites.
+3. **Platform Coverage (`v0.7.0`):** Inline composition, schemas, custom prompts/MCP, isolated `.aief/` layout, interactive brownfield wizard, and native skill projections pass for all **5 platforms** (`87/87` automated checks). See [`adapters/compatibility-matrix.md`](../adapters/compatibility-matrix.md) for per-platform asset layouts and prerequisites.

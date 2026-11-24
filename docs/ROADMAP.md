@@ -1,6 +1,6 @@
 # Project Roadmap (`ROADMAP.md`)
 
-**Version:** `0.6.0`  
+**Version:** `0.7.0`  
 
 ---
 
@@ -13,7 +13,8 @@ flowchart LR
     V031 --> V04["v0.4.0: Inline Overlay, Custom Prompts/MCP & `aief` CLI"]
     V04 --> V05["v0.5.0: Isolated `.aief/` Layout & Zero-Collision Discovery"]
     V05 --> V06["v0.6.0: Interactive Setup Wizard, Monorepo Speed & Sandbox Hardening"]
-    V06 --> V07["v0.7.0+: Optional Registry Ecosystems (PyPI / npm / dotnet tool)"]
+    V06 --> V07["v0.7.0: .NET Backend & UI/Prompt Curated Skills"]
+    V07 --> V08["v0.8.0+: Optional Registry Ecosystems (PyPI / npm / dotnet tool)"]
 ```
 
 ---
@@ -40,10 +41,13 @@ flowchart LR
 - Isolated consumer runtime under `.aief/` (`config.json`, `lock.json`, `state/`, `custom/`, `core/`, `agents/`, `skills/`, `workflows/`, `scripts/`) keeping consumer roots limited to native platform touchpoints.
 - Zero-collision brownfield validation scoped to `core/` and `optional/`, preserving pre-existing `skills/` and `.agents/rules/*.md`, `13` canonical specialist roles in `agents/`, plus Windows `MAX_PATH`-safe `bundle.zip` short-cache extraction (`86/86` automated checks).
 
-### `v0.6.0` — Interactive Setup Wizard, Monorepo Speed & Sandbox Hardening *(Current)*
+### `v0.6.0` — Interactive Setup Wizard, Monorepo Speed & Sandbox Hardening *(Released)*
 - Interactive pre-flight discovery and legacy migration wizard in `aief init` (`copy` / `move` / `skip` / `delete` per legacy entry file, duplicate content detection, external skill/rule unification, plus `--yes`, `--interactive`, `--no-import`).
 - Pruned `os.walk` validation (`_iter_workspace_files`) for sub-second `pnpm` monorepo checks, nested `.vscode/*.json` JSONC support, `.aief/.gitignore` Python bytecode hygiene, and Windows sandbox-safe validation (`87/87` automated checks).
 
-### `v0.7.0`+ — Ecosystem Distribution *(Planned)*
+### `v0.7.0` — .NET Backend & UI/Prompt Curated Skills *(Current)*
+- Added curated skills `prompt-master` (`communication`), `ui-styling` (`frontend-design`, `shadcn/ui` + Tailwind CSS with helper scripts), and the `backend-dotnet` *(alias `dotnet`)* optional pack (`dotnet-backend-patterns` + `dotnet-best-practices`), expanding the catalog to `37` skills across `6` optional packs.
+
+### `v0.8.0`+ — Ecosystem Distribution *(Planned)*
 - Optional PyPI Trusted Publishing activation (`PYPI_PUBLISH_ENABLED=true`) and thin `npx` / `dotnet tool` wrappers above the canonical Python engine.
 - Helper commands (`aief bump`, `aief doctor`) and additional optional domain skill packs.

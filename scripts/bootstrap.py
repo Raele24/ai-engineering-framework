@@ -35,7 +35,7 @@ import preflight  # noqa: E402
 import sync_adapters  # noqa: E402
 
 FRAMEWORK_ROOT = SCRIPT_DIR.parent
-FRAMEWORK_VERSION = "0.6.0"
+FRAMEWORK_VERSION = "0.7.0"
 LOCKFILE_NAME = ".aief/lock.json"
 LOCKFILE_SCHEMA_VERSION = "2.0.0"
 LOCKFILE_BACKUP_REL = ".aief/state/lock-backups/framework-lock-v0.3.0.json"
@@ -111,6 +111,7 @@ OPTIONAL_PACK_DIRS: Dict[str, str] = {
     "agent-architecture": "skills/optional/agent-architecture",
     "frontend-design": "skills/optional/frontend-design",
     "growth-media": "skills/optional/growth-media",
+    "backend-dotnet": "skills/optional/backend-dotnet",
 }
 
 OPTIONAL_PACK_ALIASES: Dict[str, str] = {
@@ -120,6 +121,8 @@ OPTIONAL_PACK_ALIASES: Dict[str, str] = {
     "frontend-design": "frontend-design",
     "design-ui": "frontend-design",
     "growth-media": "growth-media",
+    "backend-dotnet": "backend-dotnet",
+    "dotnet": "backend-dotnet",
 }
 
 SUPPORTED_PROJECTION_ROOTS: Set[str] = {".agents/skills", ".claude/skills"}
@@ -1328,7 +1331,7 @@ def bootstrap_project(
 
     # Check Tier 3 consumer-owned files existence (created only if absent)
     optional_packs_payload = {
-        "communication": ["caveman", "rtk-cli", "i-have-adhd", "humanizer"] if "communication" in canonical_packs else [],
+        "communication": ["caveman", "rtk-cli", "i-have-adhd", "humanizer", "prompt-master"] if "communication" in canonical_packs else [],
         "contextEngineering": (
             [
                 "context-optimization",
@@ -1357,6 +1360,7 @@ def bootstrap_project(
                 "angular-new-app",
                 "web-design-guidelines",
                 "canvas-design",
+                "ui-styling",
             ]
             if "frontend-design" in canonical_packs
             else []
@@ -1372,6 +1376,14 @@ def bootstrap_project(
                 "video-use",
             ]
             if "growth-media" in canonical_packs
+            else []
+        ),
+        "backendDotnet": (
+            [
+                "dotnet-backend-patterns",
+                "dotnet-best-practices",
+            ]
+            if "backend-dotnet" in canonical_packs
             else []
         ),
     }
@@ -2031,7 +2043,14 @@ def run_interactive_init_wizard(
                 break
             emit("  Invalid selection. Enter numbers (e.g. 1,5), names, or 'all'.")
 
-    pack_order = ["communication", "context-engineering", "agent-architecture", "frontend-design", "growth-media"]
+    pack_order = [
+        "communication",
+        "context-engineering",
+        "agent-architecture",
+        "frontend-design",
+        "growth-media",
+        "backend-dotnet",
+    ]
     if cli_optional_packs is not None:
         optional_packs = list(cli_optional_packs)
     elif use_tui:
@@ -2223,7 +2242,7 @@ def main(argv: List[str] | None = None) -> int:
         "--optional-packs",
         type=str,
         default=None,
-        help="Comma-separated optional packs (default: all; options: none,all,communication,context-engineering,agent-architecture,frontend-design/design-ui,growth-media)",
+        help="Comma-separated optional packs (default: all; options: none,all,communication,context-engineering,agent-architecture,frontend-design/design-ui,growth-media,backend-dotnet/dotnet)",
     )
     parser.add_argument(
         "--stacks",

@@ -1,6 +1,6 @@
 # Configuration Reference (`CONFIGURATION.md`)
 
-**Version:** `0.6.0`  
+**Version:** `0.7.0`  
 
 ---
 
@@ -18,7 +18,7 @@ The **AI Engineering Framework** isolates all consumer runtime metadata inside `
 ```json
 {
   "$schema": "./core/schemas/framework-config.schema.json",
-  "frameworkVersion": "0.6.0",
+  "frameworkVersion": "0.7.0",
   "projectName": "my-software-project",
   "workflowProfile": "standard",
   "enabledPlatforms": [
@@ -31,7 +31,7 @@ The **AI Engineering Framework** isolates all consumer runtime metadata inside `
     "node-angular"
   ],
   "optionalSkillPacks": {
-    "communication": ["caveman", "rtk-cli", "i-have-adhd", "humanizer"],
+    "communication": ["caveman", "rtk-cli", "i-have-adhd", "humanizer", "prompt-master"],
     "contextEngineering": [
       "context-optimization",
       "context-compression",
@@ -45,9 +45,14 @@ The **AI Engineering Framework** isolates all consumer runtime metadata inside `
       "angular-developer",
       "angular-new-app",
       "web-design-guidelines",
-      "canvas-design"
+      "canvas-design",
+      "ui-styling"
     ],
-    "growthMedia": []
+    "growthMedia": [],
+    "backendDotnet": [
+      "dotnet-backend-patterns",
+      "dotnet-best-practices"
+    ]
   },
   "disabled": {
     "skills": [],
@@ -86,12 +91,12 @@ The **AI Engineering Framework** isolates all consumer runtime metadata inside `
 
 | Field | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `frameworkVersion` | `string` | `"0.6.0"` | SemVer version of the installed AI Engineering Framework |
+| `frameworkVersion` | `string` | `"0.7.0"` | SemVer version of the installed AI Engineering Framework |
 | `projectName` | `string` | Folder name | Identifier used in handoff manifests and reports |
 | `workflowProfile` | `"full"` \| `"standard"` \| `"hotfix"` | `"standard"` | Controls ceremony depth in `docs/WORKFLOW.md` |
 | `enabledPlatforms` | `string[]` | All 5 platforms | Platforms configured by `scripts/bootstrap.py` and verified by `.aief/scripts/validate.py --mode consumer` |
 | `stacks` | `string[]` | `[]` | Stack templates enabled (`"dotnet"`, `"node-angular"`, `"python"`) |
-| `optionalSkillPacks.*` | `object` | Pack-dependent | Lists installed optional skills per pack (`communication`, `contextEngineering`, `agentArchitecture`, `frontendDesign`, `growthMedia`) |
+| `optionalSkillPacks.*` | `object` | Pack-dependent | Lists installed optional skills per pack (`communication`, `contextEngineering`, `agentArchitecture`, `frontendDesign`, `growthMedia`; optional `backendDotnet` for backward compatibility with `v0.3.x`–`v0.6.x` configs) |
 | `disabled.skills` | `string[]` | `[]` | Framework or custom skill names excluded from native projections and active indexes (re-enabled cleanly via `aief compose .` from bundle cache) |
 | `disabled.agents` | `string[]` | `[]` | Canonical or custom agent roles omitted from `AGENTS.md` and native subagent files |
 | `disabled.phases` | `integer[]` | `[]` | Workflow phases (`1..15`) omitted from rendered stage tables and rule bullets |

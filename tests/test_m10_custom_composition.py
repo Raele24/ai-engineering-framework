@@ -432,10 +432,18 @@ class TestM10CustomComposition(unittest.TestCase):
             )
             self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
             reg = json.loads((target / ".aief" / "skills" / "registry.json").read_text(encoding="utf-8"))
-            self.assertEqual(reg["total_skills"], 33)
+            self.assertEqual(reg["total_skills"], 37)
+            for sk in ("ui-styling", "dotnet-backend-patterns", "dotnet-best-practices"):
+                self.assertTrue((target / ".agents" / "skills" / sk / "SKILL.md").exists(), f"Missing .agents skill {sk}")
+                self.assertTrue((target / ".claude" / "skills" / sk / "SKILL.md").exists(), f"Missing .claude skill {sk}")
             cfg = json.loads((target / ".aief" / "config.json").read_text(encoding="utf-8"))
             self.assertEqual(sorted(cfg["stacks"]), ["dotnet", "python"])
             self.assertEqual(len(cfg["enabledPlatforms"]), 5)
+            self.assertIn("ui-styling", cfg["optionalSkillPacks"]["frontendDesign"])
+            self.assertEqual(
+                cfg["optionalSkillPacks"]["backendDotnet"],
+                ["dotnet-backend-patterns", "dotnet-best-practices"],
+            )
 
             comp_proc = subprocess.run(
                 [sys.executable, str(target / ".aief" / "scripts" / "compose.py")],
@@ -684,9 +692,13 @@ class TestM10CustomComposition(unittest.TestCase):
                 optional_packs=["communication", "context-engineering"],
             )
 
-            for sk in ("i-have-adhd", "humanizer", "session-handoff"):
+            for sk in ("i-have-adhd", "humanizer", "prompt-master", "session-handoff"):
                 self.assertTrue((target / ".agents" / "skills" / sk / "SKILL.md").exists(), f"Missing .agents skill {sk}")
                 self.assertTrue((target / ".claude" / "skills" / sk / "SKILL.md").exists(), f"Missing .claude skill {sk}")
+            self.assertTrue(
+                (target / ".agents" / "skills" / "prompt-master" / "references" / "templates.md").exists(),
+                "Missing .agents prompt-master references/templates.md",
+            )
 
             # Toggle off humanizer cleanly
             cfg_path = target / ".aief" / "config.json"

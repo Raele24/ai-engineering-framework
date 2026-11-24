@@ -71,7 +71,7 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
             self.assertGreater(len(summary["created"]), 20)
             self.assertEqual((target / "README.md").read_text(encoding="utf-8"), "# App Owned\n")
 
-            # 10 installed skills (8 core + 2 communication) projected to both roots
+            # 13 installed skills (8 core + 5 communication) projected to both roots
             for sk in ("grill-me", "tdd-cycle", "find-skills", "graphify", "caveman", "rtk-cli"):
                 self.assertTrue((target / ".agents" / "skills" / sk / "SKILL.md").exists())
                 self.assertTrue((target / ".claude" / "skills" / sk / "SKILL.md").exists())
@@ -88,7 +88,7 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
             self.assertEqual(lock["schema_version"], "2.0.0")
             self.assertEqual(lock["projection_state"]["status"], "completed")
             self.assertEqual(lock["projection_state"]["pending_entries"], {})
-            self.assertEqual(lock["projection_state"]["last_successful_projection"]["projected_skill_count"], 12)
+            self.assertEqual(lock["projection_state"]["last_successful_projection"]["projected_skill_count"], 13)
 
             passed, report = validate.run_validation(target, mode="consumer")
             self.assertTrue(passed, f"LT-01 consumer validation failed: {report}")
@@ -604,15 +604,17 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
         pack_cases = [
             ("empty-core", [], 8),
             ("none-core", ["none"], 8),
-            ("only-communication", ["communication"], 12),
+            ("only-communication", ["communication"], 13),
             ("only-context-engineering", ["context-engineering"], 13),
             ("only-agent-architecture", ["agent-architecture"], 12),
-            ("only-frontend-design", ["frontend-design"], 13),
-            ("only-design-ui-alias", ["design-ui"], 13),
+            ("only-frontend-design", ["frontend-design"], 14),
+            ("only-design-ui-alias", ["design-ui"], 14),
             ("only-growth-media", ["growth-media"], 15),
-            ("multi-comm-growth", ["communication", "growth-media"], 19),
+            ("only-backend-dotnet", ["backend-dotnet"], 10),
+            ("only-dotnet-alias", ["dotnet"], 10),
+            ("multi-comm-growth", ["communication", "growth-media"], 20),
             ("multi-ctx-arch", ["context-engineering", "agent-architecture"], 17),
-            ("all-packs", ["all"], 33),
+            ("all-packs", ["all"], 37),
         ]
         for label, packs, expected_count in pack_cases:
             with self.subTest(pack_matrix=label):
@@ -681,7 +683,7 @@ class TestM9ProjectionLifecycle(unittest.TestCase):
             lock = json.loads((target / ".aief" / "lock.json").read_text(encoding="utf-8"))
             self.assertEqual(lock["schema_version"], "2.0.0")
             self.assertEqual(lock["enabled_platforms"], ["claude-code", "codex"])
-            self.assertEqual(lock["projection_state"]["last_successful_projection"]["projected_skill_count"], 12)
+            self.assertEqual(lock["projection_state"]["last_successful_projection"]["projected_skill_count"], 13)
             passed, report = validate.run_validation(target, mode="consumer")
             self.assertTrue(passed, report)
 

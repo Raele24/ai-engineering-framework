@@ -1,7 +1,7 @@
 # Project Charter — AI Engineering Framework
 
 > [!NOTE]
-> **Historical M1 Baseline Document (`v0.1.0`):** This charter captures the initial architectural vision and M0–M5 milestone blueprint. For current `v0.6.0` platform status, CLI scripts (`bootstrap.py`, `compose.py`, `validate.py`, `sync_adapters.py`, `preflight.py`, `platform_capabilities.py`, `readiness.py`, `run_tests.py`), and roadmap details, see [`README.md`](./README.md) and [`docs/ROADMAP.md`](./docs/ROADMAP.md).
+> **Historical M1 Baseline Document (`v0.1.0`):** This charter captures the initial architectural vision and M0–M5 milestone blueprint. For current `v0.7.0` platform status, CLI scripts (`bootstrap.py`, `compose.py`, `validate.py`, `sync_adapters.py`, `preflight.py`, `platform_capabilities.py`, `readiness.py`, `run_tests.py`), and roadmap details, see [`README.md`](./README.md) and [`docs/ROADMAP.md`](./docs/ROADMAP.md).
 
 **Project Name:** AI Engineering Framework  
 **Repository:** `ai-engineering-framework`  

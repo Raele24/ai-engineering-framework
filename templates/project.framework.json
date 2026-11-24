@@ -1,6 +1,6 @@
 {
   "$schema": "./core/schemas/framework-config.schema.json",
-  "frameworkVersion": "0.6.0",
+  "frameworkVersion": "0.7.0",
   "projectName": "ai-engineering-framework",
   "workflowProfile": "full",
   "enabledPlatforms": [
@@ -16,7 +16,8 @@
       "caveman",
       "rtk-cli",
       "i-have-adhd",
-      "humanizer"
+      "humanizer",
+      "prompt-master"
     ],
     "contextEngineering": [
       "context-optimization",
@@ -33,9 +34,14 @@
       "angular-developer",
       "angular-new-app",
       "web-design-guidelines",
-      "canvas-design"
+      "canvas-design",
+      "ui-styling"
     ],
-    "growthMedia": []
+    "growthMedia": [],
+    "backendDotnet": [
+      "dotnet-backend-patterns",
+      "dotnet-best-practices"
+    ]
   },
   "qualityGates": {
     "requireTddRedGreen": true,

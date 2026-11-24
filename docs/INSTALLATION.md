@@ -1,6 +1,6 @@
 # Installation & Update Guide (`INSTALLATION.md`)
 
-**Version:** `0.6.0`  
+**Version:** `0.7.0`  
 
 ---
 
@@ -62,7 +62,7 @@ The framework includes a deterministic, non-destructive installer (`scripts/boot
 ### 4.1 Command Syntax
 
 ```bash
-# Zero-flag install (all 5 platforms, all 33 skills, auto-detected stacks)
+# Zero-flag install (all 5 platforms, all 37 skills, auto-detected stacks)
 python scripts/bootstrap.py <PATH_TO_TARGET_PROJECT>
 
 # Full explicit syntax
@@ -70,7 +70,7 @@ python scripts/bootstrap.py \
   --target <PATH_TO_TARGET_PROJECT> \
   [--platforms antigravity,copilot,claude-code,codex,gemini-cli] \
   [--profile full|standard|hotfix] \
-  [--optional-packs all|none|communication,context-engineering,agent-architecture,frontend-design,growth-media] \
+  [--optional-packs all|none|communication,context-engineering,agent-architecture,frontend-design,growth-media,backend-dotnet] \
   [--stacks auto|none|dotnet,node/angular,python] \
   [--update] \
   [--dry-run] \
@@ -79,19 +79,19 @@ python scripts/bootstrap.py \
   [--no-import]
 ```
 
-*(Note: `--optional-packs` accepts `frontend-design` or its legacy alias `design-ui`; `-y`/`--yes` skips the interactive TTY wizard and accepts defaults, `-i`/`--interactive` forces wizard prompts, and `--no-import` skips auto-importing legacy root AI instructions.)*
+*(Note: `--optional-packs` accepts `frontend-design` (alias `design-ui`) and `backend-dotnet` (alias `dotnet`); `-y`/`--yes` skips the interactive TTY wizard and accepts defaults, `-i`/`--interactive` forces wizard prompts, and `--no-import` skips auto-importing legacy root AI instructions.)*
 
 ### 4.2 Optional Skill Pack Filtering
 
-`bootstrap.py` always installs the 8 mandatory core skills (`grill-me`, `tdd-cycle`, `ponytail`, `adr-writer`, `graphify`, `agent-browser`, `find-skills`, `anti-slop`) and filters all generated consumer files to match the `--optional-packs` selection:
+`bootstrap.py` always installs the 8 mandatory core skills (`grill-me`, `tdd-cycle`, `ponytail`, `adr-writer`, `graphify`, `agent-browser`, `find-skills`, `anti-slop`) and filters all generated consumer files to match the `--optional-packs` selection across `6` optional packs:
 1. **Consumer `skills/registry.json`:** Contains only the 8 core skills plus the skills belonging to the selected optional packs (preserving 100% of upstream attribution, license, source URL, and SHA-256 metadata).
 2. **Consumer `AGENTS.md`:** Generates Section 4 (`Active Skills`) with only the installed skills — zero dangling references to uninstalled packs.
 3. **Consumer `agents/*.md`:** Filters `required_skills` in YAML frontmatter so agents only reference installed skills.
 4. **Consumer `.agents/skills.json`:** Registers only `skills/core` and the installed `skills/optional/<pack>` directories.
 5. **Native Platform Skill Projections:** Derived dynamically from `core/platform-capabilities.json`, `bootstrap.py` projects physical copies of installed skills into `.agents/skills/<skill-name>/` (when any `.agents/skills`-consuming platform is enabled) and `.claude/skills/<skill-name>/` (when `claude-code` is enabled), excluding `UPSTREAM_SKILL.md` and `__pycache__/` while keeping attribution in `skills/`.
 
-*Supported pack names:* `all` *(default — all `33` skills)*, `communication`, `context-engineering`, `agent-architecture`, `frontend-design` (alias `design-ui`), `growth-media`, or `none` (core-only `8` skills).  
-*CLI Defaults (when flags are omitted):* positional target or `--target`, all `5` platforms (`antigravity,copilot,claude-code,codex,gemini-cli`), `--profile standard`, `--optional-packs all` (`33` skills; disable unwanted items via `disabled.*` in `.aief/config.json` or legacy `project.framework.json`), `--stacks auto` (auto-detects `dotnet`, `node-angular`, `python`).  
+*Supported pack names:* `all` *(default — all `37` skills across `6` optional packs + `8` core)*, `communication`, `context-engineering`, `agent-architecture`, `frontend-design` (alias `design-ui`), `growth-media`, `backend-dotnet` (alias `dotnet`), or `none` (core-only `8` skills).  
+*CLI Defaults (when flags are omitted):* positional target or `--target`, all `5` platforms (`antigravity,copilot,claude-code,codex,gemini-cli`), `--profile standard`, `--optional-packs all` (`37` skills; disable unwanted items via `disabled.*` in `.aief/config.json` or legacy `project.framework.json`), `--stacks auto` (auto-detects `dotnet`, `node-angular`, `python`).  
 *Stack Naming Note:* `bootstrap.py --stacks` accepts `node/angular` (normalizing it automatically to `node-angular`), whereas `scripts/preflight.py --stacks` and `.aief/config.json` (or legacy `project.framework.json`) use `node-angular`.
 
 ### 4.3 Adapter & Projected Skill Link Rewriting

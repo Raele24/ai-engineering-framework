@@ -1,22 +1,22 @@
-# Graph Report - ai-engineering-framework  (2026-11-22)
+# Graph Report - ai-engineering-framework  (2026-11-24)
 
 ## Corpus Check
-- 253 files · ~212,591 words
+- 279 files · ~258,139 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3465 nodes · 4146 edges · 337 communities (323 shown, 14 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 8 edges (avg confidence: 0.85)
+- 4221 nodes · 5216 edges · 394 communities (364 shown, 30 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 19 edges (avg confidence: 0.63)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `584cfa55`
+- Built from commit: `c8c4ba85`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - security
-- properties
+- type
 - compose.py
 - Architecture Guide (`ARCHITECTURE.md`)
 - optionalSkillPacks
@@ -64,14 +64,14 @@
 - 3. Core Framework Security Invariants
 - TestM10CustomComposition
 - AI Engineering Framework — Universal Agent Instructions (`AGENTS.md`)
-- Discovery & Product Requirements Brief (`01-discovery-brief.md`)
+- Tailwind CSS Utility Reference
 - enum
 - enum
 - enum
 - required
 - TestM9ProjectionLifecycle
 - Pricing — AI Unit Economics & Tier Modeling Skill
-- CLAUDE.md
+- Core Rule: Security Guardrails (`security-guardrails.md`)
 - compaction.py
 - Contributing, Versioning & Release Guide (`CONTRIBUTING.md`)
 - Graphify Knowledge Graph Integration (`integrations/graphify/`)
@@ -90,10 +90,10 @@
 - Video Lens — Technical Video & Session Replay Analysis Skill
 - Video Use — Automated Demo & Walkthrough Recording Skill
 - Test & Verification Plan (`TEST_PLAN.template.md`)
-- human-approval-gates.md
+- Core Rule: Context Handoff Protocol (`context-handoff-protocol.md`)
 - Tool Design Best Practices
 - description
-- name
+- properties
 - Logo Usage Rules
 - Test-Driven Development Protocol (`quality/tdd-protocol.md`)
 - Asset Approval Checklist
@@ -103,7 +103,7 @@
 - check_staleness.py
 - Stage 6 Runbook: CI/CD Release, Documentation & Retrospective (Phases 13–15)
 - Role: DevOps, CI/CD & Cloud Release Engineer (`devops-release-engineer`)
-- properties
+- source
 - definition-of-done.md
 - tool-classification.md
 - Brand Consistency Checklist
@@ -179,7 +179,7 @@
 - Manual Setup (Tailwind v4)
 - agent-role.schema.json
 - preflight.py
-- Router Lifecycle and Events
+- .NET Backend Development Patterns
 - ADR-0001: Open-Source Licensing under Apache License 2.0
 - 4. Practical Customization Recipes
 - Detailed Topics
@@ -194,12 +194,12 @@
 - Rendering Strategies
 - Route Transition Animations
 - Route Guards
-- router-testing.md
+- Result
 - Show Routes with Outlets
 - How to Use This Skill
 - validate_handoff.py
 - items
-- title
+- properties
 - enum
 - Anti-AI Slop — High-Signal Technical Prose Skill
 - enum
@@ -218,7 +218,7 @@
 - Side Effects with `effect` and `afterRenderEffect`
 - 2. Passive vs. Active Security Checks
 - properties
-- Grill Me — Requirement Clarification Skill
+- Canvas Design System
 - design_system.py
 - Role: UI/UX & Design System Designer (`ui-ux-designer`)
 - platform_capabilities.py
@@ -230,7 +230,7 @@
 - Common Pitfalls
 - Detailed Topics
 - Detailed Topics
-- Automatic Migrations & Code Modernization
+- CancellationToken
 - Ponytail — YAGNI & Minimalist Implementation Skill
 - testing-fundamentals.md
 - angular-new-app/SKILL.md
@@ -262,7 +262,7 @@
 - Find Skills — Safe Skill Discovery & Vetting Protocol
 - test_sync_brand_to_tokens.py
 - /graphify
-- name
+- Form & Input Components
 - Handoff
 - TestM9AgentPlatformContracts
 - Role: Backend & API TDD Implementation Engineer (`backend-engineer`)
@@ -282,11 +282,11 @@
 - STYLE PATTERNS
 - CONTENT PATTERNS
 - session-handoff/SKILL.md
-- type
+- Tailwind CSS Responsive Design
 - RESUME Workflow
 - How to Use This Skill
 - frontendDesign
-- Stage 1 Runbook: Discovery, Grill Me & Specification (Phases 1–3)
+- shadcn/ui Accessibility Patterns
 - component-harnesses.md
 - Role: Database Architect & Big Data Engineer (`data-engineer`)
 - Pre-Delivery Checklist
@@ -296,7 +296,7 @@
 - enabledPlatforms
 - paths
 - build_bundle_zip
-- contextEngineering
+- TestTailwindConfigGenerator
 - run_tests.py
 - Design Principles
 - Common Rules for Professional UI
@@ -314,29 +314,92 @@
 - Context for Resuming Agent
 - Work Completed
 - Tips for Better Results
-- customizations
+- .NET/C# Best Practices
 - security
-- Implementation Pattern
+- Entity Framework Core Best Practices
 - DETECTION GUIDANCE
 - ai-engineering-framework
-- PULL_REQUEST_TEMPLATE.md
+- Dapper Patterns and Best Practices
 - Stage 4 Runbook: Test-Driven Development & Implementation (Phase 9)
-- Integration Patterns
+- Tailwind CSS Customization
+- shadcn/ui Theming & Customization
 - Stage 2 Runbook: Technical Research, Architecture & ADRs (Phases 4–5)
+- TailwindConfigGenerator
+- Product
+- TestShadcnInstaller
+- Prompt Templates Reference
+- main
+- .add_components
+- ShadcnInstaller
+- UI Styling Skill
+- UI Styling Skill
+- test_tailwind_config_gen.py
+- .generate_config_string
+- .SearchAsync
+- patch
+- prompt-master/SKILL.md
+- BaseSpecification
+- MIDDLE ZONE — Execution Logic, Tool Routing, Diagnostics
+- MIDDLE ZONE — Execution Logic, Tool Routing, Diagnostics
+- ._base_config
+- Role: Software & Systems Architect (`software-architect`)
+- handoff-packet.schema.json
+- Credit-Killing Patterns Reference
+- communication
+- Hierarchical Injectors
+- Component Host Elements
+- Anti-Patterns to Avoid
+- Core Rule: Human Approval Gates (`human-approval-gates.md`)
+- allowed_tools
+- phase_number
+- Tool Collection Design
+- Response Format Optimization
+- Core Stack
+- Core Stack
+- generate_design_system
+- .temp_project
+- ProductServiceOptions
+- KV-Cache Optimization
+- .__init__
+- ui-styling/SKILL.md
+- Quick Start
+- Utility Scripts
+- Quick Start
+- Utility Scripts
+- test_shadcn_add.py
+- .test_add_components_no_config
+- .test_add_components_already_installed
+- .test_list_installed_empty
+- .test_add_breakpoints
+- .test_init_default_typescript
+- .test_generate_javascript_config
+- .test_generate_config_with_plugins
+- .test_validate_config_empty_theme
+- .test_write_config
+- .test_write_config_invalid_path
+- .test_init_framework
+- .test_default_content_paths_react
+- .test_default_content_paths_nextjs
 
 ## God Nodes (most connected - your core abstractions)
-1. `compose_consumer_artifacts()` - 26 edges
-2. `enum` - 23 edges
-3. `bootstrap_project()` - 21 edges
-4. `TestM10CustomComposition` - 20 edges
-5. `TestM9ProjectionLifecycle` - 20 edges
-6. `4. Detailed Specification of the 15 Phases` - 16 edges
-7. `run_validation_full()` - 15 edges
-8. `FILLER AND HEDGING` - 14 edges
-9. `FILLER AND HEDGING` - 14 edges
-10. `Signal Forms` - 14 edges
+1. `TailwindConfigGenerator` - 58 edges
+2. `TestTailwindConfigGenerator` - 35 edges
+3. `ShadcnInstaller` - 34 edges
+4. `compose_consumer_artifacts()` - 26 edges
+5. `Product` - 26 edges
+6. `TestShadcnInstaller` - 26 edges
+7. `enum` - 23 edges
+8. `bootstrap_project()` - 21 edges
+9. `TestM10CustomComposition` - 20 edges
+10. `TestM9ProjectionLifecycle` - 20 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `TestShadcnInstaller` --uses--> `ShadcnInstaller`  [INFERRED]
+  skills/optional/frontend-design/ui-styling/scripts/tests/test_shadcn_add.py → skills/optional/frontend-design/ui-styling/scripts/shadcn_add.py
+- `TestGeneratedConfigIsValidJs` --uses--> `TailwindConfigGenerator`  [INFERRED]
+  skills/optional/frontend-design/ui-styling/scripts/tests/test_tailwind_config_gen.py → skills/optional/frontend-design/ui-styling/scripts/tailwind_config_gen.py
+- `TestTailwindConfigGenerator` --uses--> `TailwindConfigGenerator`  [INFERRED]
+  skills/optional/frontend-design/ui-styling/scripts/tests/test_tailwind_config_gen.py → skills/optional/frontend-design/ui-styling/scripts/tailwind_config_gen.py
 - `_generate_intelligent_overrides()` --calls--> `search()`  [EXTRACTED]
   skills/optional/frontend-design/ui-ux-pro-max/scripts/design_system.py → skills/optional/frontend-design/ui-ux-pro-max/scripts/core.py
 - `main()` --calls--> `resolve_framework_root()`  [EXTRACTED]
@@ -345,15 +408,15 @@
 ## Import Cycles
 - None detected.
 
-## Communities (337 total, 14 thin omitted)
+## Communities (394 total, 30 thin omitted)
 
 ### Community 0 - "security"
 Cohesion: 0.15
 Nodes (13): type, type, allowActiveSecurityTesting, enforcePreCommitSecretScan, security, strixProfilePath, properties, required (+5 more)
 
-### Community 1 - "properties"
-Cohesion: 0.16
-Nodes (15): items, minItems, type, items, type, items, type, type (+7 more)
+### Community 1 - "type"
+Cohesion: 0.25
+Nodes (8): items, type, items, type, approval_gates, required_skills, items, type
 
 ### Community 2 - "compose.py"
 Cohesion: 0.06
@@ -364,12 +427,12 @@ Cohesion: 0.20
 Nodes (10): 1. Architectural Overview, 2.1 Why Four Tiers?, 2. Four-Tier Layered Architecture, 3. Component Responsibilities & Dependencies, 4.1 Context Isolation Over Anthropomorphism, 4.2 Progressive Skill Disclosure & Domain Isolation, 4. Context Engineering & Multi-Agent Topology, 5. Codebase Knowledge Graph Integration (`Graphify`) (+2 more)
 
 ### Community 4 - "optionalSkillPacks"
-Cohesion: 0.20
-Nodes (10): caveman, evaluation, humanizer, i-have-adhd, multi-agent-patterns, rtk-cli, optionalSkillPacks, agentArchitecture (+2 more)
+Cohesion: 0.15
+Nodes (13): context-compression, context-optimization, dotnet-backend-patterns, dotnet-best-practices, evaluation, filesystem-context, multi-agent-patterns, session-handoff (+5 more)
 
 ### Community 5 - "type"
-Cohesion: 0.13
-Nodes (19): items, type, items, type, items, type, items, type (+11 more)
+Cohesion: 0.11
+Nodes (22): items, type, items, type, items, type, items, type (+14 more)
 
 ### Community 6 - "4. Detailed Specification of the 15 Phases"
 Cohesion: 0.09
@@ -404,12 +467,12 @@ Cohesion: 0.05
 Nodes (76): _assert_overlay_safe(), assert_safe_target_path(), _atomic_write_bytes(), bootstrap_project(), BootstrapSecurityError, build_consumer_agents_md(), build_consumer_antigravity_skills_json(), build_filtered_registry() (+68 more)
 
 ### Community 14 - "path"
-Cohesion: 0.15
-Nodes (14): items, type, properties, required, items, type, type, input_artifacts (+6 more)
+Cohesion: 0.14
+Nodes (16): items, items, type, properties, required, type, items, type (+8 more)
 
 ### Community 15 - "required"
-Cohesion: 0.10
-Nodes (19): additionalProperties, description, $id, required, $schema, title, type, decisions_locked (+11 more)
+Cohesion: 0.15
+Nodes (13): required, decisions_locked, human_approval, input_artifacts, next_role, open_risks, output_artifacts, phase_number (+5 more)
 
 ### Community 16 - "Project Charter — AI Engineering Framework"
 Cohesion: 0.17
@@ -425,7 +488,7 @@ Nodes (37): Protocol, _BuiltToolSpec, ErrorMessageGenerator, _generate_errors(),
 
 ### Community 19 - "properties"
 Cohesion: 0.12
-Nodes (16): type, maximum, minimum, type, type, type, properties, next_role (+8 more)
+Nodes (17): type, type, items, type, type, type, properties, decisions_locked (+9 more)
 
 ### Community 20 - "Role: Quality Assurance & Automated Test Engineer (`qa-engineer`)"
 Cohesion: 0.25
@@ -433,18 +496,18 @@ Nodes (8): 1. Responsibilities, 2. Allowed Activities, 3. Expected Inputs, 4. Ex
 
 ### Community 21 - "Skills Catalog, Installation & Compatibility Matrix (`SKILL_COMPATIBILITY_MATRIX.md`)"
 Cohesion: 0.29
-Nodes (7): 1. Installation Policy & Optional Packs, 2. Platform Skill Discovery Paths, 3. Per-Skill Compatibility Matrix (All 33 Registered Skills), 4. Curation & Deduplication Notes, Available `--optional-packs` Values, Optional External CLIs (Policy B), Skills Catalog, Installation & Compatibility Matrix (`SKILL_COMPATIBILITY_MATRIX.md`)
+Nodes (7): 1. Installation Policy & Optional Packs, 2. Platform Skill Discovery Paths, 3. Per-Skill Compatibility Matrix (All 37 Registered Skills), 4. Curation & Deduplication Notes, Available `--optional-packs` Values, Optional External CLIs (Policy B), Skills Catalog, Installation & Compatibility Matrix (`SKILL_COMPATIBILITY_MATRIX.md`)
 
 ### Community 22 - "2. Release Progression"
-Cohesion: 0.20
-Nodes (10): 1. Milestone Progression, 2. Release Progression, Project Roadmap (`ROADMAP.md`), `v0.1.0` — Canonical Foundation, Agents, Skills & Tooling *(Released)*, `v0.3.0` — Consumer Bootstrap Hardening & Stack Preflight *(Released)*, `v0.3.1` — Multi-Platform Adapter Parity & Lockfile `v2.0.0`, `v0.4.0` — Custom Composition Engine, Prompts/MCP & `aief` CLI *(Released)*, `v0.5.0` — Isolated `.aief/` Layout & Brownfield Safety *(Released)* (+2 more)
+Cohesion: 0.18
+Nodes (11): 1. Milestone Progression, 2. Release Progression, Project Roadmap (`ROADMAP.md`), `v0.1.0` — Canonical Foundation, Agents, Skills & Tooling *(Released)*, `v0.3.0` — Consumer Bootstrap Hardening & Stack Preflight *(Released)*, `v0.3.1` — Multi-Platform Adapter Parity & Lockfile `v2.0.0`, `v0.4.0` — Custom Composition Engine, Prompts/MCP & `aief` CLI *(Released)*, `v0.5.0` — Isolated `.aief/` Layout & Brownfield Safety *(Released)* (+3 more)
 
 ### Community 23 - "AI Engineering Framework"
 Cohesion: 0.18
 Nodes (11): 1. Validate the Framework Repository, 2. Install into a New or Existing Project (Packaged `aief` CLI or Direct Python), 3. Synchronize Platform Adapters After Editing Canonical Rules, AI Engineering Framework, Architecture Overview, Core Design, Documentation Index (`docs/README.md`), License & Rationale (+3 more)
 
 ### Community 24 - "CompressionEvaluator"
-Cohesion: 0.05
+Cohesion: 0.06
 Nodes (32): CompressionEvaluator, CriterionResult, evaluate_compression_quality(), EvaluationResult, Probe, ProbeGenerator, ProbeType, Enum (+24 more)
 
 ### Community 25 - "Engineering Specification (`03-specification.md`)"
@@ -452,8 +515,8 @@ Cohesion: 0.20
 Nodes (9): 1.1 In Scope, 1.2 Explicit Non-Goals (Out of Scope), 1. Scope & Non-Goals, 2. Functional Requirements (`FR`), 3. Testable Acceptance Criteria (`Given / When / Then`), 4. Non-Functional Requirements (`NFR`), `AC-01`: `<Happy Path Title>`, `AC-02`: `<Error / Boundary Case Title>` (+1 more)
 
 ### Community 26 - "README.md"
-Cohesion: 0.17
-Nodes (7): 1. Configuration & Capability Mapping Across Supported Platforms, 2. Unsupported or Partially Supported Platform Features & Fallbacks, 3. Platform Capabilities & Prerequisites, Platform Compatibility Matrix (`compatibility-matrix.md`), 1. Adoption & Daily Usage, 2. Canonical Specifications & Reference, Documentation Index (`docs/README.md`)
+Cohesion: 0.13
+Nodes (10): 1. Configuration & Capability Mapping Across Supported Platforms, 2. Unsupported or Partially Supported Platform Features & Fallbacks, 3. Platform Capabilities & Prerequisites, Platform Compatibility Matrix (`compatibility-matrix.md`), 1. Adoption & Daily Usage, 2. Canonical Specifications & Reference, Documentation Index (`docs/README.md`), Related Issue / Specification / ADR (+2 more)
 
 ### Community 27 - "platforms"
 Cohesion: 0.17
@@ -495,6 +558,10 @@ Nodes (11): calculateCompliance(), colorDistance(), displayPalette(), extractHex
 Cohesion: 0.06
 Nodes (33): 10. No preamble, no recap, no closing pleasantries, 1. Lead with the next action, 2. Number multi-step tasks, 3. End with one concrete next action, 4. Suppress tangents, 5. Restate state every turn, 6. Give specific time estimates, 7. Make completed work visible (+25 more)
 
+### Community 37 - "AGENTS.md"
+Cohesion: 0.10
+Nodes (8): Antigravity Workspace Rule — AI Engineering Framework, Antigravity Workspace Rule — AI Engineering Framework, Claude Code Instructions (`CLAUDE.md`), Quick Routing for Claude Code, Google Antigravity & Gemini CLI Instructions (`GEMINI.md`), Platform Integration Notes, GitHub Copilot Workspace Instructions, Mandatory Guardrails
+
 ### Community 38 - "required"
 Cohesion: 0.17
 Nodes (12): description, name, version, required, category, dependencies, license, platforms (+4 more)
@@ -520,8 +587,8 @@ Cohesion: 0.29
 Nodes (6): additionalProperties, description, $id, $schema, title, type
 
 ### Community 44 - "enum"
-Cohesion: 0.22
-Nodes (9): tier, enum, type, core, optional-agent-architecture, optional-communication, optional-context, optional-frontend (+1 more)
+Cohesion: 0.20
+Nodes (10): tier, enum, type, core, optional-agent-architecture, optional-backend, optional-communication, optional-context (+2 more)
 
 ### Community 45 - "Configuration Reference (`CONFIGURATION.md`)"
 Cohesion: 0.22
@@ -539,9 +606,9 @@ Nodes (16): build_parser(), main(), Path, Unified `aief` CLI entrypoint wrapping
 Cohesion: 0.33
 Nodes (6): 1. Non-Negotiable Core Rules, 2. Canonical Stage Runbooks (`workflows/`), 3. Canonical Agent Roles (`agents/`), 4. Registered Skills (`skills/registry.json`), 5. Verification Commands, AI Engineering Framework — Universal Agent Instructions (`AGENTS.md`)
 
-### Community 49 - "Discovery & Product Requirements Brief (`01-discovery-brief.md`)"
-Cohesion: 0.29
-Nodes (6): 1. Problem Statement, 2. Target Users & Personas, 3. Verified Existing Context, 4. Known Constraints, 5. Open Ambiguities for Phase 2 (`Grill Me`), Discovery & Product Requirements Brief (`01-discovery-brief.md`)
+### Community 49 - "Tailwind CSS Utility Reference"
+Cohesion: 0.05
+Nodes (43): Arbitrary Values, Aspect Ratio, Background Colors, Border Color, Border Radius, Border Style, Border Width, Borders (+35 more)
 
 ### Community 50 - "enum"
 Cohesion: 0.33
@@ -552,8 +619,8 @@ Cohesion: 0.33
 Nodes (6): enum, antigravity, claude-code, codex, copilot, gemini-cli
 
 ### Community 52 - "enum"
-Cohesion: 0.50
-Nodes (4): enum, network-external, read-only, workspace-write
+Cohesion: 0.33
+Nodes (6): security_scope, enum, type, network-external, read-only, workspace-write
 
 ### Community 53 - "required"
 Cohesion: 0.33
@@ -567,9 +634,9 @@ Nodes (5): _copy_mock_framework(), Path, Create an isolated copy of the canonica
 Cohesion: 0.33
 Nodes (5): 1. Purpose, 2. Unit Economics Formula, 3. Deliverables, 4. Validation Criteria, Pricing — AI Unit Economics & Tier Modeling Skill
 
-### Community 56 - "CLAUDE.md"
-Cohesion: 0.22
-Nodes (7): Claude Code Instructions (`CLAUDE.md`), Quick Routing for Claude Code, 1. Credential and Secret Protection, 2. Boundary and Access Control Integrity, 3. Untrusted Input and External Skill Safety, 4. Authorized Security Testing Only, Core Rule: Security Guardrails (`security-guardrails.md`)
+### Community 56 - "Core Rule: Security Guardrails (`security-guardrails.md`)"
+Cohesion: 0.40
+Nodes (5): 1. Credential and Secret Protection, 2. Boundary and Access Control Integrity, 3. Untrusted Input and External Skill Safety, 4. Authorized Security Testing Only, Core Rule: Security Guardrails (`security-guardrails.md`)
 
 ### Community 57 - "compaction.py"
 Cohesion: 0.05
@@ -588,11 +655,11 @@ Cohesion: 0.40
 Nodes (4): 1. Native Host Orchestration (Default — Tier 0), 2. Evaluation of Optional External Orchestrators, 3. Integration Contract for External Orchestrators, Orchestration Strategy & External Orchestrator Evaluation (`integrations/orchestrators/`)
 
 ### Community 61 - "Role: Product & Requirements Analyst (`product-analyst`)"
-Cohesion: 0.12
-Nodes (16): 1. Responsibilities, 2. Allowed Activities, 3. Expected Inputs, 4. Expected Outputs, 5. Delegation Rules, 6. Restrictions, 7. Completion Criteria, Role: Product & Requirements Analyst (`product-analyst`) (+8 more)
+Cohesion: 0.07
+Nodes (23): 1. Responsibilities, 2. Allowed Activities, 3. Expected Inputs, 4. Expected Outputs, 5. Delegation Rules, 6. Restrictions, 7. Completion Criteria, Role: Product & Requirements Analyst (`product-analyst`) (+15 more)
 
 ### Community 62 - "ScratchPadManager"
-Cohesion: 0.06
+Cohesion: 0.07
 Nodes (30): AgentPlan, _cleanup_demo(), _demo_plan_persistence(), _demo_scratch_pad(), _demo_tool_handler(), PlanStep, Any, Filesystem Context Manager -- composable utilities for filesystem-based context… (+22 more)
 
 ### Community 63 - "Brand Guidelines v1.0"
@@ -643,21 +710,21 @@ Nodes (4): 1. Purpose, 2. Execution Protocol, 3. Validation Criteria, Video Use 
 Cohesion: 0.40
 Nodes (4): 1. Test Pyramid Matrix, 2. Edge Cases & Negative Scenarios, 3. Execution Commands, Test & Verification Plan (`TEST_PLAN.template.md`)
 
-### Community 75 - "human-approval-gates.md"
-Cohesion: 0.12
-Nodes (12): Antigravity Workspace Rule — AI Engineering Framework, Antigravity Workspace Rule — AI Engineering Framework, 1. Filesystem as State Machine, 2. Phase Output Contract, 3. Clean-Context Ingestion Rules, Core Rule: Context Handoff Protocol (`context-handoff-protocol.md`), 1. Task Classification Law, 2. Mandatory Approval Gates (+4 more)
+### Community 75 - "Core Rule: Context Handoff Protocol (`context-handoff-protocol.md`)"
+Cohesion: 0.50
+Nodes (4): 1. Filesystem as State Machine, 2. Phase Output Contract, 3. Clean-Context Ingestion Rules, Core Rule: Context Handoff Protocol (`context-handoff-protocol.md`)
 
 ### Community 76 - "Tool Design Best Practices"
-Cohesion: 0.07
-Nodes (30): Agent Testing Pattern, Anti-Patterns to Avoid, Checklist for Tool Design, Common Error Patterns, Consolidation Guidelines, Cryptic Parameter Names, Description Engineering Principles, Enumeration Values (+22 more)
+Cohesion: 0.12
+Nodes (17): Agent Testing Pattern, Checklist for Tool Design, Common Error Patterns, Description Engineering Principles, Enumeration Values, Error Message Design, Error Message Structure, Evaluation Criteria (+9 more)
 
 ### Community 77 - "description"
 Cohesion: 0.50
 Nodes (4): maxLength, minLength, type, description
 
-### Community 78 - "name"
-Cohesion: 0.50
-Nodes (4): description, pattern, type, name
+### Community 78 - "properties"
+Cohesion: 0.20
+Nodes (10): type, description, pattern, type, properties, category, name, version (+2 more)
 
 ### Community 79 - "Logo Usage Rules"
 Cohesion: 0.07
@@ -695,9 +762,9 @@ Nodes (4): Stage 6 Runbook: CI/CD Release, Documentation & Retrospective (Phases
 Cohesion: 0.25
 Nodes (8): 1. Responsibilities, 2. Allowed Activities, 3. Expected Inputs, 4. Expected Outputs, 5. Delegation Rules, 6. Restrictions, 7. Completion Criteria, Role: DevOps, CI/CD & Cloud Release Engineer (`devops-release-engineer`)
 
-### Community 88 - "properties"
-Cohesion: 0.20
-Nodes (10): properties, security_scope, source, version, type, description, minLength, type (+2 more)
+### Community 88 - "source"
+Cohesion: 0.50
+Nodes (4): source, description, minLength, type
 
 ### Community 96 - "Brand Consistency Checklist"
 Cohesion: 0.11
@@ -716,8 +783,8 @@ Cohesion: 0.18
 Nodes (10): Any, Central supervisor agent that coordinates worker agents. Use when: tasks have…, Register a worker agent with the supervisor., Decompose a task into subtasks. Use when: a high-level task needs to be broken…, Select the best available worker for a subtask. Use when: the supervisor needs…, Aggregate results from completed subtasks., Execute a complete workflow with supervision. Use when: running an end-to-end…, Simulate a worker completing a subtask. In production, replace with actual… (+2 more)
 
 ### Community 100 - "DesignSystemGenerator"
-Cohesion: 0.14
-Nodes (11): DesignSystemGenerator, Find matching reasoning rule for a category., Apply reasoning rules to search results., Select best matching result based on priority keywords., Extract results list from search result dict., Generate complete design system recommendation. variance/motion/density are…, Bucket a 1-10 dial value into its tier config. Returns None if value is None., Generates design system recommendations from aggregated searches. (+3 more)
+Cohesion: 0.16
+Nodes (9): DesignSystemGenerator, Find matching reasoning rule for a category., Apply reasoning rules to search results., Select best matching result based on priority keywords., Extract results list from search result dict., Generate complete design system recommendation. variance/motion/density are…, Generates design system recommendations from aggregated searches., Load reasoning rules from CSV. (+1 more)
 
 ### Community 101 - "sync-brand-to-tokens.cjs"
 Cohesion: 0.33
@@ -752,12 +819,12 @@ Cohesion: 0.18
 Nodes (7): AgentFailureHandler, Handler for agent failures in multi-agent systems. Use when: agents may fail…, Handle a failure from an agent. Use when: an agent reports an error and the…, Temporarily disable an agent (1-minute cooldown)., Find an alternative agent to handle the task. In production, check agent…, Check if an agent is available (circuit breaker not active)., Record a successful task completion, resetting failure count.
 
 ### Community 109 - "Architectural Reduction: Production Evidence"
-Cohesion: 0.17
-Nodes (12): Architectural Reduction: Production Evidence, Case Study: Text-to-SQL Agent, Comparative Results, Conclusion, Evaluation Framework, File Systems Are Powerful Abstractions, Good Documentation Replaces Tool Sophistication, Original Architecture (Many Specialized Tools) (+4 more)
+Cohesion: 0.12
+Nodes (16): Architectural Reduction: Production Evidence, Case Study: Text-to-SQL Agent, Comparative Results, Conclusion, Evaluation Framework, File Systems Are Powerful Abstractions, Good Documentation Replaces Tool Sophistication, Implementation Pattern (+8 more)
 
 ### Community 110 - "Context Optimization Reference"
 Cohesion: 0.15
-Nodes (13): Alert Thresholds, Cache-Friendly Design, Context Optimization Reference, Context Partitioning Strategies, Key Metrics, KV-Cache Optimization, Masking Implementation, Monitoring and Alerting (+5 more)
+Nodes (13): Alert Thresholds, Context Optimization Reference, Context Partitioning Strategies, Integration Patterns, Integration with Agent Framework, Integration with Memory Systems, Key Metrics, Masking Implementation (+5 more)
 
 ### Community 111 - "Memory Systems: Technical Reference"
 Cohesion: 0.15
@@ -804,7 +871,7 @@ Cohesion: 0.17
 Nodes (12): Context Optimization Techniques, Core Concepts, Examples, Gotchas, Guidelines, Integration, Optimization Decision Framework, Performance Targets (+4 more)
 
 ### Community 122 - "2. Advanced CSS Animations"
-Cohesion: 0.17
+Cohesion: 0.15
 Nodes (12): 1. Native CSS Animations (v20.2+ Recommended), 2. Advanced CSS Animations, 3. Legacy Animations DSL (Deprecated), Angular Animations, `animate.enter` and `animate.leave`, Animating Auto Height, Animating State and Styles, Defining Transitions (+4 more)
 
 ### Community 123 - "enum"
@@ -844,8 +911,8 @@ Cohesion: 0.18
 Nodes (10): Color Palette, Colors, Core Visual Elements, Logo, Logo, Quick Checks, Typography, Typography (+2 more)
 
 ### Community 132 - "enum"
-Cohesion: 0.20
-Nodes (10): enum, type, category, agent-architecture, codebase-intelligence, context-engineering, core-sdlc, seo-growth (+2 more)
+Cohesion: 0.22
+Nodes (9): enum, agent-architecture, backend-engineering, codebase-intelligence, context-engineering, core-sdlc, seo-growth, token-optimization (+1 more)
 
 ### Community 133 - "Component Styling"
 Cohesion: 0.20
@@ -864,8 +931,8 @@ Cohesion: 0.11
 Nodes (18): items, type, properties, items, type, maximum, minimum, items (+10 more)
 
 ### Community 137 - "HandoffProtocol"
-Cohesion: 0.25
-Nodes (5): HandoffProtocol, Protocol for agent-to-agent handoffs. Use when: implementing peer-to-peer or…, Create a handoff message with transferred context., Accept the first pending handoff for an agent, if any., Transfer task state from one agent to another. Use when: a handoff must carry…
+Cohesion: 0.33
+Nodes (4): HandoffProtocol, Protocol for agent-to-agent handoffs. Use when: implementing peer-to-peer or…, Create a handoff message with transferred context., Transfer task state from one agent to another. Use when: a handoff must carry…
 
 ### Community 138 - "Context Compression Strategies"
 Cohesion: 0.22
@@ -900,7 +967,7 @@ Cohesion: 0.22
 Nodes (9): Core Concepts, Examples, Gotchas, Guidelines, Integration, Memory System Design, References, Skill Metadata (+1 more)
 
 ### Community 146 - "Angular CLI Guide for Agents"
-Cohesion: 0.25
+Cohesion: 0.22
 Nodes (8): 1. Managing Dependencies, 2. Generating Code (`ng generate` or `ng g`), 3. Development Server & Proxying, 4. Building the Application, 5. Testing, 6. Deployment, Angular CLI Guide for Agents, Backend API Proxying
 
 ### Community 147 - "Components"
@@ -908,7 +975,7 @@ Cohesion: 0.20
 Nodes (9): Component Definition, Components, Conditional Rendering (`@if`), Core Concepts, Loops (`@for`), Metadata Options, Switching Content (`@switch`), Template Control Flow (+1 more)
 
 ### Community 148 - "Data Resolvers"
-Cohesion: 0.25
+Cohesion: 0.22
 Nodes (8): 1. Via `ActivatedRoute` (Traditional), 2. Via Component Inputs (Modern), Accessing Resolved Data, Best Practices, Configuring the Route, Creating a Resolver, Data Resolvers, Error Handling
 
 ### Community 149 - "Define Routes"
@@ -916,7 +983,7 @@ Cohesion: 0.22
 Nodes (8): Basic Configuration, Define Routes, Matching Strategy, Nested (Child) Routes, Page Titles, Redirects, Route Data and Providers, URL Paths
 
 ### Community 150 - "Angular CLI MCP Server"
-Cohesion: 0.22
+Cohesion: 0.20
 Nodes (9): Angular CLI MCP Server, Antigravity IDE, Available Tools (Default), Command Options, Configuration, Cursor, Experimental Tools, Gemini CLI (+1 more)
 
 ### Community 151 - "Reactive Forms"
@@ -944,8 +1011,8 @@ Cohesion: 0.29
 Nodes (4): AgentCommunication, Communication channel for multi-agent systems. Use when: multiple agents need…, Send a message to an agent., Broadcast a message to multiple agents.
 
 ### Community 157 - "AgentMessage"
-Cohesion: 0.29
-Nodes (5): AgentMessage, Assign a subtask to a worker agent., Send message through the communication channel., Message exchanged between agents. Use when: agents need a structured envelope…, Receive all messages for an agent, clearing its inbox.
+Cohesion: 0.24
+Nodes (6): AgentMessage, Assign a subtask to a worker agent., Send message through the communication channel., Accept the first pending handoff for an agent, if any., Message exchanged between agents. Use when: agents need a structured envelope…, Receive all messages for an agent, clearing its inbox.
 
 ### Community 158 - "Filesystem Context Implementation Patterns"
 Cohesion: 0.29
@@ -991,9 +1058,9 @@ Nodes (6): additionalProperties, description, $id, $schema, title, type
 Cohesion: 0.19
 Nodes (18): _default_repo_root(), detect_dotnet_sdk(), _detect_expected_node_pm(), detect_node_angular(), detect_python(), _list_dotnet_sdks(), main(), normalize_stacks() (+10 more)
 
-### Community 169 - "Router Lifecycle and Events"
-Cohesion: 0.33
-Nodes (5): Common Router Events (Chronological), Common Use Cases, Debugging, Router Lifecycle and Events, Subscribing to Events
+### Community 169 - ".NET Backend Development Patterns"
+Cohesion: 0.05
+Nodes (41): 1. Project Structure (Clean Architecture), 2. Dependency Injection Patterns, 3. Async/Await Patterns, 4. Configuration with IOptions, 5. Result Pattern (Avoiding Exceptions for Flow Control), Best Practices, Caching Patterns, Common Pitfalls (+33 more)
 
 ### Community 170 - "ADR-0001: Open-Source Licensing under Apache License 2.0"
 Cohesion: 0.29
@@ -1051,9 +1118,9 @@ Nodes (6): Advanced Control, Best Practices, Customizing with CSS, Enabling View
 Cohesion: 0.29
 Nodes (6): Applying Guards, Creating a Guard, Return Values, Route Guards, Security Note, Types of Guards
 
-### Community 184 - "router-testing.md"
-Cohesion: 0.25
-Nodes (7): Best Practices, Example Setup, Example: Testing Navigation, Key Concepts, Setting Up for Router Testing, Testing with the RouterTestingHarness, Writing Router Tests
+### Community 184 - "Result"
+Cohesion: 0.16
+Nodes (20): AbstractValidator, YourNamespace.Application.Services, ICacheService, IProductRepository, IValidator, CancellationToken, DateTime, Func (+12 more)
 
 ### Community 185 - "Show Routes with Outlets"
 Cohesion: 0.29
@@ -1071,9 +1138,9 @@ Nodes (17): calculate_quality_score(), check_file_references(), check_recommende
 Cohesion: 0.33
 Nodes (6): maximum, minimum, items, minItems, type, phases
 
-### Community 189 - "title"
-Cohesion: 0.27
-Nodes (6): title, version, minLength, type, pattern, type
+### Community 189 - "properties"
+Cohesion: 0.15
+Nodes (13): type, description, pattern, type, properties, delegation_targets, name, title (+5 more)
 
 ### Community 190 - "enum"
 Cohesion: 0.10
@@ -1128,8 +1195,8 @@ Cohesion: 0.33
 Nodes (6): Budget Management, Compaction Strategies, Context Partitioning, Detailed Topics, KV-Cache Optimization, Observation Masking
 
 ### Community 203 - "angular-developer/SKILL.md"
-Cohesion: 0.10
-Nodes (15): Hierarchical Injectors, `providers` vs `viewProviders`, Resolution Modifiers, Resolution Rules, Types of Injector Hierarchies, Binding Collisions, Binding to the Host Element, Component Host Elements (+7 more)
+Cohesion: 0.08
+Nodes (21): `assertInInjectionContext`, Injection Context, `runInInjectionContext`, Where is an Injection Context Available?, Automatic Migrations & Code Modernization, Common Migration Schematics, Discovering Migrations, Specialized Workflow: Migrating to Standalone (+13 more)
 
 ### Community 204 - "e2e-testing.md"
 Cohesion: 0.33
@@ -1147,13 +1214,13 @@ Nodes (5): 1. Scope of Policy, 2.1 Passive / Static Checks (Category A — Alway
 Cohesion: 0.12
 Nodes (16): additionalProperties, properties, type, maximum, minimum, type, minLength, type (+8 more)
 
-### Community 208 - "Grill Me — Requirement Clarification Skill"
-Cohesion: 0.40
-Nodes (5): 1. Purpose, 2. When to Activate, 3. Execution Protocol, 4. Validation Criteria, Grill Me — Requirement Clarification Skill
+### Community 208 - "Canvas Design System"
+Cohesion: 0.06
+Nodes (35): 1. Visual Communication First, 2. Minimal Text Integration, 3. Expert Craftsmanship, 4. Systematic Patterns, Analog Meditation, Approach, Canvas Boundaries, Canvas Design System (+27 more)
 
 ### Community 209 - "design_system.py"
-Cohesion: 0.17
-Nodes (16): _detect_page_type(), format_markdown(), format_master_md(), format_page_override_md(), generate_design_system(), _generate_intelligent_overrides(), persist_design_system(), Format a page-specific override file with intelligent AI-generated content. (+8 more)
+Cohesion: 0.18
+Nodes (14): _detect_page_type(), format_master_md(), format_page_override_md(), _generate_intelligent_overrides(), persist_design_system(), Format a page-specific override file with intelligent AI-generated content., Generate intelligent overrides based on page type using layered search. Uses…, Detect page type from context and search results. (+6 more)
 
 ### Community 210 - "Role: UI/UX & Design System Designer (`ui-ux-designer`)"
 Cohesion: 0.40
@@ -1191,9 +1258,9 @@ Nodes (5): Detailed Topics, Memory Consolidation, Memory Layers (Decision Points
 Cohesion: 0.40
 Nodes (5): Detailed Topics, Memory Consolidation, Memory Layers (Decision Points), Production Framework Landscape, Retrieval Strategies
 
-### Community 220 - "Automatic Migrations & Code Modernization"
-Cohesion: 0.40
-Nodes (4): Automatic Migrations & Code Modernization, Common Migration Schematics, Discovering Migrations, Specialized Workflow: Migrating to Standalone
+### Community 220 - "CancellationToken"
+Cohesion: 0.13
+Nodes (12): IDbConnection, IDbContextTransaction, IDisposable, IOrderRepository, CancellationToken, ILogger, Task, DapperProductRepository (+4 more)
 
 ### Community 221 - "Ponytail — YAGNI & Minimalist Implementation Skill"
 Cohesion: 0.29
@@ -1295,9 +1362,9 @@ Nodes (5): 1. Purpose, 2. Discovery Protocol, 3. Mandatory Security Quarantine C
 Cohesion: 0.13
 Nodes (13): Framework Provenance, Activation & Security, /graphify, Honesty Rules, Outputs (in graphify-out/), Quick Reference, Usage, What You Must Do When Invoked, /graphify (+5 more)
 
-### Community 252 - "name"
-Cohesion: 0.50
-Nodes (4): description, pattern, type, name
+### Community 252 - "Form & Input Components"
+Cohesion: 0.06
+Nodes (32): Accordion, Alert, Alert Dialog, Avatar, Badge, Button, Card, Checkbox (+24 more)
 
 ### Community 253 - "Handoff"
 Cohesion: 0.17
@@ -1308,8 +1375,8 @@ Cohesion: 0.40
 Nodes (5): 1. Responsibilities, 2. Allowed Activities, 3. Expected Inputs, 4. Expected Outputs, Role: Backend & API TDD Implementation Engineer (`backend-engineer`)
 
 ### Community 257 - "Changelog"
-Cohesion: 0.12
-Nodes (17): [0.1.0] - 2026-11-16, [0.3.0] - 2026-11-16, [0.3.1] - 2026-11-19 (Release Candidate — Pending `Gate-04`), [0.4.0] - 2026-11-19, [0.5.0] - 2026-11-20, [0.6.0] - 2026-11-22 (Pending `Gate-04`), Added, Added (+9 more)
+Cohesion: 0.10
+Nodes (20): [0.1.0] - 2026-11-16, [0.3.0] - 2026-11-16, [0.3.1] - 2026-11-19 (Release Candidate — Pending `Gate-04`), [0.4.0] - 2026-11-19, [0.5.0] - 2026-11-20, [0.6.0] - 2026-11-22, [0.7.0] - 2026-11-24 (Pending `Gate-04`), Added (+12 more)
 
 ### Community 258 - "Humanizer: Remove AI Writing Patterns"
 Cohesion: 0.20
@@ -1363,9 +1430,9 @@ Nodes (7): 1. Undue Emphasis on Significance, Legacy, and Broader Trends, 2. Und
 Cohesion: 0.38
 Nodes (3): Handoff Template, Table of Contents, Framework Provenance, Activation & Security
 
-### Community 272 - "type"
-Cohesion: 0.29
-Nodes (7): items, type, type, items, type, decisions_locked, open_risks
+### Community 272 - "Tailwind CSS Responsive Design"
+Cohesion: 0.06
+Nodes (32): 1. Mobile-First Design, 2. Consistent Breakpoint Usage, 3. Test at Breakpoint Boundaries, 4. Use Container for Content Width, 5. Progressive Enhancement, 6. Avoid Too Many Breakpoints, Best Practices, Breakpoint System (+24 more)
 
 ### Community 273 - "RESUME Workflow"
 Cohesion: 0.29
@@ -1376,12 +1443,12 @@ Cohesion: 0.29
 Nodes (7): How to Use This Skill, Step 1: Analyze User Requirements, Step 2: Generate Design System (REQUIRED), Step 2b: Persist Design System (Master + Overrides Pattern), Step 2c: Design Dials (optional), Step 3: Supplement with Detailed Searches (as needed), Step 4: Stack Guidelines
 
 ### Community 275 - "frontendDesign"
-Cohesion: 0.33
-Nodes (6): angular-developer, angular-new-app, canvas-design, ui-ux-pro-max, web-design-guidelines, frontendDesign
+Cohesion: 0.29
+Nodes (7): angular-developer, angular-new-app, canvas-design, ui-styling, ui-ux-pro-max, web-design-guidelines, frontendDesign
 
-### Community 276 - "Stage 1 Runbook: Discovery, Grill Me & Specification (Phases 1–3)"
-Cohesion: 0.50
-Nodes (4): Stage 1 Runbook: Discovery, Grill Me & Specification (Phases 1–3), Step 1: Phase 1 — Discovery & Context Inspection, Step 2: Phase 2 — Requirement Clarification (`Grill Me`), Step 3: Phase 3 — Specification Creation
+### Community 276 - "shadcn/ui Accessibility Patterns"
+Cohesion: 0.07
+Nodes (28): Accordion, Alert, ARIA Labels, Checkbox and Radio, Color Contrast, Command Palette Navigation, Component-Specific Patterns, Dialog/Modal Navigation (+20 more)
 
 ### Community 277 - "component-harnesses.md"
 Cohesion: 0.33
@@ -1400,8 +1467,8 @@ Cohesion: 0.33
 Nodes (6): Accessibility, Interaction, Layout, Light/Dark Mode, Pre-Delivery Checklist, Visual Quality
 
 ### Community 281 - "project.framework.json"
-Cohesion: 0.33
-Nodes (5): frameworkVersion, projectName, $schema, stacks, workflowProfile
+Cohesion: 0.20
+Nodes (9): customizations, inlineMaxBytes, overlayDir, promptInjectionMode, frameworkVersion, projectName, $schema, stacks (+1 more)
 
 ### Community 282 - "disabled"
 Cohesion: 0.33
@@ -1419,9 +1486,9 @@ Nodes (6): paths, adrDir, plansDir, retrospectivesDir, specsDir, stateDir
 Cohesion: 0.31
 Nodes (7): _build_py, build_bundle_zip(), BuildPyWithBundle, Path, Package canonical framework directories into one compact zip to avoid Windows…, Embed canonical framework assets as a single bundle.zip inside built wheels., _should_skip()
 
-### Community 286 - "contextEngineering"
-Cohesion: 0.40
-Nodes (5): context-compression, context-optimization, filesystem-context, session-handoff, contextEngineering
+### Community 286 - "TestTailwindConfigGenerator"
+Cohesion: 0.07
+Nodes (15): Test adding colors multiple times., Test adding full color palette., Test adding custom spacing., Test TailwindConfigGenerator class., Test that adding same plugin twice doesn't duplicate., Test plugin recommendations for Next.js., Test generating TypeScript configuration., Test validating config with no content paths. (+7 more)
 
 ### Community 287 - "run_tests.py"
 Cohesion: 0.70
@@ -1491,57 +1558,217 @@ Nodes (4): Decisions Made, Files Modified, Tasks Finished, Work Completed
 Cohesion: 0.50
 Nodes (4): Common Sticking Points, Pre-Delivery Checklist, Query Strategy, Tips for Better Results
 
-### Community 304 - "customizations"
-Cohesion: 0.50
-Nodes (4): customizations, inlineMaxBytes, overlayDir, promptInjectionMode
+### Community 304 - ".NET/C# Best Practices"
+Cohesion: 0.07
+Nodes (25): Async/Await Patterns, Code Quality, Configuration & Settings, Dependency Injection & Services, Design Patterns & Architecture, Documentation & Structure, Error Handling & Logging, Framework Provenance, Activation & Security (+17 more)
 
 ### Community 305 - "security"
 Cohesion: 0.50
 Nodes (4): security, allowActiveSecurityTesting, enforcePreCommitSecretScan, strixProfilePath
 
-### Community 306 - "Implementation Pattern"
-Cohesion: 0.50
-Nodes (4): Implementation Pattern, Prerequisites for Success, The File System Agent, When Not to Use
+### Community 306 - "Entity Framework Core Best Practices"
+Cohesion: 0.08
+Nodes (23): 10. Handle Concurrency with Row Versioning, 11. Use Explicit Transactions When Needed, 12. Create Indexes for Query Patterns, 1. Use AsNoTracking for Read-Only Queries, 2. Select Only Needed Columns, 3. Avoid N+1 Queries with Eager Loading, 4. Use Split Queries for Large Includes, 5. Use Compiled Queries for Hot Paths (+15 more)
 
 ### Community 307 - "DETECTION GUIDANCE"
 Cohesion: 0.67
 Nodes (3): DETECTION GUIDANCE, Signs of human writing (preserve these), What NOT to flag (false positives)
 
-### Community 319 - "PULL_REQUEST_TEMPLATE.md"
-Cohesion: 0.50
-Nodes (3): Related Issue / Specification / ADR, Summary, Verification Checklist
+### Community 319 - "Dapper Patterns and Best Practices"
+Cohesion: 0.09
+Nodes (22): 10. Custom Type Handlers, 11. Use CommandDefinition for Cancellation, 12. Buffered vs Unbuffered Queries, 13. Connection Pooling Settings, 1. Proper Connection Handling, 2. Connection Lifecycle, 3. Basic CRUD Operations, 4. Dynamic Query Building (+14 more)
 
 ### Community 330 - "Stage 4 Runbook: Test-Driven Development & Implementation (Phase 9)"
 Cohesion: 0.50
 Nodes (4): Stage 4 Runbook: Test-Driven Development & Implementation (Phase 9), Step 1: Load Clean Context, Step 2: Execute Red-Green-Refactor Loop, Step 3: Circuit Breaker & Handoff
 
-### Community 331 - "Integration Patterns"
-Cohesion: 0.67
-Nodes (3): Integration Patterns, Integration with Agent Framework, Integration with Memory Systems
+### Community 331 - "Tailwind CSS Customization"
+Cohesion: 0.09
+Nodes (22): @apply Directive, Best Practices, Color Customization, Complete Tailwind Config, Configuration Examples, Content Configuration, Custom Color Palette, Custom Font Sizes (+14 more)
+
+### Community 332 - "shadcn/ui Theming & Customization"
+Cohesion: 0.10
+Nodes (19): Base Color Presets, Best Practices, Color Customization, Color Format, Component Customization, CSS Variable System, Customize Styles, Customize Variants (+11 more)
 
 ### Community 333 - "Stage 2 Runbook: Technical Research, Architecture & ADRs (Phases 4–5)"
 Cohesion: 0.50
 Nodes (4): Stage 2 Runbook: Technical Research, Architecture & ADRs (Phases 4–5), Step 1: Verify Upstream Handoff, Step 2: Phase 4 — Technical Research Spike, Step 3: Phase 5 — Architecture, Design Spec & ADRs
 
+### Community 334 - "TailwindConfigGenerator"
+Cohesion: 0.10
+Nodes (11): Generate Tailwind CSS configuration files., Add full color palette (50-950 shades) for a base color. Args: name: Color name…, TailwindConfigGenerator, Test adding custom fonts., Test plugin recommendations., Test generating config with custom colors., Test validating valid configuration., Test that written config contains expected content. (+3 more)
+
+### Community 335 - "Product"
+Cohesion: 0.19
+Nodes (15): YourNamespace.Infrastructure.Data, DbContext, DbSet, EntityTypeBuilder, ICollection, IEntityTypeConfiguration, ModelBuilder, DateTime (+7 more)
+
+### Community 336 - "TestShadcnInstaller"
+Cohesion: 0.11
+Nodes (10): Test adding components in dry run mode., Test ShadcnInstaller class., Test adding all components without config., Test adding all components in dry run mode., Test listing installed components without config., Test listing installed components when they exist., Test checking for existing shadcn config., Test checking for non-existent shadcn config. (+2 more)
+
+### Community 341 - "Prompt Templates Reference"
+Cohesion: 0.12
+Nodes (16): Prompt Templates Reference, Table of Contents, Template A — RTF, Template B — CO-STAR, Template C — RISEN, Template D — CRISPE, Template E — Auditable Reasoning, Template F — Few-Shot (+8 more)
+
+### Community 342 - "main"
+Cohesion: 0.13
+Nodes (8): main(), Add custom font families. Args: fonts: Dict of font_type: [font_names] e.g.,…, Add custom spacing values. Args: spacing: Dict of name: value e.g., {'18':…, Add custom breakpoints. Args: breakpoints: Dict of name: width e.g., {'3xl':…, Add plugin requirements. Args: plugins: List of plugin names e.g.,…, Get plugin recommendations based on configuration. Returns: List of recommended…, Validate configuration. Returns: Tuple of (valid, message), Add custom colors to theme. Args: colors: Dict of color_name: color_value Value…
+
+### Community 343 - ".add_components"
+Cohesion: 0.20
+Nodes (7): main(), Add all available shadcn/ui components. Args: overwrite: If True, overwrite…, List installed components. Returns: Tuple of (success, message with component…, Check if shadcn is initialized in project. Returns: True if components.json…, Get list of already installed components. Returns: List of installed component…, Read shadcn version from project package.json; fall back to a pinned default., Add shadcn/ui components. Args: components: List of component names to add…
+
+### Community 344 - "ShadcnInstaller"
+Cohesion: 0.14
+Nodes (8): Handle shadcn/ui component installation., ShadcnInstaller, Test initialization with default project root., Test initialization with custom project root., Test initialization with dry run mode., Test getting installed components when none exist., Test getting installed components without config., Test adding components with empty list.
+
+### Community 345 - "UI Styling Skill"
+Cohesion: 0.14
+Nodes (14): Accessibility Patterns, Best Practices, Common Patterns, Component Library Guide, Reference, Reference Navigation, Resources, Responsive Design (+6 more)
+
+### Community 346 - "UI Styling Skill"
+Cohesion: 0.14
+Nodes (14): Accessibility Patterns, Best Practices, Common Patterns, Component Library Guide, Reference, Reference Navigation, Resources, Responsive Design (+6 more)
+
+### Community 347 - "test_tailwind_config_gen.py"
+Cohesion: 0.20
+Nodes (8): parametrize, Tests for tailwind_config_gen.py, Reduce a generated TS/JS config to a bare assignable object so it can be handed…, Regression guard for the missing-comma bug between the ``theme`` block and…, The property preceding ``plugins`` must end with a comma (pure-Python check, so…, The emitted config parses as valid JS via ``node --check``., _strip_to_object(), TestGeneratedConfigIsValidJs
+
+### Community 348 - ".generate_config_string"
+Cohesion: 0.20
+Nodes (6): Generate configuration file content. Returns: Configuration file as string, Generate TypeScript configuration., Generate JavaScript configuration., Format plugins array for config. Validates each plugin name against a strict…, Add indentation to JSON string., Write configuration to file. Returns: Tuple of (success, message)
+
+### Community 349 - ".SearchAsync"
+Cohesion: 0.33
+Nodes (5): IEnumerable, Items, IReadOnlyList, ProductSearchRequest, TotalCount
+
+### Community 350 - "patch"
+Cohesion: 0.18
+Nodes (6): patch, Test adding components with overwrite flag., Test successful component addition., Test component addition with subprocess error., Test component addition when npx is not found., Test successful addition of all components.
+
+### Community 351 - "prompt-master/SKILL.md"
+Cohesion: 0.22
+Nodes (7): Framework Provenance, Activation & Security, PRIMACY ZONE — Identity, Hard Rules, Output Lock, RECENCY ZONE — Verification and Success Lock, Reference Files, PRIMACY ZONE — Identity, Hard Rules, Output Lock, RECENCY ZONE — Verification and Success Lock, Reference Files
+
+### Community 352 - "BaseSpecification"
+Cohesion: 0.44
+Nodes (5): Expression, List, Func, BaseSpecification, ISpecification
+
+### Community 353 - "MIDDLE ZONE — Execution Logic, Tool Routing, Diagnostics"
+Cohesion: 0.20
+Nodes (10): Agentic Output Warning, Credential Safety, Diagnostic Checklist, Input Sanitization -- Pasted Prompts, Intent Extraction, Memory Block, MIDDLE ZONE — Execution Logic, Tool Routing, Diagnostics, Model Recency Gate (+2 more)
+
+### Community 354 - "MIDDLE ZONE — Execution Logic, Tool Routing, Diagnostics"
+Cohesion: 0.20
+Nodes (10): Agentic Output Warning, Credential Safety, Diagnostic Checklist, Input Sanitization -- Pasted Prompts, Intent Extraction, Memory Block, MIDDLE ZONE — Execution Logic, Tool Routing, Diagnostics, Model Recency Gate (+2 more)
+
+### Community 355 - "._base_config"
+Cohesion: 0.22
+Nodes (6): Any, Path, Initialize generator. Args: typescript: If True, generate .ts config, else .js…, Determine default output path., Create base configuration structure., Get default content paths for framework.
+
+### Community 356 - "Role: Software & Systems Architect (`software-architect`)"
+Cohesion: 0.25
+Nodes (8): 1. Responsibilities, 2. Allowed Activities, 3. Expected Inputs, 4. Expected Outputs, 5. Delegation Rules, 6. Restrictions, 7. Completion Criteria, Role: Software & Systems Architect (`software-architect`)
+
+### Community 357 - "handoff-packet.schema.json"
+Cohesion: 0.29
+Nodes (6): additionalProperties, description, $id, $schema, title, type
+
+### Community 358 - "Credit-Killing Patterns Reference"
+Cohesion: 0.29
+Nodes (7): Agentic Patterns, Context Patterns, Credit-Killing Patterns Reference, Format Patterns, Reasoning Patterns, Scope Patterns, Task Patterns
+
+### Community 359 - "communication"
+Cohesion: 0.33
+Nodes (6): caveman, humanizer, i-have-adhd, prompt-master, rtk-cli, communication
+
+### Community 360 - "Hierarchical Injectors"
+Cohesion: 0.33
+Nodes (5): Hierarchical Injectors, `providers` vs `viewProviders`, Resolution Modifiers, Resolution Rules, Types of Injector Hierarchies
+
+### Community 361 - "Component Host Elements"
+Cohesion: 0.33
+Nodes (5): Binding Collisions, Binding to the Host Element, Component Host Elements, Injecting Host Attributes, Legacy Decorators
+
+### Community 362 - "Anti-Patterns to Avoid"
+Cohesion: 0.40
+Nodes (5): Anti-Patterns to Avoid, Cryptic Parameter Names, Inconsistent Naming, Missing Error Handling, Vague Descriptions
+
+### Community 363 - "Core Rule: Human Approval Gates (`human-approval-gates.md`)"
+Cohesion: 0.50
+Nodes (4): 1. Task Classification Law, 2. Mandatory Approval Gates, 3. Destructive Operation Prohibition, Core Rule: Human Approval Gates (`human-approval-gates.md`)
+
+### Community 364 - "allowed_tools"
+Cohesion: 0.50
+Nodes (4): items, minItems, type, allowed_tools
+
+### Community 365 - "phase_number"
+Cohesion: 0.50
+Nodes (4): maximum, minimum, type, phase_number
+
+### Community 366 - "Tool Collection Design"
+Cohesion: 0.50
+Nodes (4): Consolidation Guidelines, Managing Tool Proliferation, Tool Collection Design, Tool Selection Guidance
+
+### Community 367 - "Response Format Optimization"
+Cohesion: 0.50
+Nodes (4): Format Options Pattern, Response Format Optimization, The Token-Accuracy Trade-off, When to Use Each Format
+
+### Community 368 - "Core Stack"
+Cohesion: 0.50
+Nodes (4): Component Layer: shadcn/ui, Core Stack, Styling Layer: Tailwind CSS, Visual Design Layer: Canvas
+
+### Community 369 - "Core Stack"
+Cohesion: 0.50
+Nodes (4): Component Layer: shadcn/ui, Core Stack, Styling Layer: Tailwind CSS, Visual Design Layer: Canvas
+
+### Community 370 - "generate_design_system"
+Cohesion: 0.50
+Nodes (4): format_markdown(), generate_design_system(), Format design system as markdown., Main entry point for design system generation. Args: query: Search query (e.g.,…
+
+### Community 372 - "ProductServiceOptions"
+Cohesion: 0.67
+Nodes (3): ProductServiceOptions, string, TimeSpan
+
+### Community 373 - "KV-Cache Optimization"
+Cohesion: 0.67
+Nodes (3): Cache-Friendly Design, KV-Cache Optimization, Prefix Stability
+
+### Community 376 - "Quick Start"
+Cohesion: 0.67
+Nodes (3): Alternative: Tailwind-Only Setup, Component + Styling Setup, Quick Start
+
+### Community 377 - "Utility Scripts"
+Cohesion: 0.67
+Nodes (3): shadcn_add.py, tailwind_config_gen.py, Utility Scripts
+
+### Community 378 - "Quick Start"
+Cohesion: 0.67
+Nodes (3): Alternative: Tailwind-Only Setup, Component + Styling Setup, Quick Start
+
+### Community 379 - "Utility Scripts"
+Cohesion: 0.67
+Nodes (3): shadcn_add.py, tailwind_config_gen.py, Utility Scripts
+
 ## Knowledge Gaps
-- **1756 isolated node(s):** `$schema`, `$id`, `title`, `description`, `type` (+1751 more)
+- **2107 isolated node(s):** `$schema`, `$id`, `title`, `description`, `type` (+2102 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **14 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **30 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Humanizer: Remove AI Writing Patterns` connect `Humanizer: Remove AI Writing Patterns` to `LANGUAGE AND GRAMMAR PATTERNS`, `COMMUNICATION PATTERNS`, `STYLE PATTERNS`, `CONTENT PATTERNS`, `DETECTION GUIDANCE`, `FILLER AND HEDGING`?**
+- **Why does `Signal Forms` connect `Signal Forms` to `angular-developer/SKILL.md`?**
   _High betweenness centrality (0.017) - this node is a cross-community bridge._
-- **Why does `Context Optimization Reference` connect `Context Optimization Reference` to `Integration Patterns`, `context-optimization/SKILL.md`, `Performance Benchmarks`, `Compaction Strategies`, `Optimization Decision Framework`, `Common Pitfalls`?**
-  _High betweenness centrality (0.014) - this node is a cross-community bridge._
-- **Why does `Context Compression Evaluation Framework` connect `Context Compression Evaluation Framework` to `Probe Types`, `context-compression/SKILL.md`, `Scoring Rubrics`?**
-  _High betweenness centrality (0.013) - this node is a cross-community bridge._
+- **Why does `Handoff` connect `Handoff` to `CREATE Workflow`, `session-handoff/SKILL.md`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+- **Why does `Evaluation Reference: Metrics and Implementation` connect `Evaluation Reference: Metrics and Implementation` to `evaluation/SKILL.md`, `Core Metric Definitions`?**
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._
+- **Are the 2 inferred relationships involving `TailwindConfigGenerator` (e.g. with `TestGeneratedConfigIsValidJs` and `TestTailwindConfigGenerator`) actually correct?**
+  _`TailwindConfigGenerator` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `$schema`, `$id`, `title` to the rest of the system?**
-  _1756 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _2107 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `compose.py` be split into smaller, more focused modules?**
   _Cohesion score 0.0648018648018648 - nodes in this community are weakly interconnected._
 - **Should `type` be split into smaller, more focused modules?**
-  _Cohesion score 0.1286549707602339 - nodes in this community are weakly interconnected._
-- **Should `4. Detailed Specification of the 15 Phases` be split into smaller, more focused modules?**
-  _Cohesion score 0.08695652173913043 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11255411255411256 - nodes in this community are weakly interconnected._
